@@ -1,61 +1,87 @@
-import { useEffect, useState } from 'react';
+import type { PaymentRequirements } from '@xorv/sdk';
+import { usePoll } from './data';
 
-/**
- * The Xorv gateway (packages/gateway) signs jobs with the buyer key and runs the provider nodes.
- * The web app reaches it through the Vite proxy at /api and /v1. Without it the app stays read-only
- * and says so ("Setup required"), it never pretends.
- */
-export interface NodeStatus { label: string; node: string; price: number; keeper: boolean; up: boolean; pid: number | null; started_ms: number; restarts: number; last_error: string | null }
-export interface Health { contract: string; network: string; buyer: string | null; provider_keys: Record<string, boolean>; nodes: NodeStatus[]; external_nodes: boolean; models: { id: string; ready: boolean; demo_ready: boolean }[]; provider_setup_required: string[]; setup_required: string[] }
-export interface Account { account: string; balance: string; locked: string; storage_bytes: number; explorer: string }
-export interface Posted { job: number; tx: string; model: string; units: number; max_near: number; deposit_near: string; explorer: string }
-export interface Receipt { at: string; node: string; event: string; tx: string; job: number }
-export interface Receipts { job: number; post: { at: string; job: number; tx: string; model: string; source: string } | null; nodes: Receipt[] }
-export interface ApiKey { id: string; name: string; prefix: string; created_ms: number; last_used_ms: number; requests: number; jobs: number[]; revoked: boolean }
+export const GATEWAY_START = 'XORV_ENV_FILE=/path/to/.env pnpm gateway';
 
 export class GatewayError extends Error {
-  constructor(message: string, public status: number, public setup?: string, public offline = false) { super(message); }
+  status: number;
+  offline: boolean;
+  setup?: string[];
+  constructor(message: string, status = 0, offline = false, setup?: string[]) {
+    super(message);
+    this.status = status;
+    this.offline = offline;
+    this.setup = setup;
+  }
 }
 
-export const GATEWAY_START = 'GROQ_API_KEY=your_groq_api_key pnpm gateway';
-
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  let r: Response;
-  try { r = await fetch(path, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } }); }
-  catch { throw new GatewayError('The Xorv gateway is not reachable.', 0, 'gateway', true); }
-  const text = await r.text();
-  let body: any = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = null; }
-  // The dev/preview proxy answers 502/504 with an HTML or empty body when the gateway process is down.
-  if ((!body && !r.ok) || body?.gateway_offline) throw new GatewayError('The Xorv gateway is not running.', r.status, 'gateway', true);
-  if (!r.ok) throw new GatewayError(body?.error?.message ?? `HTTP ${r.status}`, r.status, body?.error?.setup);
-  return body as T;
+export interface Health {
+  chainId: number;
+  network: string;
+  facilitator: string | null;
+  nodes: { label: string; up: boolean; ready: boolean; fault: string }[];
+  models: { id: string; nodes: number }[];
+  setup_required: string[];
 }
+export interface ServedModel { id: string; name: string; nodes: number; index_rate_per_1k: string | null }
+export interface Paid { job: number; tx: string; explorer: string; value: string; receipt?: { transaction: string; payer: string; network: string } }
+export interface PrivatePosted { job: number; tx: string; explorer: string; escrow: string; creditLeft: string; postedBy: string }
+export interface Credit { address: string; credit: string; topups: { from: string; amount: string; tx: string; block: number }[]; jobs: { job: number; escrow: string; settled: boolean; tx: string }[] }
+export interface PrivateStatus { enabled: boolean; setup: string | null; encryptedERC: string; registrar: string; desk: string | null; auditor: string | null; privateJobs: number; attributedTopups: number }
+
+async function call<T>(path: string, init?: RequestInit): Promise<{ body: T; res: Response }> {
+  let res: Response;
+  try {
+    res = await fetch(path, init);
+  } catch {
+    throw new GatewayError('The Xorv gateway could not be reached.', 0, true);
+  }
+  if (res.headers.get('x-xorv-gateway') === 'offline') throw new GatewayError('The Xorv gateway is not running.', 0, true);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok && res.status !== 402) throw new GatewayError(body?.error?.message ?? `HTTP ${res.status}`, res.status, false, body?.setup);
+  return { body, res };
+}
+const json = (body: unknown, headers: Record<string, string> = {}): RequestInit => ({ method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 
 export const gateway = {
-  health: () => req<Health>('/api/health'),
-  account: () => req<Account>('/api/account'),
-  chat: (model: string, messages: { role: string; content: string }[]) => req<Posted>('/api/chat', { method: 'POST', body: JSON.stringify({ model, messages }) }),
-  receipts: (job: number) => req<Receipts>(`/api/jobs/${job}/receipts`),
-  recordWalletPost: (job: number, tx: string) => req(`/api/jobs/${job}/receipt`, { method: 'POST', body: JSON.stringify({ tx }) }),
-  keys: () => req<ApiKey[]>('/api/keys'),
-  createKey: (name: string) => req<{ key: string; record: ApiKey }>('/api/keys', { method: 'POST', body: JSON.stringify({ name }) }),
-  revokeKey: (id: string) => req<{ revoked: string }>(`/api/keys/${id}`, { method: 'DELETE' }),
+  health: async () => (await call<Health>('/api/health')).body,
+  models: async () => (await call<{ data: ServedModel[] }>('/v1/models')).body.data,
+  requirements: async (body: unknown): Promise<PaymentRequirements> => {
+    const { body: b } = await call<{ accepts: PaymentRequirements[] }>('/api/x402/requirements', json(body));
+    if (!b.accepts?.[0]) throw new GatewayError('The gateway returned no payment requirements.');
+    return b.accepts[0];
+  },
+  chat: async (body: unknown, payment: string): Promise<Paid> => {
+    const { body: b, res } = await call<Paid & { error?: { message: string } }>('/api/chat', json(body, { 'x-payment': payment }));
+    if (res.status === 402) throw new GatewayError(b.error?.message ?? 'Payment was not accepted.', 402);
+    const h = res.headers.get('x-payment-response');
+    let receipt: Paid['receipt'];
+    try {
+      receipt = h ? JSON.parse(atob(h)) : undefined;
+    } catch {
+      receipt = undefined;
+    }
+    return { ...b, receipt };
+  },
+  privateChat: async (body: unknown): Promise<PrivatePosted> => {
+    const { body: b, res } = await call<PrivatePosted & { error?: { message: string } }>('/api/private/chat', json(body));
+    if (res.status === 402) throw new GatewayError(b.error?.message ?? 'Not enough private credit.', 402);
+    return b;
+  },
+  credit: async (body: unknown): Promise<Credit> => {
+    const { body: b, res } = await call<Credit & { error?: { message: string } }>('/api/private/credit', json(body));
+    if (res.status === 402) throw new GatewayError(b.error?.message ?? 'Credit unavailable.', 402);
+    return b;
+  },
+  privateStatus: async () => (await call<PrivateStatus>('/api/private/status')).body,
 };
 
-/** Poll the gateway's health. `error` is set (and data null) when the gateway is down. */
-export function useGateway(ms = 8000) {
-  const [s, set] = useState<{ data: Health | null; error: GatewayError | null; loading: boolean }>({ data: null, error: null, loading: true });
-  useEffect(() => {
-    let alive = true;
-    let t: ReturnType<typeof setTimeout>;
-    const tick = async () => {
-      try { const d = await gateway.health(); if (alive) set({ data: d, error: null, loading: false }); }
-      catch (e) { if (alive) set({ data: null, error: e as GatewayError, loading: false }); }
-      if (alive) t = setTimeout(tick, document.hidden ? ms * 3 : ms);
-    };
-    tick();
-    return () => { alive = false; clearTimeout(t); };
-  }, [ms]);
-  return s;
+export function useGateway(ms = 15_000) {
+  return usePoll(async () => {
+    try {
+      return { ok: true as const, health: await gateway.health() };
+    } catch (e) {
+      return { ok: false as const, error: e as GatewayError };
+    }
+  }, ms);
 }

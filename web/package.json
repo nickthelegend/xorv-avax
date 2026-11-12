@@ -5,27 +5,28 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5200 --strictPort",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 5200 --strictPort",
-    "test": "tsc --noEmit && node --test test/*.test.ts"
+    "dev": "vite --host 127.0.0.1 --port 5390 --strictPort",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "build:qa": "VITE_XORV_QA=1 vite build --outDir dist-qa",
+    "preview": "vite preview --host 127.0.0.1 --port 5390 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "shots": "node scripts/shots.mjs",
+    "qa:flow": "node scripts/qa-flow.mjs"
   },
   "dependencies": {
-    "@near-wallet-selector/core": "10.1.4",
-    "@near-wallet-selector/meteor-wallet": "10.1.4",
     "@xorv/sdk": "workspace:*",
-    "buffer": "6.0.3",
-    "near-api-js": "6.2.5",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "react-markdown": "10.1.0",
-    "remark-gfm": "4.0.1"
+    "remark-gfm": "4.0.1",
+    "viem": "2.37.6"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.9.3",
-    "vite": "^7.0.0"
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "5.0.2",
+    "playwright-core": "1.56.1",
+    "typescript": "5.9.3",
+    "vite": "7.1.5"
   }
 }

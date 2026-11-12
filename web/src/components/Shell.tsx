@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CONTRACT, acctUrl, allModels, modelName, modelUrl, short, useMarket } from '../lib/data';
+import { C, addrUrl, allModels, jobTitle, modelName, modelUrl, short, useMarket } from '../lib/data';
 import { Link, navigate } from '../lib/router';
 import { useWallet } from '../lib/wallet';
 import { Art, Icon, Wordmark, type ArtName } from './Ui';
@@ -7,12 +7,13 @@ import { Art, Icon, Wordmark, type ArtName } from './Ui';
 export const NAV = [
   { key: 'models', to: '/models', label: 'Models' },
   { key: 'chat', to: '/chat', label: 'Chat' },
+  { key: 'index', to: '/index', label: 'Index' },
   { key: 'rankings', to: '/rankings', label: 'Rankings' },
   { key: 'providers', to: '/providers', label: 'Providers' },
-  { key: 'bounties', to: '/bounties', label: 'Bounties' },
+  { key: 'private', to: '/private', label: 'Private' },
 ];
 
-/** Search over the live contract: models, providers and jobs. ⌘K focuses it. */
+/** Search over the live contracts: models, providers and jobs. ⌘K focuses it. */
 export function Search({ onPick, big, placeholder = 'Search' }: { onPick?: () => void; big?: boolean; placeholder?: string }) {
   const m = useMarket();
   const [q, setQ] = useState('');
@@ -28,11 +29,11 @@ export function Search({ onPick, big, placeholder = 'Search' }: { onPick?: () =>
   const hits = useMemo(() => {
     const d = m.data;
     if (!d || !q.trim()) return [];
-    const t = q.trim().toLowerCase();
+    const t = q.trim().toLowerCase().replace(/^#/, '');
     return [
-      ...allModels(d).filter((x) => x.toLowerCase().includes(t)).map((x) => ({ to: modelUrl(x), kind: 'Model', label: modelName(x), sub: x })),
-      ...d.providers.filter((p) => (p.label + ' ' + p.node + ' ' + p.models.join(' ')).toLowerCase().includes(t)).map((p) => ({ to: `/providers/${p.label}`, kind: 'Provider', label: p.label, sub: short(p.node) })),
-      ...d.jobs.filter((j) => (j.title + ' job ' + j.id + ' #' + j.id).toLowerCase().includes(t)).map((j) => ({ to: `/jobs/${j.id}`, kind: j.kind === 'bounty' ? 'Bounty' : 'Job', label: j.title, sub: `#${j.id}` })),
+      ...allModels(d).filter((x) => (x + ' ' + modelName(x)).toLowerCase().includes(t)).map((x) => ({ to: modelUrl(x), kind: 'Model', label: modelName(x), sub: x })),
+      ...d.providers.filter((p) => (p.label + ' ' + p.node + ' ' + p.owner).toLowerCase().includes(t)).map((p) => ({ to: `/providers/${p.label}`, kind: 'Provider', label: p.label, sub: short(p.node) })),
+      ...d.jobs.filter((j) => (jobTitle(d, j) + ' job ' + j.id).toLowerCase().includes(t)).map((j) => ({ to: `/jobs/${j.id}`, kind: 'Job', label: jobTitle(d, j), sub: `#${j.id}` })),
     ].slice(0, 8);
   }, [q, m.data]);
   const go = (to: string) => { setQ(''); setOpen(false); ref.current?.blur(); navigate(to); onPick?.(); };
@@ -47,15 +48,24 @@ export function Search({ onPick, big, placeholder = 'Search' }: { onPick?: () =>
         <ul className="search-pop" role="listbox" id={big ? 'sp-big' : 'sp-hdr'}>
           {hits.length ? hits.map((h, k) => (
             <li key={h.to} role="option" aria-selected={k === i}><button onMouseDown={(e) => e.preventDefault()} onClick={() => go(h.to)} className={k === i ? 'on' : ''}><span className="sp-kind">{h.kind}</span><b>{h.label}</b><small>{h.sub}</small></button></li>
-          )) : <li className="sp-none">{m.data ? 'Nothing on the contract matches.' : 'Reading the contract…'}</li>}
+          )) : <li className="sp-none">{m.data ? 'Nothing on the contracts matches.' : 'Reading Fuji…'}</li>}
         </ul>
       )}
     </div>
   );
 }
 
-export function Header({ active }: { active?: string }) {
+function AccountButton({ onDone }: { onDone?: () => void }) {
   const wallet = useWallet();
+  return (
+    <Link to="/account" className="btn btn-w btn-sm acct-btn" title={wallet.address ? `${wallet.address} · Avalanche Fuji` : 'Connect a wallet on Avalanche Fuji'}
+      onClick={(e) => { onDone?.(); if (!wallet.address) { e.preventDefault(); navigate('/account'); void wallet.connect(); } }}>
+      {wallet.address ? short(wallet.address) : wallet.connecting ? 'Connecting…' : 'Connect'}
+    </Link>
+  );
+}
+
+export function Header({ active }: { active?: string }) {
   const [menu, setMenu] = useState(false);
   useEffect(() => { document.body.style.overflow = menu ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [menu]);
   useEffect(() => {
@@ -73,8 +83,8 @@ export function Header({ active }: { active?: string }) {
           {NAV.map((n) => <Link key={n.key} to={n.to} aria-current={active === n.key ? 'page' : undefined}>{n.label}</Link>)}
         </nav>
         <div className="hdr-end">
-          <a className="net" href={acctUrl(CONTRACT)} target="_blank" rel="noreferrer" title={`Contract ${CONTRACT}`}><i className="live-dot" />Testnet</a>
-          <Link to="/account" className={`btn btn-w btn-sm acct-btn`} aria-current={active === 'account' ? 'page' : undefined} title={wallet.account ? `${wallet.account} · NEAR testnet` : 'Connect Meteor Wallet (testnet)'} onClick={(e) => { if (!wallet.account) { e.preventDefault(); navigate('/account'); void wallet.connect(); } }}>Account</Link>
+          <a className="net" href={addrUrl(C.market)} target="_blank" rel="noreferrer" title={`Market ${C.market}`}><i className="live-dot" />Fuji</a>
+          <AccountButton />
           <button className="icon-btn hdr-menu" onClick={() => setMenu(true)} aria-label="Open menu"><Icon name="menu" size={18} /></button>
         </div>
       </div>
@@ -85,10 +95,9 @@ export function Header({ active }: { active?: string }) {
             <Search onPick={() => setMenu(false)} />
             <nav aria-label="Main">
               {NAV.map((n) => <Link key={n.key} to={n.to} aria-current={active === n.key ? 'page' : undefined} onClick={() => setMenu(false)}>{n.label}<Icon name="chevR" size={16} /></Link>)}
-              <Link to="/account" aria-current={active === 'account' ? 'page' : undefined} onClick={(e) => { setMenu(false); if (!wallet.account) { e.preventDefault(); navigate('/account'); void wallet.connect(); } }}>Account<Icon name="chevR" size={16} /></Link>
-              <Link to="/keys" onClick={() => setMenu(false)}>API keys<Icon name="chevR" size={16} /></Link>
+              <Link to="/account" aria-current={active === 'account' ? 'page' : undefined} onClick={() => setMenu(false)}>Account<Icon name="chevR" size={16} /></Link>
             </nav>
-            <a className="net" style={{ display: 'inline-flex', alignSelf: 'flex-start' }} href={acctUrl(CONTRACT)} target="_blank" rel="noreferrer"><i className="live-dot" />{CONTRACT}</a>
+            <a className="net" style={{ display: 'inline-flex', alignSelf: 'flex-start' }} href={addrUrl(C.market)} target="_blank" rel="noreferrer"><i className="live-dot" />Avalanche Fuji · {short(C.market)}</a>
           </div>
         </div>
       )}
@@ -100,10 +109,10 @@ export function Footer() {
   return (
     <footer className="foot">
       <div className="wrap">
-        <span>Xorv on NEAR testnet · every number is a read of <a href={acctUrl(CONTRACT)} target="_blank" rel="noreferrer">{CONTRACT}</a> or a recorded transaction.</span>
+        <span>Xorv on Avalanche Fuji · every number is a read of <a href={addrUrl(C.market)} target="_blank" rel="noreferrer">the market</a>, <a href={addrUrl(C.index)} target="_blank" rel="noreferrer">the index</a> or a recorded transaction. Prices in tUSD test dollars.</span>
         <nav aria-label="Footer">
           <Link to="/providers/join">Become a provider</Link>
-          <Link to="/keys">API</Link>
+          <Link to="/index#api">API</Link>
           <span>MIT · © 2026 Nivesh Gajengi</span>
         </nav>
       </div>

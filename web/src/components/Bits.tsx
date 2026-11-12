@@ -1,5 +1,3 @@
-import type { JobSummary, Job } from '@xorv/sdk';
-
 /** 20-segment meter, like a telemetry bar. */
 export function Meter({ bps, threshold, bad }: { bps: number; threshold?: number; bad?: boolean }) {
   const on = Math.round(bps / 500);
@@ -33,6 +31,3 @@ export function Spark({ points, height = 150 }: { points: { x: number; y: number
   );
 }
 
-export function jobPrice(j: JobSummary | Job) {
-  return j.kind === 'bounty' ? j.reward : BigInt(j.clearing_price) > 0n ? j.clearing_price : j.max_price;
-}

@@ -1,102 +1,162 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { InjectedWallet, WalletSelector } from '@near-wallet-selector/core';
-import { computeChatRequest, postedJobId, formatNear, NEAR, rpc, TESTNET_RPCS, type ChatMessage } from '@xorv/sdk';
-import { CONTRACT, RPC, acctUrl, chain, txUrl } from './data';
-import { walletError } from './wallet-errors';
-import type { Account, Posted } from './gateway';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createWalletClient, custom, type Address, type Hex, type LocalAccount, type WalletClient } from 'viem';
+import { fuji, rpcTransport, signPayment, type PaymentPayload, type PaymentRequirements } from '@xorv/sdk';
+import { D } from './data';
 
-let selectorPromise: Promise<WalletSelector> | null = null;
-function selector() {
-  return selectorPromise ??= import('./polyfills').then(() => Promise.all([
-    import('@near-wallet-selector/core'), import('@near-wallet-selector/meteor-wallet'),
-  ])).then(async ([core, meteor]) => {
-    const module = import.meta.env.VITE_QA_SIGNER === '1'
-      ? (await import('./qa-signer')).setupQASigner() : meteor.setupMeteorWallet();
-    return core.setupWalletSelector({ network: 'testnet', modules: [module] });
-  })
-    .catch((error) => { selectorPromise = null; throw error; });
+/**
+ * Build flag for the Playwright QA signer. Only a build made with VITE_XORV_QA=1 contains this path;
+ * the test key is injected at runtime as window.__XORV_QA_KEY__ and is never part of the bundle.
+ */
+export const QA = import.meta.env.VITE_XORV_QA === '1';
+
+type Kind = 'injected' | 'qa';
+interface Wallet {
+  address: Address | null;
+  kind: Kind | null;
+  connecting: boolean;
+  error: string | null;
+  hasInjected: boolean;
+  qaAvailable: boolean;
+  connect: (kind?: Kind) => Promise<void>;
+  disconnect: () => void;
+  signPayment: (req: PaymentRequirements) => Promise<PaymentPayload>;
+  signMessage: (message: string) => Promise<Hex>;
+  write: (req: { address: Address; abi: any; functionName: string; args?: unknown[] }) => Promise<Hex>;
 }
 
-export async function readAccount(id: string): Promise<Account> {
-  if (id.endsWith('.near')) throw new Error('mainnet account');
-  const view = await rpc<{ amount: string; locked: string; storage_usage: number }>([RPC, ...TESTNET_RPCS.filter((u) => u !== RPC)], 'query', { request_type: 'view_account', finality: 'final', account_id: id });
-  return { account: id, balance: view.amount, locked: view.locked, storage_bytes: view.storage_usage, explorer: acctUrl(id) };
+const Ctx = createContext<Wallet | null>(null);
+const FUJI_HEX = '0xa869';
+const STORE = 'xorv.wallet';
+
+const eth = () => (window as any).ethereum as { request: (a: { method: string; params?: unknown[] }) => Promise<any>; on?: any; removeListener?: any } | undefined;
+
+async function ensureFuji() {
+  const p = eth()!;
+  const id = await p.request({ method: 'eth_chainId' });
+  if (id === FUJI_HEX) return;
+  try {
+    await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: FUJI_HEX }] });
+  } catch (e: any) {
+    if (e?.code !== 4902) throw e;
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{ chainId: FUJI_HEX, chainName: 'Avalanche Fuji C-Chain', nativeCurrency: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 }, rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'], blockExplorerUrls: ['https://testnet.snowtrace.io'] }],
+    });
+  }
 }
 
-export class EscrowConfirmationError extends Error {
-  constructor(message: string, public tx: string) { super(message); }
+export function walletMessage(e: unknown): string {
+  const err = e as any;
+  if (err?.code === 4001 || /reject|denied/i.test(String(err?.message))) return 'You declined the request in your wallet. Nothing was signed or sent.';
+  return String(err?.shortMessage ?? err?.message ?? e).slice(0, 240);
 }
-type WalletState = { account: string; ready: boolean; connecting: boolean; error: string | null; connect: () => Promise<void>; disconnect: () => Promise<void>; postChat: (model: string, messages: ChatMessage[]) => Promise<Posted>; };
-const Context = createContext<WalletState | null>(null);
+
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState('');
-  const [ready, setReady] = useState(false);
+  const [address, setAddress] = useState<Address | null>(null);
+  const [kind, setKind] = useState<Kind | null>(null);
+  const [client, setClient] = useState<WalletClient | null>(null);
+  const [local, setLocal] = useState<LocalAccount | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    let alive = true;
-    let stop: (() => void) | undefined;
-    selector().then((s) => {
-      if (!alive) return;
-      const sync = () => { if (alive) setAccount(s.store.getState().accounts.find((a) => a.active)?.accountId ?? ''); };
-      sync();
-      setReady(true);
-      const sub = s.store.observable.subscribe(sync);
-      stop = () => sub.unsubscribe();
-    }).catch((e) => { if (alive) { setError(walletError(e)); setReady(true); } });
-    return () => { alive = false; stop?.(); };
+  const hasInjected = typeof window !== 'undefined' && !!eth();
+  const qaAvailable = QA && typeof window !== 'undefined' && typeof (window as any).__XORV_QA_KEY__ === 'string';
+
+  const useInjected = useCallback(async (request: boolean) => {
+    const p = eth();
+    if (!p) throw new Error('No browser wallet found. Install Core or MetaMask, or use a QA build.');
+    const accounts: string[] = await p.request({ method: request ? 'eth_requestAccounts' : 'eth_accounts' });
+    if (!accounts[0]) return false;
+    await ensureFuji();
+    const c = createWalletClient({ account: accounts[0] as Address, chain: fuji, transport: custom(p) });
+    setClient(c);
+    setLocal(null);
+    setAddress(accounts[0] as Address);
+    setKind('injected');
+    return true;
   }, []);
-  async function connect() {
-    if (connecting) return;
-    setConnecting(true); setError(null);
-    try { const wallet = await (await selector()).wallet<InjectedWallet>(import.meta.env.VITE_QA_SIGNER === '1' ? 'qa-signer' : 'meteor-wallet'); await wallet.signIn({ contractId: CONTRACT, methodNames: ['post_compute'] }); }
-    catch (e) { setError(walletError(e)); }
-    finally { setConnecting(false); }
-  }
-  async function disconnect() {
+
+  // In a normal build QA is the literal false, so this whole branch (and its key lookup) is dropped.
+  const useQa = useCallback(QA ? async () => {
+    const key = (window as any).__XORV_QA_KEY__ as Hex | undefined;
+    if (!key) throw new Error('QA signer: no key was injected for this session.');
+    const { privateKeyToAccount } = await import('viem/accounts');
+    const acct = privateKeyToAccount(key);
+    setLocal(acct);
+    setClient(createWalletClient({ account: acct, chain: fuji, transport: rpcTransport(D) }));
+    setAddress(acct.address);
+    setKind('qa');
+    return true;
+  } : async () => false, []);
+
+  const connect = useCallback(async (k?: Kind) => {
+    setConnecting(true);
     setError(null);
-    try { await (await (await selector()).wallet()).signOut(); setAccount(''); }
-    catch (e) { setError(walletError(e)); }
-  }
-  async function postChat(model: string, messages: ChatMessage[]): Promise<Posted> {
-    const buyer = account;
-    if (!buyer) throw new Error('Wallet not signed in');
-    const [config, balance, core, s] = await Promise.all([chain.config(), readAccount(buyer), import('@near-wallet-selector/core'), selector()]);
-    const request = computeChatRequest(config, model, messages);
-    if (BigInt(balance.balance) < BigInt(request.deposit) + BigInt(NEAR(0.05))) throw new Error('NotEnoughBalance');
-    const wallet = await s.wallet();
-    let outcome: unknown;
-    let hash = '';
     try {
-      outcome = await wallet.signAndSendTransaction({ signerId: buyer, receiverId: CONTRACT,
-        actions: [core.actionCreators.functionCall(request.methodName, request.args, BigInt(request.gas), BigInt(request.deposit))] });
-      const result = outcome as { transaction?: { hash?: string }; transaction_outcome?: { id?: string } } | undefined;
-      hash = result?.transaction?.hash ?? result?.transaction_outcome?.id ?? '';
+      const want = k ?? (qaAvailable ? 'qa' : 'injected');
+      if (want === 'qa') await useQa();
+      else await useInjected(true);
+      try { localStorage.setItem(STORE, want); } catch { /* private mode */ }
     } catch (e) {
-      // A landed transaction must never be re-sent just because finality lookup failed.
-      hash = (e as { transaction_outcome?: { id?: string } })?.transaction_outcome?.id
-        ?? String((e as Error)?.message ?? '').match(/Transaction (\w{43,44}) doesn't exist/)?.[1] ?? '';
-      if (!hash) throw e;
+      setError(walletMessage(e));
+    } finally {
+      setConnecting(false);
     }
-    if (!hash) throw new Error('The wallet returned no transaction. Check Meteor Wallet before retrying.');
-    try {
-      outcome = await rpc([RPC, ...TESTNET_RPCS.filter((u) => u !== RPC)], 'tx', { tx_hash: hash, sender_account_id: buyer, wait_until: 'FINAL' });
-      const job = postedJobId(outcome);
-      let record = await chain.job(job);
-      for (let attempt = 0; !record && attempt < 6; attempt++) {
-        await new Promise((r) => setTimeout(r, 1000));
-        record = await chain.job(job);
-      }
-      if (!record || record.buyer !== buyer || record.model !== model) throw new Error('Escrow confirmation did not match this account and model.');
-      return { job, tx: hash, model, units: request.args.units, max_near: 0.05, deposit_near: formatNear(request.deposit, 4), explorer: txUrl(hash) };
-    } catch {
-      throw new EscrowConfirmationError('The escrow transaction was submitted, but its job could not be confirmed. Check the transaction before retrying; it has not been sent again.', hash);
-    }
-  }
-  return <Context.Provider value={{ account, ready, connecting, error, connect, disconnect, postChat }}>{children}</Context.Provider>;
+  }, [qaAvailable, useInjected, useQa]);
+
+  const disconnect = useCallback(() => {
+    setAddress(null);
+    setKind(null);
+    setClient(null);
+    setLocal(null);
+    try { localStorage.removeItem(STORE); } catch { /* ignore */ }
+  }, []);
+
+  // Reconnect silently on reload (no wallet pop-up).
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(STORE); } catch { /* ignore */ }
+    if (saved === 'qa' && qaAvailable) void useQa();
+    else if (saved === 'injected' && hasInjected) void useInjected(false).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const p = eth();
+    if (!p?.on || kind !== 'injected') return;
+    const onAcc = (a: string[]) => (a[0] ? setAddress(a[0] as Address) : disconnect());
+    p.on('accountsChanged', onAcc);
+    return () => p.removeListener?.('accountsChanged', onAcc);
+  }, [kind, disconnect]);
+
+  const value = useMemo<Wallet>(() => ({
+    address,
+    kind,
+    connecting,
+    error,
+    hasInjected,
+    qaAvailable,
+    connect,
+    disconnect,
+    signPayment: async (req) => {
+      if (!address || !client) throw new Error('Connect a wallet first.');
+      if (kind === 'injected') await ensureFuji();
+      return local ? signPayment(local, req) : signPayment({ account: address, client }, req);
+    },
+    signMessage: async (message) => {
+      if (!address || !client) throw new Error('Connect a wallet first.');
+      return local ? local.signMessage({ message }) : client.signMessage({ account: address, message });
+    },
+    write: async (req) => {
+      if (!address || !client) throw new Error('Connect a wallet first.');
+      if (kind === 'injected') await ensureFuji();
+      return client.writeContract({ ...req, account: local ?? address, chain: fuji } as any);
+    },
+  }), [address, kind, connecting, error, hasInjected, qaAvailable, connect, disconnect, client, local]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
+
 export function useWallet() {
-  const wallet = useContext(Context);
-  if (!wallet) throw new Error('WalletProvider is missing');
-  return wallet;
+  const w = useContext(Ctx);
+  if (!w) throw new Error('useWallet outside WalletProvider');
+  return w;
 }

@@ -1,31 +1,14 @@
 import type { ReactNode } from 'react';
-import type { Job } from '@xorv/sdk';
-import { ago, clock, near, short, useNow, acctUrl, jobNodes, verdict, longDay, hhmm } from '../lib/data';
+import { STATUS, OUTCOME_TEXT } from '@xorv/sdk';
+import { CLOSED, addrUrl, ago, clock, ev, ev1, money, nameOf, rate1m, short, txUrl, useNow, utc, verdict, type JobDetail, type Market } from '../lib/data';
 import { Meter } from './Bits';
 import { Md } from './MdLazy';
 import { Icon, State } from './Ui';
 import { Kpi, Tag } from './Shell';
 import { Link } from '../lib/router';
 
-const CLOSED = ['done', 'paid', 'faulted', 'expired', 'refunded', 'forfeited'];
-
-function stagesFor(j: Job, now: number) {
-  if (j.kind === 'compute') {
-    const at = j.status === 'bidding' ? (now < j.commit_end_ms ? 0 : 1) : j.status === 'running' ? 2 : ['checking', 'tiebreak'].includes(j.status) ? 3 : 4;
-    return { names: ['Sealed bids', 'Reveal', 'Run', 'Spot check', 'Settled'], at };
-  }
-  const at = j.status === 'solving' ? (now < j.commit_end_ms ? 0 : 1) : j.status === 'verifying' ? 2 : 4;
-  return { names: ['Solve', 'Reveal', 'Verify', 'Vote', 'Settled'], at: at === 2 && j.verifiers.some((v) => v.voted_ms) ? 3 : at };
-}
-
-function deadline(j: Job, now: number): [string, number] | null {
-  if (CLOSED.includes(j.status)) return null;
-  if (j.status === 'bidding' || j.status === 'solving') return now < j.commit_end_ms ? [j.kind === 'bounty' ? 'Solve window closes' : 'Bids close', j.commit_end_ms] : ['Reveals close', j.reveal_end_ms];
-  if (j.status === 'running') return ['Delivery due', j.deliver_end_ms];
-  if (j.status === 'checking' || j.status === 'tiebreak') return ['Check due', j.check_end_ms];
-  if (j.status === 'verifying') return ['Votes due', j.verify_end_ms];
-  return null;
-}
+const PAYOUT = ['', 'clearing price', 'check fee', 'tiebreak fee', 'refund to buyer'];
+const SKIP = ['', 'no tokens were used', 'fewer than two revealed bids', 'the buyer won its own job'];
 
 function Sec({ id, title, meta, children }: { id?: string; title: string; meta?: ReactNode; children: ReactNode }) {
   return (
@@ -36,181 +19,127 @@ function Sec({ id, title, meta, children }: { id?: string; title: string; meta?:
   );
 }
 
-export function JobView({ job: j, chainNow: readNow, readAt }: { job: Job; chainNow: number; readAt: number }) {
-  const wall = useNow(1000);
-  const chainNow = readNow + Math.max(0, wall - readAt);
-  const st = stagesFor(j, chainNow);
-  const dl = deadline(j, chainNow);
-  const left = dl ? Math.max(0, dl[1] - chainNow) : 0;
+export const TxL = ({ h }: { h?: string | null }) => (h ? <a href={txUrl(h)} target="_blank" rel="noreferrer" title={h} className="txl">{h.slice(0, 8)}… <Icon name="external" size={11} /></a> : null);
+
+function stageAt(s: string, now: number, commitEnd: number) {
+  if (s === 'Bidding') return now < commitEnd ? 0 : 1;
+  if (s === 'Running') return 2;
+  if (['Delivered', 'Checking', 'Mismatch', 'Tiebreak'].includes(s)) return 3;
+  return 4;
+}
+
+export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
+  const now = useNow(1000);
+  const j = d.job;
   const v = verdict(j);
-  const nodes = jobNodes(j);
-  const price = j.kind === 'bounty' ? { v: near(j.reward, 3), l: 'Reward' } : BigInt(j.clearing_price) > 0n ? { v: near(j.clearing_price, 4), l: 'Cleared at' } : { v: near(j.max_price, 3), l: 'Max price' };
+  const posted = ev1(d, 'JobPosted');
+  const delivered = ev1(d, 'Delivered');
+  const cleared = ev1(d, 'AuctionCleared');
+  const closed = ev1(d, 'JobClosed');
+  const at = stageAt(j.status, now, j.commitEnd);
+  const dl: [string, number] | null = CLOSED.has(j.status) ? null : j.status === 'Bidding' ? (now < j.commitEnd ? ['Bids close', j.commitEnd] : ['Reveals close', j.revealEnd]) : j.status === 'Running' ? ['Delivery due', j.deliverEnd] : ['Checking', j.checkEnd || now];
+  const latency = delivered?.timeStamp && cleared?.timeStamp ? delivered.timeStamp - cleared.timeStamp : null;
   return (
     <div className="job">
       <div className="ph">
-        <nav className="crumbs" aria-label="Breadcrumb"><span><Link to="/rankings#activity">Activity</Link><Icon name="chevR" size={13} /></span><span><Link to={j.kind === 'bounty' ? '/bounties' : `/models/${encodeURIComponent(j.model)}`}>{j.kind === 'bounty' ? 'Bounties' : j.model.split(':').slice(1).join(':')}</Link><Icon name="chevR" size={13} /></span></nav>
+        <nav className="crumbs" aria-label="Breadcrumb"><span><Link to="/rankings#activity">Activity</Link><Icon name="chevR" size={13} /></span><span><Link to={`/models/${encodeURIComponent(j.model)}`}>{j.model.split(':').slice(1).join(':')}</Link><Icon name="chevR" size={13} /></span></nav>
         <div className="ph-row">
           <div className="ph-title"><div>
-            <h1>{j.title}</h1>
-            <p><span className="mono-c">Job #{j.id}</span> · {j.kind === 'bounty' ? 'bug bounty' : 'inference'} · posted by {short(j.buyer)} {ago(j.created_ms, chainNow)} · {longDay(j.created_ms)} {hhmm(j.created_ms)} UTC{j.kind === 'compute' && <> · {j.units} unit{j.units === 1 ? '' : 's'}{j.always_check && ' · check paid for'}</>}</p>
+            <h1>Job #{j.id}</h1>
+            <p>{j.model} · posted by <a className="link" href={addrUrl(j.buyer)} target="_blank" rel="noreferrer">{nameOf(m, j.buyer)}</a> {ago(j.createdAt, now)} · {utc(j.createdAt)}{j.viaX402 && ' · paid with x402'}{j.alwaysCheck && ' · verification paid for'}</p>
           </div></div>
           <div className="ph-actions">
-            {dl && <Tag tone="live"><Icon name="clock" size={13} />{dl[0]} {left > 0 ? clock(left) : 'now'}</Tag>}
-            <Tag tone={v.tone === 'ok' ? 'ok' : v.tone === 'bad' ? 'bad' : v.tone === 'live' ? 'live' : 'dim'}>{v.text}</Tag>
+            {dl && <Tag tone="live"><Icon name="clock" size={13} />{dl[0]} {dl[1] > now ? clock(dl[1] - now) : 'now'}</Tag>}
+            <Tag tone={v.tone}>{v.text}</Tag>
           </div>
         </div>
       </div>
       <div className="kpis">
-        <Kpi label={price.l} icon="coin" value={price.v} unit="NEAR" note={j.kind === 'bounty' ? `bond ${near(j.bond, 3)} NEAR` : `max ${near(j.max_price, 3)} NEAR`} />
-        <Kpi label={j.kind === 'bounty' ? 'Sealed patches' : 'Sealed bids'} icon="envelope" value={j.kind === 'bounty' ? j.patches.length : j.bids.length} note={j.kind === 'bounty' ? `${j.patches.filter((p) => p.patch).length} revealed` : `${j.bids.filter((b) => b.price).length} revealed`} />
-        <Kpi label="Nodes involved" icon="layers" value={nodes.length} note={`${nodes.filter((n) => n.slashed).length} slashed`} />
-        {j.kind === 'compute'
-          ? <Kpi label="Delivery" icon="zap" value={j.result?.delivered_ms ? `${((j.result.delivered_ms - (j.result.drawn_ms || j.reveal_end_ms)) / 1000).toFixed(1)}` : '—'} unit={j.result?.delivered_ms ? 's' : undefined} note="reveal close to deliver()" />
-          : <Kpi label="Verifier votes" icon="shield" value={`${j.verifiers.filter((x) => x.voted_ms).length}/${j.verifiers.length}`} note="drawn by block seed" />}
+        <Kpi label={j.clearedRate ? 'Cleared at' : 'Buyer ceiling'} icon="coin" value={rate1m(j.clearedRate || j.maxRate)} unit="/ 1M tokens" note={`ceiling ${rate1m(j.maxRate)} · ${j.maxTokens} tokens max`} />
+        <Kpi label="Sealed bids" icon="envelope" value={j.bidCount} note={`${j.revealed} revealed`} />
+        <Kpi label="Charged" icon="zap" value={j.charge ? money(j.charge) : '—'} note={`${j.tokens} tokens · escrow ${money(posted?.args.escrow ?? j.escrow)}`} />
+        <Kpi label="Delivery" icon="clock" value={latency != null ? String(latency) : '—'} unit={latency != null ? 's' : undefined} note="auction close to deliver()" />
       </div>
-      {j.outcome && <p className={`outcome tone-${v.tone}`}><Icon name={v.tone === 'bad' ? 'x' : v.tone === 'ok' ? 'check' : 'clock'} size={16} />{j.outcome}</p>}
+      {j.outcome !== 'None' && <p className={`outcome tone-${v.tone === 'ok' ? 'ok' : v.tone === 'bad' ? 'bad' : 'dim'}`}><Icon name={v.tone === 'bad' ? 'x' : v.tone === 'ok' ? 'check' : 'clock'} size={16} />{OUTCOME_TEXT[j.outcome]}</p>}
       <ol className="stages" aria-label="Job progress">
-        {st.names.map((n, i) => <li key={n} className={i < st.at || st.at === 4 ? 'done' : i === st.at ? 'now' : ''}><i /><span>{n}</span></li>)}
+        {['Sealed bids', 'Reveal', 'Run', 'Spot check', 'Settled'].map((n, i) => <li key={n} className={i < at || at === 4 ? 'done' : i === at ? 'now' : ''}><i /><span>{n}</span></li>)}
       </ol>
-      {j.kind === 'compute' ? <Compute j={j} now={chainNow} /> : <Bounty j={j} />}
-      <Money j={j} />
-    </div>
-  );
-}
 
-function Compute({ j, now }: { j: Job; now: number }) {
-  const revealedAll = j.status !== 'bidding' || now >= j.commit_end_ms;
-  const spot = j.draws.find((d) => d.purpose === 'spot-check');
-  return (
-    <>
-      <Sec id="bids" title="Sealed bids" meta={`${j.bids.length} committed · ${j.bids.filter((b) => b.price).length} revealed`}>
-        {j.bids.length === 0 ? (
-          <State kind="empty" title={j.status === 'bidding' ? 'Waiting for sealed bids' : 'No bids'}>{j.status === 'bidding' ? 'Staked nodes that serve this model commit a hash of their price. Prices stay hidden until the reveal window.' : 'Nobody bid; the escrow went back to the buyer.'}</State>
+      <Sec id="bids" title="Sealed bids" meta={`${j.bidCount} committed · ${j.revealed} revealed · lowest rate wins`}>
+        {d.bids.length === 0 ? (
+          <State kind="empty" art="envelope" title={j.status === 'Bidding' ? 'Waiting for sealed bids' : 'No bids'}>{j.status === 'Bidding' ? 'Staked nodes that serve this model commit a hash of their rate. Rates stay hidden until the reveal window.' : 'Nobody bid; the escrow went back to the buyer.'}</State>
         ) : (
           <div className="envelopes">
-            {j.bids.map((b) => {
-              const won = j.winner_node === b.node;
+            {d.bids.map((b) => {
+              const won = j.winnerNode.toLowerCase() === b.node.toLowerCase();
+              const c = ev(d, 'BidCommitted').find((e) => e.args.node.toLowerCase() === b.node.toLowerCase());
+              const r = ev(d, 'BidRevealed').find((e) => e.args.node.toLowerCase() === b.node.toLowerCase());
               return (
                 <div key={b.node} className={`env ${won ? 'won' : ''}`}>
-                  <div className="env-top"><b>{short(b.owner)}</b>{won && <span className="lean lean-ok">Won</span>}</div>
-                  <span className="hash">{b.commitment.slice(0, 22)}…</span>
-                  {b.price ? <span className="env-price">{near(b.price, 4)} <small>NEAR</small></span> : <span className="sealed">{revealedAll && j.status !== 'bidding' ? 'never revealed' : 'sealed ●●●●'}</span>}
+                  <div className="env-top"><b>{nameOf(m, b.owner)}</b>{won && <span className="lean lean-ok">Won</span>}</div>
+                  <span className="hash">{b.commitment.slice(0, 22)}… <TxL h={c?.transactionHash} /></span>
+                  {b.revealed ? <span className="env-price">{rate1m(b.rate)} <small>/ 1M</small> <TxL h={r?.transactionHash} /></span> : <span className="sealed">{j.status === 'Bidding' ? 'sealed ●●●●' : 'never revealed'}</span>}
                 </div>
               );
             })}
           </div>
         )}
       </Sec>
-      {(j.result || j.status === 'running') && (
-        <Sec id="result" title="Result" meta={<>{j.winner ? `delivered by ${short(j.winner)}` : ''}{j.result?.hash && <> · sha256 {j.result.hash.slice(0, 12)}…</>}</>}>
-          {j.result?.output ? <><div className={`paper paper-md ${j.status === 'faulted' ? 'paper-bad' : ''}`}><Md text={j.result.output} /></div><details className="prompt"><summary>Raw output as stored on-chain (sha256 {j.result.hash?.slice(0, 12)}…)</summary><div className="paper paper-dim">{j.result.output}</div></details></> : <State kind="loading" title="Running">The winning node is running {j.model}. Its output lands here when it calls deliver().</State>}
-          <details className="prompt"><summary>Prompt sent to the node</summary><div className="paper paper-dim">{j.prompt}</div></details>
-        </Sec>
-      )}
-      {spot && (
-        <Sec id="check" title="Spot check" meta={spot.selected ? (j.always_check ? 'paid for by the buyer' : 'sampled by block seed') : 'not sampled'}>
+
+      <Sec id="result" title="Prompt and answer" meta={delivered ? <>delivered by {nameOf(m, j.winner)} · keccak {j.resultHash.slice(0, 12)}… <TxL h={delivered.transactionHash} /></> : posted ? 'prompt from the JobPosted event' : undefined}>
+        {posted ? <div className="paper paper-dim prompt-box">{posted.args.prompt}</div> : <p className="note">The prompt is in the JobPosted event; the indexer has not returned it yet.</p>}
+        {delivered ? <div className={`paper paper-md ${j.status === 'Faulted' ? 'paper-bad' : ''}`} style={{ marginTop: 10 }}><Md text={delivered.args.output} /></div>
+          : j.status === 'Running' ? <div style={{ marginTop: 10 }}><State kind="loading" title="Running">{nameOf(m, j.winner)} is running {j.model}. The answer lands here when it calls deliver().</State></div> : null}
+      </Sec>
+
+      {(ev(d, 'DrawResolved').length > 0 || d.checks.length > 0) && (
+        <Sec id="check" title="Spot check" meta={j.alwaysCheck ? 'paid for by the buyer' : 'sampled from the delivery block hash'}>
           <div className="card checks-card">
-            <p className="seed">block seed {spot.seed.slice(0, 24)}… · roll {spot.roll_bps} of 10000 · sampled when below {spot.threshold_bps}</p>
-            {j.checks.map((c, i) => {
-              const sim = c.similarity_bps;
-              const bad = sim != null && sim < 3500;
+            {ev(d, 'DrawResolved').map((e) => (
+              <p className="seed" key={e.transactionHash + e.args.purpose}>{Number(e.args.purpose) === 0 ? `Spot-check draw: roll ${e.args.rollBps} of 10000, sampled below ${e.args.thresholdBps}: ${e.args.selected ? 'sampled' : 'not sampled'}` : 'Tiebreaker draw'}{e.args.selected && Number(e.args.pool) > 0 ? ` · ${nameOf(m, e.args.picked)} picked from ${e.args.pool} eligible` : ''} · seed {String(e.args.seed).slice(0, 18)}… <TxL h={e.transactionHash} /></p>
+            ))}
+            {d.checks.map((c, i) => {
+              const e = ev(d, 'CheckDelivered').find((x) => Number(x.args.round) === i);
+              const sim = c.delivered ? c.similarityBps : null;
+              const bad = sim != null && sim < Number(m?.config.toleranceBps ?? 5000);
               return (
                 <div key={i} className="check">
                   <div className="check-row">
-                    <span><span className="lbl">{i === 0 ? 'Checker' : 'Tiebreaker'}</span> <b>{short(c.owner)}</b></span>
-                    <span className={`check-v ${bad ? 'bad' : ''}`}>{sim == null ? 'running…' : `${(sim / 100).toFixed(0)}%`}<small> match</small></span>
+                    <span><span className="lbl">{i === 0 ? 'Checker' : 'Tiebreaker'}</span> <b>{nameOf(m, c.owner)}</b> <TxL h={e?.transactionHash} /></span>
+                    <span className={`check-v ${bad ? 'bad' : ''}`}>{sim == null ? 're-running…' : `${(sim / 100).toFixed(0)}%`}<small> match{i === 1 && e ? ` · ${(Number(e.args.againstFirstBps) / 100).toFixed(0)}% with checker` : ''}</small></span>
                   </div>
-                  {sim != null && <Meter bps={sim} bad={bad} />}
-                  {c.output && <details className="prompt"><summary>{short(c.owner)}'s re-run</summary><div className="paper paper-md"><Md text={c.output} /></div></details>}
+                  {sim != null && <Meter bps={sim} threshold={Number(m?.config.toleranceBps ?? 5000)} bad={bad} />}
+                  {e?.args.output && <details className="prompt"><summary>{nameOf(m, c.owner)}'s re-run</summary><div className="paper paper-md"><Md text={e.args.output} /></div></details>}
                 </div>
               );
             })}
-            {j.checks.length > 0 && <p className="note">Similarity is the word-set overlap with the provider's output, computed on-chain. Two honest runs of the same prompt overlap; junk does not.</p>}
-            {j.checks.length === 0 && <p className="note">The block seed of the delivery did not select this job, so nobody re-ran it.</p>}
+            <p className="note">The market contract computes the word-set overlap itself. A match needs {Number(m?.config.toleranceBps ?? 5000) / 100}%. Whoever the tiebreaker contradicts is slashed.</p>
           </div>
         </Sec>
       )}
-    </>
-  );
-}
 
-function Bounty({ j }: { j: Job }) {
-  return (
-    <>
-      <div className="jgrid">
-        <Sec id="bug" title="The bug" meta={j.repo_commit.slice(0, 10)}>
-          <div className="card">
-            <p className="body">{j.issue}</p>
-            <p className="mono-line">{j.repo_url.replace(/^file:\/\/.*\/projects\//, 'file://…/')}</p>
-            <p className="mono-line">$ {j.test_cmd}</p>
-          </div>
+      {(ev(d, 'Payout').length > 0 || ev(d, 'Slashed').length > 0) && (
+        <Sec id="money" title="Settlement" meta={closed ? <>closed {utc(Number(closed.timeStamp ?? j.closedAt))} <TxL h={closed.transactionHash} /></> : undefined}>
+          <dl className="receipt">
+            {ev(d, 'Slashed').map((s, i) => <div key={`s${i}`}><dt><a href={addrUrl(s.args.owner)} target="_blank" rel="noreferrer">{nameOf(m, s.args.owner)}</a><small>slashed: {s.args.reason} → {nameOf(m, s.args.to)}</small></dt><dd className="neg">−{money(s.args.amount, 2)}</dd></div>)}
+            {ev(d, 'Payout').map((p, i) => <div key={`p${i}`}><dt><a href={addrUrl(p.args.to)} target="_blank" rel="noreferrer">{nameOf(m, p.args.to)}</a><small>{PAYOUT[Number(p.args.kind)] ?? 'payout'}</small></dt><dd>+{money(p.args.amount)}</dd></div>)}
+          </dl>
+          <p className="note" style={{ marginTop: 8 }}>
+            {d.index ? <>Recorded in the Compute Index at {rate1m(d.index.args.indexRate)} / 1M <TxL h={d.index.transactionHash} /></> : ev1(d, 'IndexSkipped') ? <>Not indexed: {SKIP[Number(ev1(d, 'IndexSkipped').args.reason)]}.</> : j.status === 'Faulted' || j.status === 'Expired' ? 'Not indexed: no paid delivery.' : null}
+          </p>
         </Sec>
-        <Sec id="test" title="Hidden test" meta={j.test_files ? 'revealed · hash matched' : 'hidden'}>
-          <div className="card">
-            <p className="mono-line">commitment {j.test_commit}</p>
-            {j.test_files ? <details className="prompt" open><summary>Revealed test files</summary><div className="paper paper-dim">{j.test_files}</div></details>
-              : <p className="note">Solvers can't see the test. The buyer reveals it after the solve window; the contract rejects any test whose hash differs.</p>}
-          </div>
-        </Sec>
-      </div>
-      <Sec id="result" title="Sealed patches" meta={`${j.patches.length} committed · earliest commit first`}>
-        {j.patches.length === 0 ? <State kind="empty" title="No patches committed yet">Solver nodes commit a hash of their patch before the solve window closes.</State> : (
-          <div className="patches">
-            {j.patches.map((p, i) => (
-              <div key={p.node} className={`env patch ${j.winning_patch === i ? 'won' : ''}`}>
-                <div className="env-top">
-                  <span><span className="lbl">Patch #{i}</span> <b>{short(p.owner)}</b></span>
-                  <span className="env-tags">{p.majority === true && <span className="lean lean-ok">Pass majority</span>}{p.majority === false && <span className="lean lean-bad">Failed</span>}{j.winning_patch === i && <span className="lean lean-ok">Paid</span>}</span>
-                </div>
-                <span className="hash">{p.commitment}</span>
-                {p.patch ? <details className="prompt" open={j.winning_patch === i}><summary>{p.patch.split('\n').length} lines revealed{p.majority != null ? ` · ${p.passes} pass / ${p.fails} fail` : ''}</summary><div className="paper paper-dim">{p.patch}</div></details> : <span className="sealed">sealed ●●●●</span>}
-              </div>
-            ))}
-          </div>
-        )}
+      )}
+
+      <Sec id="txs" title="Transactions" meta={`${new Set(d.events.map((e) => e.transactionHash)).size} on Avalanche Fuji`}>
+        <div className="card card-pad txs">
+          {d.x402 && <a href={txUrl(d.x402.transactionHash)} target="_blank" rel="noreferrer"><span>{short(d.x402.args.facilitator)}</span><b>x402 settled: {money(d.x402.args.value)} from {short(d.x402.args.buyer)}</b><em>{d.x402.transactionHash.slice(0, 10)}… <Icon name="external" size={11} /></em></a>}
+          {d.events.filter((e, i, a) => a.findIndex((x) => x.transactionHash === e.transactionHash) === i && !(d.x402 && e.transactionHash === d.x402.transactionHash)).map((e) => (
+            <a key={e.transactionHash} href={txUrl(e.transactionHash)} target="_blank" rel="noreferrer"><span>{nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.to ?? '')}</span><b>{e.eventName}</b><em>{e.transactionHash.slice(0, 10)}… <Icon name="external" size={11} /></em></a>
+          ))}
+          {!d.events.length && <p className="note">The Snowtrace indexer has not returned this job's events yet. They appear within a few seconds.</p>}
+        </div>
       </Sec>
-      {j.verifiers.length > 0 && (
-        <Sec id="votes" title="Verifier votes" meta={`${j.verifiers.filter((v) => v.voted_ms).length} of ${j.verifiers.length} voted`}>
-          <div className="card votes-card">
-            <div className="votes-scroll">
-              <table className="votes">
-                <thead><tr><th>Verifier</th>{j.patches.map((_, i) => <th key={i}>Patch #{i}</th>)}<th>Verdict</th></tr></thead>
-                <tbody>
-                  {j.verifiers.map((v) => (
-                    <tr key={v.node}>
-                      <td><b>{short(v.owner)}</b></td>
-                      {j.patches.map((p, i) => {
-                        const vote = v.votes[i];
-                        if (!vote) return <td key={i}><span className="cell">…</span></td>;
-                        const lie = p.majority != null && vote.pass !== p.majority;
-                        return <td key={i}><span className={`cell ${vote.pass ? 'pass' : 'fail'} ${lie ? 'lie' : ''}`} title={`log ${vote.log_hash}`}>{vote.pass ? 'PASS' : 'FAIL'}</span></td>;
-                      })}
-                      <td>{v.honest == null ? <span className="lean">pending</span> : v.honest ? <span className="lean lean-ok">Majority ✓</span> : <span className="lean lean-bad">Slashed ✕</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="note">Drawn from the staked verifier set by block seed; a patch's owner can't verify their own. Hover a cell for its log hash.</p>
-          </div>
-        </Sec>
-      )}
-    </>
-  );
-}
-
-function Money({ j }: { j: Job }) {
-  if (!j.payouts.length && !j.slashes.length) return null;
-  return (
-    <Sec id="money" title="Settlement" meta={`${j.payouts.length} payouts · ${j.slashes.length} slash${j.slashes.length === 1 ? '' : 'es'}`}>
-      <dl className="receipt">
-        {j.slashes.map((s, i) => (
-          <div key={`s${i}`}><dt><a href={acctUrl(s.account)} target="_blank" rel="noreferrer">{short(s.account)}</a><small>{s.reason}</small></dt><dd className="neg">−{near(s.amount, 4)} NEAR</dd></div>
-        ))}
-        {j.payouts.map((p, i) => (
-          <div key={`p${i}`}><dt><a href={acctUrl(p.account)} target="_blank" rel="noreferrer">{short(p.account)}</a><small>{p.reason}</small></dt><dd>+{near(p.amount, 4)} NEAR</dd></div>
-        ))}
-      </dl>
-    </Sec>
+      <p className="note" style={{ marginTop: 12 }}>Status {STATUS.indexOf(j.status)} · {j.status}. Everything above is read from the XorvMarket, XorvRegistry, XorvIndex and X402Router contracts and their events.</p>
+    </div>
   );
 }

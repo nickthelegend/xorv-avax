@@ -1,42 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { chain, short, txUrl, usePoll } from '../lib/data';
-import { gateway, type Receipts } from '../lib/gateway';
-import { recordedTxs } from '../lib/evidence';
-import { Link, scrollToId } from '../lib/router';
-import { Icon, State } from '../components/Ui';
+import { CLOSED, readJobDetail, useMarket, usePoll } from '../lib/data';
+import { Link } from '../lib/router';
+import { State } from '../components/Ui';
 import { JobView } from '../components/JobView';
 
 export function JobPage({ id }: { id: number }) {
-  const job = usePoll(() => chain.job(id), 4000, [id]);
-  const stats = usePoll(() => chain.stats(), 4000);
-  const jumped = useRef(false);
-  const [rc, setRc] = useState<Receipts | null>(null);
-  useEffect(() => { gateway.receipts(id).then(setRc).catch(() => setRc(null)); }, [id, job.data?.status]);
-  // Real transaction hashes for this job: the recorded Nov 9 run, plus what the gateway and its nodes logged.
-  const txs = [
-    ...recordedTxs().filter((t) => t.job === id).map((t) => ({ who: t.who, what: t.what, hash: t.hash })),
-    ...(rc?.post ? [{ who: short(job.data?.buyer ?? 'buyer'), what: 'post_compute (escrow)', hash: rc.post.tx }] : []),
-    ...(rc?.nodes ?? []).map((n) => ({ who: n.node, what: n.event, hash: n.tx })),
-  ].filter((t, i, a) => a.findIndex((x) => x.hash === t.hash) === i);
-  useEffect(() => {
-    // Cards link to #result / #check / #votes; jump once the record has rendered.
-    if (job.data && !jumped.current && location.hash) { jumped.current = true; scrollToId(location.hash.slice(1)); }
-  }, [job.data]);
+  const m = useMarket();
+  const total = m.data?.stats.jobs;
+  const exists = total == null || id < total;
+  const job = usePoll(() => (exists ? readJobDetail(id) : Promise.resolve(null)), 6000, [id, exists]);
+  const live = job.data && !CLOSED.has(job.data.job.status);
   return (
     <div className="wrap page">
-      {job.error && !job.data && <State kind="error" title="Could not read this job">{job.error}</State>}
-      {job.loading && !job.data && !job.error && <><div className="skeleton sk-row" /><div className="skeleton sk-row" style={{ marginTop: 12 }} /></>}
-      {!job.loading && !job.data && !job.error && <State kind="empty" title={`No job ${String(id).padStart(2, '0')}`} action={<Link to="/rankings#activity" className="btn btn-sm">All activity</Link>}>This contract has no job with that id yet.</State>}
-      {job.data && <JobView job={job.data} chainNow={stats.data?.now_ms ?? Date.now()} readAt={stats.at || Date.now()} />}
-      {job.data && txs.length > 0 && (
-        <section className="jsec" aria-label="Transactions">
-          <header className="jsec-h"><h2>Transactions</h2><span className="jsec-meta">{txs.length} on NEAR testnet</span></header>
-          <div className="card card-pad txs">
-            {txs.map((t) => <a key={t.hash} href={txUrl(t.hash)} target="_blank" rel="noreferrer"><span>{t.who}</span><b>{t.what}</b><em>{t.hash.slice(0, 10)}… <Icon name="external" size={11} /></em></a>)}
-          </div>
-        </section>
-      )}
+      {!exists && <State kind="empty" art="empty" title={`No job #${id}`} action={<Link to="/rankings#activity" className="btn btn-sm">All activity</Link>}>The market has {total} job{total === 1 ? '' : 's'} so far.</State>}
+      {exists && job.error && !job.data && <State kind="error" art="warning" title="Could not read this job" action={<button className="btn btn-sm" onClick={job.reload}>Retry</button>}>{job.error}</State>}
+      {exists && !job.data && !job.error && <><div className="skeleton sk-row" /><div className="skeleton sk-row" style={{ marginTop: 12 }} /></>}
+      {job.data && <JobView d={job.data} m={m.data} />}
       {job.data && job.error && <p className="stale" role="status">Showing the last read. Refresh failed: {job.error}</p>}
+      {live && <p className="stale" role="status">Live: this page re-reads the job every few seconds.</p>}
     </div>
   );
 }
