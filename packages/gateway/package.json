@@ -1,0 +1,7 @@
+{
+  "name": "@xorv/gateway",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": { "@xorv/sdk": "workspace:*", "@xorv/eerc": "workspace:*", "viem": "2.37.6" }
+}

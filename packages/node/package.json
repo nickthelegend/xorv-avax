@@ -1,0 +1,8 @@
+{
+  "name": "@xorv/node",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "xorv-node": "./src/cli.ts" },
+  "dependencies": { "@xorv/sdk": "workspace:*", "viem": "2.37.6" }
+}

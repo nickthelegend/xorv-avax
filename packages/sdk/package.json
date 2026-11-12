@@ -1,0 +1,8 @@
+{
+  "name": "@xorv/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": { ".": "./src/index.ts", "./node": "./src/node.ts" },
+  "dependencies": { "viem": "2.37.6" }
+}

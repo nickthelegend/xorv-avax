@@ -1,0 +1,27 @@
+{
+  "name": "xorv-avax",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.29.2",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "abi": "node scripts/gen-abi.mjs",
+    "build:contracts": "cd contracts && forge build && cd .. && node scripts/gen-abi.mjs",
+    "test:contracts": "cd contracts && forge test",
+    "test:sdk": "node --test packages/sdk/test/*.test.ts",
+    "test:eerc": "node --test --test-concurrency=1 packages/eerc/test/*.test.ts",
+    "test:gateway": "node --test packages/gateway/test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "circuits": "node scripts/fetch-eerc-circuits.mjs",
+    "gateway": "node packages/gateway/src/server.ts",
+    "node": "node packages/node/src/cli.ts"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.10.1",
+    "viem": "2.37.6"
+  }
+}

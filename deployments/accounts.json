@@ -1,0 +1,18 @@
+{
+  "note": "Test accounts generated for this repo. Keys live only in the gitignored .env.",
+  "addresses": {
+    "deployer": "0xDDb9a3bB6666eb92901D3836ccB2919BBDd8752E",
+    "desk": "0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+    "auditor": "0x6aAf68984791d4676CdcB356206C512C217c84F4",
+    "buyer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+    "qa": "0xea1021F144df6bB6B565c85422Bb5d285140bc10",
+    "owner.atlas": "0x010B876aCd66e60F87E63ABdC18bFf64F153E99C",
+    "node.atlas": "0x9EeB9BCc19227E67914973dae38A632F2743a0e2",
+    "owner.birch": "0xE79a20A7245e67A8b1c4679812ac878c2b469CC2",
+    "node.birch": "0xB45B8faB9545B5e51646Fd9c82D5B6e977906620",
+    "owner.cobalt": "0xD418357c27d4dD4482511F5AC7eb01F16d79F9E4",
+    "node.cobalt": "0x02444216F6a8933E3cD78E00199dDDFb270a00a9",
+    "owner.dune": "0x85b225E219E7FE56F50026F89d31a54899177408",
+    "node.dune": "0xC038554039b4E261CfB57A62d6bC1E919bC18162"
+  }
+}
