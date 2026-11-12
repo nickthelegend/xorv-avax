@@ -4,7 +4,7 @@
 
 2. **The problem.** AI is bought at list prices from a few APIs, idle capacity earns nothing, and nobody can see what AI work really costs. A company's AI spend is also competitive information.
 
-3. **Every answer is an auction.** Ask in chat or over the OpenAI-compatible API. Four staked nodes seal a rate per 1k tokens, reveal, the lowest wins and answers. About 25–35 seconds end to end on Fuji. (Chat screenshot with the step list and Snowtrace links.)
+3. **Every answer is an auction.** Open the hosted app with nothing installed: one tap makes a test wallet and the gas station funds it. Ask in chat or over the OpenAI-compatible API. Four staked nodes seal a rate per 1k tokens, reveal, the lowest wins and answers. About 25–35 seconds end to end on Fuji. (Chat screenshot with the step list and Snowtrace links.)
 
 4. **Pay per call with x402.** HTTP 402 → one EIP-3009 signature in tUSD → the x402 router moves it into the buyer's job escrow in the same Fuji transaction. Unused escrow comes back on-chain. Replays get 409; expired and tampered payments are refused. (Code: 402 body and the X-PAYMENT-RESPONSE.)
 
@@ -14,6 +14,6 @@
 
 7. **Lock next week's compute price.** XorvForward: a buyer goes long, a provider goes short, settled against the index TWAP, payoff capped at margin. One forward live and settled on Fuji.
 
-8. **Private AI spend with eERC.** Ava Labs' official encrypted ERC: the buyer tops up the Xorv desk with an encrypted transfer; amounts are ciphertext to everyone but the buyer, the desk and the auditor; jobs are posted by the desk, so they don't name the buyer. Providers pay their treasury the same way. Honest about what stays public. (Private page with ciphertext rows.)
+8. **Private AI spend with eERC.** Ava Labs' official encrypted ERC: the buyer tops up the Xorv desk with an encrypted transfer; amounts are ciphertext to everyone but the buyer, the desk and the auditor; the proofs are made in the buyer's browser with Ava Labs' eERC SDK; jobs are posted by the desk, so they don't name the buyer. The desk signs a receipt of its ledger and the browser checks every line on Fuji, down to each top-up amount against the buyer's own proof. Honest about what stays public. (Account → Private credit with the five green checks.)
 
-9. **Built and tested.** 74 tests (55 Foundry incl. replay, expiry, front-run, wash-bid and slashing attacks; 19 on a local chain with real Groth16 proofs), contracts and every run on Snowtrace, MIT. Next: browser eERC proofs, mainnet USDC, more providers and models.
+9. **Built and tested.** 99 tests (79 Foundry incl. replay, expiry, front-run, wash-bid, slashing and gas-station abuse; 20 on a local chain with real Groth16 proofs and forged desk receipts), plus the judge path run in a fresh browser on the hosted app. Contracts and every run on Snowtrace, MIT. Next: mainnet USDC, more providers and models, a desk ledger others can audit without the buyer.
