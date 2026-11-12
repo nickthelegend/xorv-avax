@@ -5,6 +5,7 @@ import { CopyButton, Icon, State } from '../components/Ui';
 import { Avatar, PageHead, Tile } from '../components/Shell';
 import { Spark } from '../components/Bits';
 import { JobsTable, ProvidersTable, modelOverview, pct } from '../components/Market';
+import { ListLine } from './IndexPage';
 
 /** OpenRouter model page: title and id, stat tiles, then providers, price and activity. */
 export function Model({ id }: { id: string }) {
@@ -29,6 +30,7 @@ export function Model({ id }: { id: string }) {
         <Tile label="Delivered" value={pct(o.deliveredRate)} note={`${o.paid.length} paid of ${o.settled.length} settled recent jobs`} />
         <Tile label="Context" value="4,000" unit="bytes" note="prompt per job; up to 8,192 tokens" />
       </div>
+      <ListLine model={id} rate={o.index?.rate ?? null} />
       <section className="sec">
         <div className="sec-h"><div><h2><Icon name="server" size={17} />Providers</h2><p>Each bid is a rate per 1k tokens from the node's own cost and load.</p></div></div>
         <ProvidersTable providers={o.nodes} />

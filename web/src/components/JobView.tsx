@@ -7,6 +7,33 @@ import { Icon, State } from './Ui';
 import { Kpi, Tag } from './Shell';
 import { Link } from '../lib/router';
 
+const simPct = (bps: number) => (bps % 100 === 0 ? `${bps / 100}%` : `${(bps / 100).toFixed(2)}%`);
+
+/** Plain-language account of a slash, built only from this job's checks and events. */
+function Story({ d, m }: { d: JobDetail; m: Market | null }) {
+  const j = d.job;
+  const slash = ev1(d, 'Slashed');
+  const refund = ev(d, 'Payout').find((p) => Number(p.args.kind) === 4);
+  const c0 = d.checks[0];
+  const c1 = d.checks[1];
+  const t1 = ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === 1);
+  if (j.outcome === 'FaultedTiebreakSidedWithChecker' && c0 && c1 && slash) {
+    return (
+      <div className="story story-bad">
+        <h3>What happened</h3>
+        <p><b>{nameOf(m, j.winner)}</b> won the auction at {rate1m(j.clearedRate)} per 1M and delivered an answer. The spot check drew <b>{nameOf(m, c0.owner)}</b>, whose re-run matched it only <b>{simPct(c0.similarityBps)}</b>. A tiebreaker, <b>{nameOf(m, c1.owner)}</b>, re-ran it again: <b>{simPct(Number(t1?.args.againstFirstBps ?? 0))}</b> with the checker, <b>{simPct(c1.similarityBps)}</b> with the provider. The market computed both overlaps itself and slashed <b>{nameOf(m, j.winner)}</b> {money(slash.args.amount, 2)} of stake, paid to the buyer, and refunded the buyer's escrow{refund ? <> ({money(refund.args.amount)})</> : null} minus the two check fees. The provider was paid nothing and the job never reached the index.</p>
+      </div>
+    );
+  }
+  if (j.outcome === 'PaidTiebreakSidedWithProvider' && c0 && c1 && slash) {
+    return <div className="story"><h3>What happened</h3><p>The checker <b>{nameOf(m, c0.owner)}</b> disagreed with the provider ({simPct(c0.similarityBps)}), but the tiebreaker <b>{nameOf(m, c1.owner)}</b> matched the provider {simPct(c1.similarityBps)}. The checker lost {money(slash.args.amount, 2)} of stake to the provider.</p></div>;
+  }
+  if (j.outcome === 'FaultedNoDelivery' && slash) {
+    return <div className="story story-bad"><h3>What happened</h3><p><b>{nameOf(m, j.winner)}</b> won the auction but never delivered before the deadline. It lost {money(slash.args.amount, 2)} of stake to the buyer, and the escrow went back in full.</p></div>;
+  }
+  return null;
+}
+
 const PAYOUT = ['', 'clearing price', 'check fee', 'tiebreak fee', 'refund to buyer'];
 const SKIP = ['', 'no tokens were used', 'fewer than two revealed bids', 'the buyer won its own job'];
 
@@ -61,6 +88,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
         <Kpi label="Delivery" icon="clock" value={latency != null ? String(latency) : '—'} unit={latency != null ? 's' : undefined} note="auction close to deliver()" />
       </div>
       {j.outcome !== 'None' && <p className={`outcome tone-${v.tone === 'ok' ? 'ok' : v.tone === 'bad' ? 'bad' : 'dim'}`}><Icon name={v.tone === 'bad' ? 'x' : v.tone === 'ok' ? 'check' : 'clock'} size={16} />{OUTCOME_TEXT[j.outcome]}</p>}
+      <Story d={d} m={m} />
       <ol className="stages" aria-label="Job progress">
         {['Sealed bids', 'Reveal', 'Run', 'Spot check', 'Settled'].map((n, i) => <li key={n} className={i < at || at === 4 ? 'done' : i === at ? 'now' : ''}><i /><span>{n}</span></li>)}
       </ol>
@@ -86,7 +114,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
         )}
       </Sec>
 
-      <Sec id="result" title="Prompt and answer" meta={delivered ? <>delivered by {nameOf(m, j.winner)} · keccak {j.resultHash.slice(0, 12)}… <TxL h={delivered.transactionHash} /></> : posted ? 'prompt from the JobPosted event' : undefined}>
+      <Sec id="result" title={j.status === 'Faulted' ? 'Prompt and the answer that failed its check' : 'Prompt and answer'} meta={delivered ? <>delivered by {nameOf(m, j.winner)} · keccak {j.resultHash.slice(0, 12)}… <TxL h={delivered.transactionHash} /></> : posted ? 'prompt from the JobPosted event' : undefined}>
         {posted ? <div className="paper paper-dim prompt-box">{posted.args.prompt}</div> : <p className="note">The prompt is in the JobPosted event; the indexer has not returned it yet.</p>}
         {delivered ? <div className={`paper paper-md ${j.status === 'Faulted' ? 'paper-bad' : ''}`} style={{ marginTop: 10 }}><Md text={delivered.args.output} /></div>
           : j.status === 'Running' ? <div style={{ marginTop: 10 }}><State kind="loading" title="Running">{nameOf(m, j.winner)} is running {j.model}. The answer lands here when it calls deliver().</State></div> : null}
@@ -106,7 +134,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
                 <div key={i} className="check">
                   <div className="check-row">
                     <span><span className="lbl">{i === 0 ? 'Checker' : 'Tiebreaker'}</span> <b>{nameOf(m, c.owner)}</b> <TxL h={e?.transactionHash} /></span>
-                    <span className={`check-v ${bad ? 'bad' : ''}`}>{sim == null ? 're-running…' : `${(sim / 100).toFixed(0)}%`}<small> match{i === 1 && e ? ` · ${(Number(e.args.againstFirstBps) / 100).toFixed(0)}% with checker` : ''}</small></span>
+                    <span className={`check-v ${bad ? 'bad' : ''}`}>{sim == null ? 're-running…' : simPct(sim)}<small> match with the provider{i === 1 && e ? ` · ${simPct(Number(e.args.againstFirstBps))} with the checker` : ''}</small></span>
                   </div>
                   {sim != null && <Meter bps={sim} threshold={Number(m?.config.toleranceBps ?? 5000)} bad={bad} />}
                   {e?.args.output && <details className="prompt"><summary>{nameOf(m, c.owner)}'s re-run</summary><div className="paper paper-md"><Md text={e.args.output} /></div></details>}
@@ -136,7 +164,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
             const es = d.events.filter((e) => e.transactionHash === h);
             const names = [...new Set(es.map((e) => e.eventName as string))].join(' · ');
             const e = es[0];
-            return <a key={h} href={txUrl(h)} target="_blank" rel="noreferrer"><span>{d.x402 && h === d.x402.transactionHash ? 'x402' : nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.to ?? '')}</span><b>{d.x402 && h === d.x402.transactionHash ? `x402 settled ${money(d.x402.args.value)} · ${names}` : names}</b><em>{h.slice(0, 10)}… <Icon name="external" size={11} /></em></a>;
+            return <a key={h} href={txUrl(h)} target="_blank" rel="noreferrer"><span>{d.x402 && h === d.x402.transactionHash ? 'x402' : nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.picked ?? e.args.to ?? '')}</span><b>{d.x402 && h === d.x402.transactionHash ? `x402 settled ${money(d.x402.args.value)} · ${names}` : names}</b><em>{h.slice(0, 10)}… <Icon name="external" size={11} /></em></a>;
           })}
           {!d.events.length && <p className="note">The Snowtrace indexer has not returned this job's events yet. They appear within a few seconds.</p>}
         </div>

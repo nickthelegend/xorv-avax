@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   MODELS,
+  modelId as modelIdOf,
   OUTCOME_TEXT,
   XorvReader,
   modelInfo,
   x402RouterAbi,
+  xorvForwardAbi,
   xorvIndexAbi,
   xorvMarketAbi,
   type Bid,
@@ -15,6 +17,7 @@ import {
   type Provider,
 } from '@xorv/sdk';
 import fuji from '../../../deployments/fuji.json';
+import accounts from '../../../deployments/accounts.json';
 
 export const D = fuji as unknown as Deployment & { startBlock?: number; evidence?: Record<string, any[]> };
 export const reader = new XorvReader(D);
@@ -32,7 +35,7 @@ export const ZERO = '0x0000000000000000000000000000000000000000';
 export function money(micro: bigint | number | string | null | undefined, digits?: number) {
   if (micro == null) return '—';
   const v = Number(BigInt(micro)) / 1e6;
-  const d = digits ?? (v !== 0 && Math.abs(v) < 0.01 ? 4 : 2);
+  const d = digits ?? (v !== 0 && Math.abs(v) < 0.0001 ? 6 : v !== 0 && Math.abs(v) < 0.01 ? 4 : 2);
   return `$${v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
 }
 /** A rate in micro-dollars per 1k tokens shown as dollars per 1M tokens. */
@@ -192,14 +195,27 @@ export function useMarket() {
 
 // ------------------------------------------------------------------ derived views
 
+/** This repo's public test accounts (deployments/accounts.json), named the way the demo names them. */
+const KNOWN: Record<string, string> = Object.fromEntries(
+  Object.entries((accounts as { addresses: Record<string, string> }).addresses).map(([k, a]) => [a.toLowerCase(), k === 'buyer' ? 'demo buyer' : k === 'desk' ? 'Xorv desk' : k === 'qa' ? 'QA account' : k.replace(/^(owner|node)\./, '')]),
+);
 export const labelOf = (m: Market | null | undefined, who?: string | null) => {
   if (!who || who === ZERO) return null;
   const w = who.toLowerCase();
   const p = m?.providers.find((x) => x.owner.toLowerCase() === w || x.node.toLowerCase() === w);
   if (p) return p.label;
   if (D.eerc?.desk && w === D.eerc.desk.toLowerCase()) return 'Xorv desk';
-  return null;
+  return KNOWN[w] ?? null;
 };
+
+/** Upstream list price (USD per 1M tokens) and the 40/60 input/output blend used to compare it. */
+export function listPrice(model: string) {
+  const l = modelInfo(model).list;
+  if (!l) return null;
+  return { ...l, blend: 0.4 * l.input + 0.6 * l.output, host: hostName(model) };
+}
+/** micro-dollars per 1k tokens -> dollars per 1M tokens */
+export const per1m = (r: bigint | number) => (Number(r) * 1000) / 1e6;
 export const nameOf = (m: Market | null | undefined, who?: string | null) => labelOf(m, who) ?? short(who);
 
 export function servedModels(m: Market) {
@@ -275,4 +291,64 @@ export async function jobsOf(buyer: string): Promise<Job[]> {
   const logs = await reader.logs({ address: C.market, abi: xorvMarketAbi, eventName: 'JobPosted', args: { buyer } });
   const ids = [...new Set(logs.map((l) => Number(l.args.id)))].sort((a, b) => b - a).slice(0, 50);
   return Promise.all(ids.map(readJob));
+}
+
+// ------------------------------------------------------------------ compute forwards
+
+export const FORWARD_STATE = ['None', 'Offered', 'Live', 'Settled', 'Cancelled'] as const;
+export interface ForwardRow {
+  id: number;
+  maker: string;
+  taker: string;
+  makerLong: boolean;
+  state: (typeof FORWARD_STATE)[number];
+  model: string;
+  strike: bigint;
+  notionalTokens: bigint;
+  margin: bigint;
+  duration: number;
+  start: number;
+  expiry: number;
+  settledAt: number;
+  settleRate: bigint;
+  payoffToLong: bigint;
+  long: string | null;
+  short: string | null;
+  /** the index TWAP since start, and what it would pay the long if settled now */
+  mark: { rate: bigint; payoff: bigint } | null;
+  txs: { offered?: string; taken?: string; settled?: string; cancelled?: string };
+}
+
+export async function readForwards(): Promise<ForwardRow[]> {
+  const addr = (C as Record<string, string>).forward as `0x${string}` | undefined;
+  if (!addr) return [];
+  const n = Number(await reader.client.readContract({ address: addr, abi: xorvForwardAbi, functionName: 'forwardCount' }));
+  const ids = Array.from({ length: Math.min(n, 30) }, (_, i) => n - 1 - i);
+  const q = (eventName: string) => reader.logs({ address: addr, abi: xorvForwardAbi, eventName }).catch(() => [] as any[]);
+  const [rows, offered, taken, settled, cancelled] = await Promise.all([
+    Promise.all(ids.map((i) => reader.client.readContract({ address: addr, abi: xorvForwardAbi, functionName: 'getForward', args: [BigInt(i)] }) as Promise<any>)),
+    q('Offered'), q('Taken'), q('Settled'), q('Cancelled'),
+  ]);
+  const tx = (logs: any[], id: number) => logs.find((l) => Number(l.args.id) === id)?.transactionHash as string | undefined;
+  const now = Math.floor(Date.now() / 1000);
+  return Promise.all(rows.map(async (f, k) => {
+    const id = ids[k];
+    const state = FORWARD_STATE[Number(f.state)];
+    const live = state === 'Live';
+    const long = f.makerLong ? f.maker : f.taker === ZERO ? null : f.taker;
+    const short = f.makerLong ? (f.taker === ZERO ? null : f.taker) : f.maker;
+    let mark: ForwardRow['mark'] = null;
+    if (live && now > Number(f.start)) {
+      try {
+        const rate = (await reader.client.readContract({ address: C.index, abi: xorvIndexAbi, functionName: 'twap', args: [modelIdOf(f.model), BigInt(now - Number(f.start))] })) as bigint;
+        const payoff = (await reader.client.readContract({ address: addr, abi: xorvForwardAbi, functionName: 'payoffAt', args: [BigInt(id), rate] })) as bigint;
+        mark = { rate, payoff };
+      } catch { mark = null; }
+    }
+    return {
+      id, maker: f.maker, taker: f.taker, makerLong: f.makerLong, state, model: f.model, strike: BigInt(f.strike), notionalTokens: BigInt(f.notionalTokens), margin: BigInt(f.margin), duration: Number(f.duration),
+      start: Number(f.start), expiry: Number(f.expiry), settledAt: Number(f.settledAt), settleRate: BigInt(f.settleRate), payoffToLong: BigInt(f.payoffToLong), long, short, mark,
+      txs: { offered: tx(offered, id), taken: tx(taken, id), settled: tx(settled, id), cancelled: tx(cancelled, id) },
+    };
+  }));
 }

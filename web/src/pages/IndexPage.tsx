@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import type { IndexModel, IndexObservation } from '@xorv/sdk';
-import { C, D, addrUrl, int, modelName, money, rate1m, reader, utc, ago, useNow, usePoll } from '../lib/data';
+import { C, D, addrUrl, clock, int, listPrice, modelName, money, nameOf, per1m, rate1m, readForwards, reader, txUrl, utc, ago, useMarket, useNow, usePoll, type ForwardRow } from '../lib/data';
 import { Link } from '../lib/router';
 import { CopyButton, Icon, State } from '../components/Ui';
-import { PageHead, Tile } from '../components/Shell';
+import { PageHead, Tag, Tile } from '../components/Shell';
 
 /** Cleared rate (dots) against the index (step line), both in $ per 1M tokens. */
 function IndexChart({ obs, now }: { obs: IndexObservation[]; now: number }) {
@@ -61,6 +61,7 @@ function ModelIndex({ m, now }: { m: IndexModel; now: number }) {
         <Tile label="VWAP 24h" value={m.vwap24h.count ? rate1m(m.vwap24h.rate) : '—'} unit="/ 1M" note={`${int(m.vwap24h.tokens)} tokens · ${money(m.vwap24h.usd)}`} />
         <Tile label="Clearings" value={int(m.observations)} note={`${m.vwap24h.count} in the last 24h`} />
       </div>
+      <ListLine model={m.name} rate={m.rate} />
       <div className="card card-pad" style={{ marginTop: 12 }}>
         {obs.data ? <IndexChart obs={obs.data} now={now} /> : obs.error ? <State kind="error" art="warning" title="Could not read observations">{obs.error}</State> : <div className="skeleton sk-row" />}
       </div>
@@ -84,6 +85,69 @@ function ModelIndex({ m, now }: { m: IndexModel; now: number }) {
         </div>
       )}
     </section>
+  );
+}
+
+/** The upstream list price next to the index, with the blend spelled out. */
+export function ListLine({ model, rate }: { model: string; rate: bigint | null }) {
+  const l = listPrice(model);
+  if (!l) return null;
+  const idx = rate != null && rate > 0n ? per1m(rate) : null;
+  const diff = idx != null ? ((idx - l.blend) / l.blend) * 100 : null;
+  return (
+    <p className="list-line">
+      <span>{l.host} list <b className="num">${l.input.toFixed(3).replace(/0$/, '')} in</b> / <b className="num">${l.output.toFixed(2)} out</b> per 1M tokens</span>
+      <span className="faint">Blended 40% input, 60% output: <b className="num">${l.blend.toFixed(3).replace(/0$/, '')}</b> per 1M{diff != null && <> · the index is {Math.abs(diff).toFixed(0)}% {diff >= 0 ? 'above' : 'below'} that blend</>}</span>
+      <a className="link faint" href={l.source} target="_blank" rel="noreferrer">source, checked {l.checked}</a>
+    </p>
+  );
+}
+
+function Forwards() {
+  const m = useMarket();
+  const now = useNow(1000);
+  const fw = usePoll(readForwards, 15_000);
+  const addr = (C as Record<string, string>).forward;
+  if (!addr) return null;
+  const who = (a: string | null) => (a ? <a className="link" href={addrUrl(a)} target="_blank" rel="noreferrer">{nameOf(m.data, a)}</a> : <span className="faint">open</span>);
+  const T = ({ h, l }: { h?: string; l: string }) => (h ? <a className="txl" href={txUrl(h)} target="_blank" rel="noreferrer">{l} <Icon name="external" size={11} /></a> : null);
+  return (
+    <section className="sec" id="forwards" aria-labelledby="h-fw">
+      <div className="sec-h"><div><h2 id="h-fw"><Icon name="clock" size={17} />Compute forwards</h2><p>Lock next week's compute price; settled in tUSD against the index TWAP, payoff capped at margin.</p></div>
+        <a href={addrUrl(addr)} target="_blank" rel="noreferrer">XorvForward {addr.slice(0, 10)}… <Icon name="external" size={13} /></a></div>
+      {fw.error && !fw.data && <State kind="error" art="warning" title="Could not read forwards" action={<button className="btn btn-sm" onClick={fw.reload}>Retry</button>}>{fw.error}</State>}
+      {!fw.data && !fw.error && <div className="skeleton sk-row" />}
+      {fw.data && !fw.data.length && <State kind="empty" art="empty" title="No forwards yet">The first offer shows up here once someone posts one with scripts/forward.ts.</State>}
+      {fw.data && fw.data.length > 0 && <div className="fwd-list">{fw.data.map((f) => <ForwardCard key={f.id} f={f} now={now} who={who} T={T} />)}</div>}
+      <p className="note" style={{ marginTop: 10 }}>This page is read-only. Offers and takes are made from the terminal: <code>node scripts/forward.ts</code>. Payoff to the long = (index TWAP over the forward's life − strike) × tokens, within ± each side's margin.</p>
+    </section>
+  );
+}
+
+function ForwardCard({ f, now, who, T }: { f: ForwardRow; now: number; who: (a: string | null) => ReactElement; T: (p: { h?: string; l: string }) => ReactElement | null }) {
+  const notionalUsd = (f.strike * f.notionalTokens) / 1000n;
+  const tone = f.state === 'Live' ? 'live' : f.state === 'Settled' ? 'ok' : 'dim';
+  const left = f.expiry - now;
+  return (
+    <div className="card card-pad fwd">
+      <div className="fwd-top">
+        <div><b>Forward #{f.id}</b> <span className="faint">· {modelName(f.model)}</span></div>
+        <Tag tone={tone}>{f.state === 'Live' ? (left > 0 ? `Live · settles in ${left >= 120 ? `${Math.round(left / 60)} min` : clock(left)}` : 'Live · ready to settle') : f.state}</Tag>
+      </div>
+      <div className="fwd-grid">
+        <div><span>Strike</span><b className="num">{rate1m(f.strike)}</b><small>/ 1M tokens</small></div>
+        <div><span>Notional</span><b className="num">{int(f.notionalTokens)}</b><small>tokens · {money(notionalUsd, 2)} at strike</small></div>
+        <div><span>Margin</span><b className="num">{money(f.margin, 2)}</b><small>each side, the most either can lose</small></div>
+        <div><span>{f.state === 'Settled' ? 'Settled at' : f.mark ? 'Index TWAP so far' : 'Term'}</span><b className="num">{f.state === 'Settled' ? rate1m(f.settleRate) : f.mark ? rate1m(f.mark.rate) : `${Math.round(f.duration / 60)} min`}</b><small>{f.state === 'Settled' ? `TWAP over ${Math.round((f.settledAt - f.start) / 60)} min` : f.start ? `${utc(f.start).slice(11)} → ${utc(f.expiry).slice(11)}` : 'starts when taken'}</small></div>
+      </div>
+      <div className="fwd-sides">
+        <span>Long (pays strike, gains if compute gets dearer): {who(f.long)}</span>
+        <span>Short (gains if compute gets cheaper): {who(f.short)}</span>
+      </div>
+      {f.state === 'Settled' && <p className={`fwd-out ${f.payoffToLong >= 0n ? 'ok-c' : 'bad-c'}`}>{f.payoffToLong >= 0n ? `Long received ${money(f.payoffToLong)} from the short` : `Short received ${money(-f.payoffToLong)} from the long`} · index {rate1m(f.settleRate)} vs strike {rate1m(f.strike)}</p>}
+      {f.state === 'Live' && f.mark && <p className="fwd-out faint">Marked to the index now: {f.mark.payoff >= 0n ? `long +${money(f.mark.payoff)}` : `short +${money(-f.mark.payoff)}`}. Final payoff uses the TWAP at expiry.</p>}
+      <div className="fwd-txs"><T h={f.txs.offered} l="Offered" /><T h={f.txs.taken} l="Taken" /><T h={f.txs.settled} l="Settled" /><T h={f.txs.cancelled} l="Cancelled" /></div>
+    </div>
   );
 }
 
@@ -114,6 +178,7 @@ export function IndexPage() {
       {!idx.data && !idx.error && <><div className="skeleton sk-row" /><div className="skeleton sk-row" style={{ marginTop: 12 }} /></>}
       {idx.data && !idx.data.length && <State kind="empty" art="empty" title="No clearing has reached the index yet" action={<Link to="/chat" className="btn btn-sm">Run a chat</Link>}>The first paid auction with two revealed bids sets the first price.</State>}
       {idx.data?.map((m) => <ModelIndex key={m.id} m={m} now={now} />)}
+      <Forwards />
 
       <section className="sec" id="api" aria-labelledby="h-read">
         <div className="sec-h"><div><h2 id="h-read">Read it</h2><p>From any contract on Fuji, or as JSON from the gateway.</p></div>

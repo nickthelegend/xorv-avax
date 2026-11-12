@@ -74,7 +74,7 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
       if (j.status === 'Delivered') steps.push({ k: 'draw', state: 'now', body: <>Drawing the spot check from the delivery block hash…</> });
       if (spot) {
         if (!spot.args.selected) steps.push({ k: 'spot', state: 'done', body: <>Not sampled for a spot check this time (roll {String(spot.args.rollBps)} ≥ {String(spot.args.thresholdBps)}) <T h={spot.transactionHash} /></> });
-        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> is re-running the prompt</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {(c.similarityBps / 100).toFixed(0)}% match, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
+        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> is re-running the prompt</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {c.similarityBps % 100 === 0 ? c.similarityBps / 100 : (c.similarityBps / 100).toFixed(2)}% match, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
       }
       if (CLOSED.has(j.status)) {
         const closed = ev1(d, 'JobClosed');
