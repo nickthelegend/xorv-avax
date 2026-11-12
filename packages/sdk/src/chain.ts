@@ -30,6 +30,8 @@ export const FUJI_RPCS = ['https://avalanche-fuji-c-chain-rpc.publicnode.com', '
 
 export function rpcTransport(d: { chainId: number; rpc: string }, rpc?: string): Transport {
   const urls = rpc ? rpc.split(',') : d.chainId === 43113 ? FUJI_RPCS : [d.rpc];
-  const t = urls.map((u) => http(u.trim(), { retryCount: 2, timeout: 20_000, batch: { wait: 16 } }));
+  // drpc's free plan answers HTTP 400 to any JSON-RPC batch of more than 3 calls, so its batches stay at 3; the
+  // others get modest batches so one page burst never becomes a single huge request.
+  const t = urls.map((u) => http(u.trim(), { retryCount: 2, timeout: 20_000, batch: { wait: 16, batchSize: /drpc\.org/.test(u) ? 3 : 20 } }));
   return t.length === 1 ? t[0] : fallback(t, { rank: false });
 }
