@@ -13,7 +13,8 @@
  *   /api/private/*              the eERC private credit lane (see private.ts)
  *
  * Env: XORV_DEPLOYMENT, XORV_RPC, XORV_GATEWAY_PORT (5421), XORV_ENV_FILE (only GROQ_API_KEY is read),
- *      XORV_GATEWAY_NODES (atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15), XORV_PUBLIC_URL.
+ *      XORV_GATEWAY_NODES (atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15), XORV_PUBLIC_URL,
+ *      XORV_GATEWAY_HOST (127.0.0.1; 0.0.0.0 inside a container behind a reverse proxy).
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -27,6 +28,7 @@ import { PrivateLane } from './private.ts';
 const d = loadDeployment();
 const rpc = process.env.XORV_RPC ?? d.rpc;
 const port = Number(process.env.XORV_GATEWAY_PORT ?? 5421);
+const host = process.env.XORV_GATEWAY_HOST ?? '127.0.0.1';
 const publicUrl = process.env.XORV_PUBLIC_URL ?? `http://127.0.0.1:${port}`;
 const reader = new XorvReader(d, rpc);
 
@@ -224,8 +226,8 @@ const server = createServer(async (req, res) => {
 pool.start();
 // Attribute encrypted top-ups promptly: the desk must record a pending top-up before it ever spends.
 const syncTimer = d.eerc && desk ? setInterval(() => lane.sync().catch(() => undefined), 30_000) : null;
-server.listen(port, '127.0.0.1', () => {
-  console.log(`xorv gateway on http://127.0.0.1:${port} · ${d.network} · market ${d.contracts.market} · facilitator ${desk?.account.address ?? '(missing)'}`);
+server.listen(port, host, () => {
+  console.log(`xorv gateway on http://${host}:${port} · ${d.network} · market ${d.contracts.market} · facilitator ${desk?.account.address ?? '(missing)'}`);
   const needs = setupNeeds();
   if (needs.length) console.log(`  Setup required: ${needs.join('; ')}`);
 });
