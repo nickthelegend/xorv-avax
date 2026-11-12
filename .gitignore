@@ -12,3 +12,4 @@ contracts/broadcast/
 .DS_Store
 web/test-results/
 deployments/local.json
+deployments/test.json

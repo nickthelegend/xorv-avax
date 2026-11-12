@@ -5,11 +5,13 @@ export interface ModelInfo {
   vendor: string;
   /** what the model is good at, one short line */
   blurb: string;
+  /** the upstream list price per 1M tokens, as published (USD) */
+  list?: { input: number; output: number; source: string; checked: string };
 }
 
 export const MODELS: ModelInfo[] = [
-  { id: 'groq:openai/gpt-oss-20b', name: 'GPT-OSS 20B', vendor: 'OpenAI open weights on Groq', blurb: 'Fast open-weight reasoning model.' },
-  { id: 'groq:openai/gpt-oss-120b', name: 'GPT-OSS 120B', vendor: 'OpenAI open weights on Groq', blurb: 'The larger open-weight reasoning model.' },
+  { id: 'groq:openai/gpt-oss-20b', name: 'GPT-OSS 20B', vendor: 'OpenAI open weights on Groq', blurb: 'Fast open-weight reasoning model.', list: { input: 0.075, output: 0.3, source: 'https://console.groq.com/docs/model/openai/gpt-oss-20b', checked: '2026-11-12' } },
+  { id: 'groq:openai/gpt-oss-120b', name: 'GPT-OSS 120B', vendor: 'OpenAI open weights on Groq', blurb: 'The larger open-weight reasoning model.', list: { input: 0.15, output: 0.6, source: 'https://console.groq.com/docs/model/openai/gpt-oss-120b', checked: '2026-11-12' } },
 ];
 
 export const modelInfo = (id: string): ModelInfo =>

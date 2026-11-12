@@ -199,7 +199,7 @@ const server = createServer(async (req, res) => {
       const needs = setupNeeds();
       const body = await readJson(req);
       const header = req.headers['x-payment'];
-      if (!header) return paymentRequired(res, body, p);
+      if (!header) return await paymentRequired(res, body, p);
       if (needs.length) throw new HttpError(503, `Setup required: ${needs.join('; ')}`, { setup: needs });
       const t = await chatTerms(body);
       const s = await facilitator.settle(String(header), t);
@@ -215,7 +215,9 @@ const server = createServer(async (req, res) => {
     const err = e as HttpError;
     const status = err.status ?? 500;
     if (status >= 500) console.error(`gateway: ${req.method} ${p}: ${err.message}`);
-    send(res, status, { error: { message: err.message }, ...(err.extra?.x402 ? (err.extra.x402 as object) : {}), ...(err.extra?.setup ? { setup: err.extra.setup } : {}) });
+    // x402 errors use the x402 body shape ({ x402Version, error, accepts }); everything else { error: { message } }.
+    if (err.extra?.x402) return send(res, status, err.extra.x402);
+    send(res, status, { error: { message: err.message }, ...(err.extra?.setup ? { setup: err.extra.setup } : {}) });
   }
 });
 

@@ -100,13 +100,18 @@ export class Facilitator {
     const a = p.payload.authorization;
     if (await this.reader.authorizationUsed(a.from, a.nonce)) throw new HttpError(409, 'this payment authorization was already used (replay rejected)');
     const bal = await this.reader.tokenBalance(a.from);
-    if (bal < BigInt(a.value)) throw new HttpError(402, `payer ${a.from} holds ${bal} micro-tUSD, the payment is ${a.value}. Use the tUSD faucet first.`, { x402: { x402Version: 1, error: 'insufficient_funds', accepts: [req] } });
+    if (bal < BigInt(a.value)) {
+      const msg = `insufficient_funds: payer ${a.from} holds ${bal} micro-tUSD, the payment is ${a.value}. Use the tUSD faucet first.`;
+      throw new HttpError(402, msg, { x402: { x402Version: 1, error: msg, accepts: [req] } });
+    }
     const params = { model: t.model, prompt: t.prompt, maxRate: t.maxRate, maxTokens: t.maxTokens, alwaysCheck: t.alwaysCheck, ...WINDOWS };
     const auth = routerAuthorization(p);
     const sim = await this.desk.simulateContract({ address: this.d.contracts.router, abi: x402RouterAbi, functionName: 'payAndPost', args: [params, auth], account: this.desk.account }).catch((e) => {
       throw new HttpError(402, `settlement would fail: ${e.shortMessage ?? e.message}`);
     });
-    const hash = await this.desk.writeContract(sim.request as any);
+    // Estimates on Fuji can land just short (one settlement ran out of gas at 99%); pay for headroom.
+    const gas = await this.desk.estimateContractGas({ address: this.d.contracts.router, abi: x402RouterAbi, functionName: 'payAndPost', args: [params, auth], account: this.desk.account });
+    const hash = await this.desk.writeContract({ ...(sim.request as any), gas: (gas * 14n) / 10n });
     const r = await this.desk.waitForTransactionReceipt({ hash, timeout: 90_000 });
     if (r.status !== 'success') throw new HttpError(502, `settlement reverted: ${txUrl(hash, this.d.chainId)}`);
     const ev = parseEventLogs({ abi: x402RouterAbi, logs: r.logs, eventName: 'PaidAndPosted' })[0];

@@ -11,10 +11,15 @@ import { XorvReader, perMillion, usd } from '@xorv/sdk';
 import { ROOT, keyByName, loadDeployment, readEnvFile } from '@xorv/sdk/node';
 import { startNode, type Fault } from './node.ts';
 
-/** What each upstream model costs this operator, in micro-dollars per 1k tokens (blended in/out). */
+/**
+ * What each upstream model costs this operator, in micro-dollars per 1k tokens: Groq's published price
+ * per 1M tokens (console.groq.com/docs/model, read Nov 12, 2026) blended as 40% input / 60% output.
+ *   gpt-oss-20b:  $0.075 in, $0.30 out  -> $0.21 per 1M  -> 210
+ *   gpt-oss-120b: $0.15 in,  $0.60 out  -> $0.42 per 1M  -> 420
+ */
 export const DEFAULT_COST: Record<string, number> = {
-  'groq:openai/gpt-oss-20b': 300,
-  'groq:openai/gpt-oss-120b': 600,
+  'groq:openai/gpt-oss-20b': 210,
+  'groq:openai/gpt-oss-120b': 420,
 };
 
 function flag(args: string[], name: string, fallback?: string) {

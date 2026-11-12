@@ -159,7 +159,8 @@ export class PrivateLane {
       const params = { model: t.model, prompt: t.prompt, maxRate: t.maxRate, maxTokens: t.maxTokens, alwaysCheck: t.alwaysCheck, ...WINDOWS };
       try {
         const sim = await desk.simulateContract({ address: this.d.contracts.market, abi: xorvMarketAbi, functionName: 'postJob', args: [params], account: desk.account });
-        const hash = await desk.writeContract(sim.request as any);
+        const gas = await desk.estimateContractGas({ address: this.d.contracts.market, abi: xorvMarketAbi, functionName: 'postJob', args: [params], account: desk.account });
+        const hash = await desk.writeContract({ ...(sim.request as any), gas: (gas * 14n) / 10n });
         const r = await desk.waitForTransactionReceipt({ hash });
         if (r.status !== 'success') throw new Error(`postJob reverted ${hash}`);
         const ev = parseEventLogs({ abi: xorvMarketAbi, logs: r.logs, eventName: 'JobPosted' })[0];

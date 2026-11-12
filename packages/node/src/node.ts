@@ -31,6 +31,8 @@ export interface NodeOptions {
 interface State {
   bids: Record<string, { rate: string; salt: Hex }>;
   done: Record<string, true>;
+  /** this node's current margin over cost; it learns from wins and losses */
+  margin?: number;
 }
 
 const JUNK = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. (xorv fault injection: this node returns junk on purpose)';
@@ -151,7 +153,7 @@ export async function startNode(o: NodeOptions) {
     if (o.fault === 'deliver') return 1n; // a cheater underbids to win, then skips the work
     const load = 1 + 0.1 * busyJobs();
     const jitter = 0.97 + Math.random() * 0.06;
-    return BigInt(Math.max(1, Math.round((o.cost[model] ?? 300) * o.margin * load * jitter)));
+    return BigInt(Math.max(1, Math.round((o.cost[model] ?? 300) * (state.margin ?? o.margin) * load * jitter)));
   };
 
   const open = new Set<number>();
@@ -175,6 +177,18 @@ export async function startNode(o: NodeOptions) {
       }
       const key = String(id);
       const mine = o.models.includes(j.model);
+
+      // Learn from each auction this node bid in: a win raises the margin a little, a loss lowers it,
+      // so asks drift toward the price that actually clears (never below cost x 1.02).
+      const bidHere = state.bids[key];
+      if (j.status !== 'Bidding' && bidHere && bidHere.rate !== '0' && !state.done[`learn:${key}`]) {
+        const won = j.winner.toLowerCase() === owner.toLowerCase();
+        const before = state.margin ?? o.margin;
+        state.margin = Math.min(1.8, Math.max(1.02, before * (won ? 1.04 : 0.98)));
+        state.done[`learn:${key}`] = true;
+        save();
+        log(won ? 'won auction, margin up' : 'lost auction, margin down', { job: id, margin: Number(state.margin.toFixed(3)) });
+      }
 
       if (j.status === 'Bidding') {
         if (now < j.commitEnd - 2 && mine && !state.bids[key] && !((benched.get(j.model)?.until ?? 0) > Date.now())) {
