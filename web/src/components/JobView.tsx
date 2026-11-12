@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { STATUS, OUTCOME_TEXT } from '@xorv/sdk';
-import { CLOSED, addrUrl, ago, clock, ev, ev1, money, nameOf, rate1m, short, txUrl, useNow, utc, verdict, type JobDetail, type Market } from '../lib/data';
+import { CLOSED, ZERO, addrUrl, ago, clock, ev, ev1, money, nameOf, rate1m, short, txUrl, useNow, utc, verdict, type JobDetail, type Market } from '../lib/data';
 import { Meter } from './Bits';
 import { Md } from './MdLazy';
 import { Icon, State } from './Ui';
@@ -164,7 +164,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
             const es = d.events.filter((e) => e.transactionHash === h);
             const names = [...new Set(es.map((e) => e.eventName as string))].join(' · ');
             const e = es[0];
-            return <a key={h} href={txUrl(h)} target="_blank" rel="noreferrer"><span>{d.x402 && h === d.x402.transactionHash ? 'x402' : nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.picked ?? e.args.to ?? '')}</span><b>{d.x402 && h === d.x402.transactionHash ? `x402 settled ${money(d.x402.args.value)} · ${names}` : names}</b><em>{h.slice(0, 10)}… <Icon name="external" size={11} /></em></a>;
+            return <a key={h} href={txUrl(h)} target="_blank" rel="noreferrer"><span>{d.x402 && h === d.x402.transactionHash ? 'x402' : (() => { const w = [e.args.node, e.args.buyer, e.args.owner, e.args.picked, e.args.to].find((x) => x && x !== ZERO); return w ? nameOf(m, w) : 'keeper'; })()}</span><b>{d.x402 && h === d.x402.transactionHash ? `x402 settled ${money(d.x402.args.value)} · ${names}` : names}</b><em>{h.slice(0, 10)}… <Icon name="external" size={11} /></em></a>;
           })}
           {!d.events.length && <p className="note">The Snowtrace indexer has not returned this job's events yet. They appear within a few seconds.</p>}
         </div>
