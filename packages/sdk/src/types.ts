@@ -14,6 +14,7 @@ export interface Deployment {
     similarity: Hex;
     market: Hex;
     router: Hex;
+    forward?: Hex;
   };
   eerc?: {
     encryptedERC: Hex;

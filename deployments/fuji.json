@@ -12,7 +12,8 @@
     "registry": "0x8fcdb5bef522f5e1ee286bacf153ca2b19dcbca2",
     "similarity": "0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b",
     "market": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
-    "router": "0xd2555e5b231957f4810f78029341cf4936e89f74"
+    "router": "0xd2555e5b231957f4810f78029341cf4936e89f74",
+    "forward": "0x67eeb02e16629d784165f3613b53e8ed29089428"
   },
   "eerc": {
     "encryptedERC": "0xf0f1d107bbca6568e0ff0cec580cf053e1b73787",
@@ -124,6 +125,12 @@
       "tx": "0xbdd3b396c3e5e6fb5a1e5f5e82e0b30992dcfbf85286647cca4425518bf71233",
       "block": 60942067,
       "gasUsed": 4026747
+    },
+    "forward": {
+      "address": "0x67eeb02e16629d784165f3613b53e8ed29089428",
+      "tx": "0x654f1b82b636c073b74290c56a006b2f9962395bd09a527f9b18e8dab53cc042",
+      "block": 60944871,
+      "gasUsed": 1116500
     }
   },
   "wiringTxs": {
@@ -472,6 +479,21 @@
             "block": 60944809
           }
         ]
+      }
+    ],
+    "forwards": [
+      {
+        "at": "2026-11-12T11:50:56.768Z",
+        "id": 0,
+        "model": "groq:openai/gpt-oss-20b",
+        "strike": "240",
+        "notionalTokens": 10000000,
+        "margin": "2000000",
+        "minutes": 25,
+        "long": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "short": "0x010B876aCd66e60F87E63ABdC18bFf64F153E99C",
+        "offerTx": "0xd2c079f836f217ab8a9c360e25aed51ef58982f437d5ca6276f40c7e8fabdb87",
+        "takeTx": "0x7577caa3b3ce12b1abca2f48e8f7aca572877788d13f9da03637ec6d46b1ecd0"
       }
     ]
   },
