@@ -1,0 +1,41 @@
+# Xorv gateway + provider nodes atlas, birch, cobalt, dune on the hackathon VPS, behind Coolify's Traefik.
+# Server layout: /opt/hk/xorv/{app/ (git archive of main), .env (mode 600), eerc/ (eERC circuits)}.
+# /opt/hk/xorv/.env holds only XORV_DESK_KEY, XORV_NODE_{ATLAS,BIRCH,COBALT,DUNE}_KEY and GROQ_API_KEY (Fuji test
+# keys and the provider key; read by name, never printed). It is mounted read-only as the repo .env, which is where the
+# gateway and the node processes look for keys. Redeploy: cd /opt/hk/xorv/app && docker compose -f deploy/docker-compose.yml up -d --build
+services:
+  gateway:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    image: hk-xorv:latest
+    restart: unless-stopped
+    networks: [coolify]
+    mem_limit: 768m
+    memswap_limit: 1g
+    cpus: 0.75
+    environment:
+      XORV_GATEWAY_HOST: 0.0.0.0
+      XORV_GATEWAY_PORT: "5421"
+      XORV_PUBLIC_URL: https://xorv-api.201-18-198-162.sslip.io
+      XORV_ENV_FILE: /app/.env
+    volumes:
+      - /opt/hk/xorv/.env:/app/.env:ro
+      - /opt/hk/xorv/eerc:/app/.eerc:ro
+      - xorv-state:/app/.xorv
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5421/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.hk-xorv.rule=Host(`xorv-api.201-18-198-162.sslip.io`)
+      - traefik.http.routers.hk-xorv.entrypoints=https
+      - traefik.http.routers.hk-xorv.tls=true
+      - traefik.http.routers.hk-xorv.tls.certresolver=letsencrypt
+      - traefik.http.services.hk-xorv.loadbalancer.server.port=5421
+volumes:
+  xorv-state:
+networks:
+  coolify:
+    external: true

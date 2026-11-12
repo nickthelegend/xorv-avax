@@ -1,0 +1,12 @@
+**/node_modules
+.env
+.env.*
+.xorv
+.eerc
+contracts
+web/dist
+web/dist-qa
+web/src
+web/public
+**/*.log
+.loom
