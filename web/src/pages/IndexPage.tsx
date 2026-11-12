@@ -2,13 +2,14 @@ import { useState, type ReactElement } from 'react';
 import type { IndexModel, IndexObservation } from '@xorv/sdk';
 import { C, D, addrUrl, clock, int, listPrice, modelName, money, nameOf, per1m, rate1m, readForwards, reader, txUrl, utc, ago, useMarket, useNow, usePoll, type ForwardRow } from '../lib/data';
 import { Link } from '../lib/router';
-import { CopyButton, Icon, State } from '../components/Ui';
+import { CopyButton, Icon, State, useMedia } from '../components/Ui';
 import { PageHead, Tag, Tile } from '../components/Shell';
 
 /** Cleared rate (dots) against the index (step line), both in $ per 1M tokens. */
 function IndexChart({ obs, now }: { obs: IndexObservation[]; now: number }) {
+  const narrow = useMedia('(max-width: 640px)');
   if (!obs.length) return null;
-  const w = 1000, h = 300, padL = 64, padR = 16, padT = 14, padB = 30;
+  const w = narrow ? 560 : 1000, h = narrow ? 340 : 300, padL = 64, padR = 16, padT = 14, padB = 30;
   const t0 = obs[0].timestamp, t1 = Math.max(now, obs[obs.length - 1].timestamp + 1);
   const ys = obs.flatMap((o) => [Number(o.rate), Number(o.indexRate)]);
   const lo = Math.min(...ys) * 0.9, hi = Math.max(...ys) * 1.08 || 1;

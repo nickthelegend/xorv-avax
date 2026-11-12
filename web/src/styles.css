@@ -669,7 +669,7 @@ a.pill { height: 32px; padding: 0 10px; }
 .ichart { margin: 0; }
 .ichart svg { width: 100%; height: auto; display: block; }
 .ichart .bars-t, .ichart .bars-l { font-size: 12px; }
-@media (max-width: 640px) { .ichart .bars-t, .ichart .bars-l { font-size: 22px; } }
+@media (max-width: 640px) { .ichart .bars-t, .ichart .bars-l { font-size: 15px; } .sec-h { flex-direction: column; align-items: flex-start; gap: 4px; } }
 .txl { display: inline-flex; align-items: center; gap: 3px; color: var(--ink-3); font-family: var(--mono); font-size: 12px; margin-left: 6px; }
 .txl:hover { color: var(--ink); }
 .prompt-box { white-space: pre-wrap; overflow-wrap: anywhere; }
