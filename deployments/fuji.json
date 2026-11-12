@@ -13,7 +13,8 @@
     "similarity": "0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b",
     "market": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
     "router": "0xd2555e5b231957f4810f78029341cf4936e89f74",
-    "forward": "0x67eeb02e16629d784165f3613b53e8ed29089428"
+    "forward": "0x67eeb02e16629d784165f3613b53e8ed29089428",
+    "gasStation": "0xfc23826ad39591f10fed2397ce5c87278806cfb1"
   },
   "eerc": {
     "encryptedERC": "0xf0f1d107bbca6568e0ff0cec580cf053e1b73787",
@@ -131,6 +132,12 @@
       "tx": "0x654f1b82b636c073b74290c56a006b2f9962395bd09a527f9b18e8dab53cc042",
       "block": 60944871,
       "gasUsed": 1116500
+    },
+    "gasStation": {
+      "address": "0xfc23826ad39591f10fed2397ce5c87278806cfb1",
+      "tx": "0xcbbf4565c2a6adcda669236fed22040e8bfb650d68365c54deca3f3b66112777",
+      "block": 60951284,
+      "gasUsed": 1017416
     }
   },
   "wiringTxs": {
@@ -727,5 +734,19 @@
       "startBlock": 60942009,
       "note": "earlier market deployment; same tUSD and eERC"
     }
-  ]
+  ],
+  "gasStation": {
+    "relayer": "0x494018Ee1ed37Fa3dCB23c42EbB7d53050726F89",
+    "dripAvax": "0.001",
+    "tusd": "2000000",
+    "dailyCap": 40,
+    "perTagDaily": 4,
+    "funded": {
+      "stationAvax": "0.02",
+      "stationTx": "0x3b931621ca52563eeb336e9156747ffc8462eda3e4c0dd85b051b8e23801c7a8",
+      "sponsorAvax": "0.003",
+      "sponsorTx": "0xdfd85dac356bd6faa90b8e433164bd2fe3e86e52abfa4131c2621313f15e4899",
+      "refillTx": "0x786477c73f0664624622673fa9956f117180daaa4b593dc83fb63f5c3a51e636"
+    }
+  }
 }
