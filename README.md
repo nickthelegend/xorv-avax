@@ -70,7 +70,7 @@ jobs 18, clearings 18, staked $39.00, paid to providers $0.002758, slashed $1.00
 
 #### The index under a dumping seller (job #17)
 
-dune's margin was set to 0.3, so it bid about 70% under everyone else. It won at $0.062 per 1M tokens and delivered a real answer, so the clearing is real and the job record keeps it. The index moved only the allowed 25%, from $0.233 to $0.174 ([settlement](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) posted the job; the clamp is visible in `XorvIndex.observations`: `rate` 62, `indexRate` 174). dune's margin learned its way back up after the win.
+dune's margin was set to 0.3, so it bid about 70% under everyone else. It won at $0.062 per 1M tokens and delivered a real answer, so the clearing is real and the job record keeps it. The index moved only the allowed 25%, from $0.233 to $0.174 ([settlement](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) posted the job; the clamp is visible in `XorvIndex.observations`: `rate` 62, `indexRate` 174). dune's margin learned its way back up after the win. The clamp also fired on its own at job #2, when the nodes switched from a flat cost to Groq's published per-token prices and the clearing fell from $0.321 to $0.220: the index stepped to $0.240 and converged over the next clearings.
 
 #### A compute forward, settled (forward #0)
 
