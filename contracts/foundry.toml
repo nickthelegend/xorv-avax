@@ -1,0 +1,21 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc_version = "0.8.27"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 20
+via_ir = true
+fs_permissions = [{ access = "read-write", path = "../deployments" }]
+
+[fuzz]
+runs = 256
+
+[rpc_endpoints]
+fuji = "https://api.avax-test.network/ext/bc/C/rpc"
+
+[lint]
+lint_on_build = false

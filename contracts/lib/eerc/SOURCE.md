@@ -1,0 +1,1 @@
+Vendored from https://github.com/ava-labs/EncryptedERC at commit 8dc98cd4d63ad3aa6d86b70b8f4bbcd70f1e8be1 (Aug 31, 2026), unmodified. Licensed under the Ava Labs Ecosystem License in LICENSE.md, not MIT.
