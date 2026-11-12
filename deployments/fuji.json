@@ -1,0 +1,230 @@
+{
+  "network": "Avalanche Fuji C-Chain",
+  "chainId": 43113,
+  "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+  "explorer": "https://testnet.snowtrace.io",
+  "deployedAt": "2026-11-12T10:59:16.362Z",
+  "deployer": "0xDDb9a3bB6666eb92901D3836ccB2919BBDd8752E",
+  "startBlock": 60942009,
+  "contracts": {
+    "testDollar": "0x2210a2161b13a1a2375951577b506707867f9739",
+    "index": "0x7a9192cb425c638bb6680033081c73eb0d841abc",
+    "registry": "0x8fcdb5bef522f5e1ee286bacf153ca2b19dcbca2",
+    "similarity": "0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b",
+    "market": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
+    "router": "0xd2555e5b231957f4810f78029341cf4936e89f74"
+  },
+  "eerc": {
+    "encryptedERC": "0xf0f1d107bbca6568e0ff0cec580cf053e1b73787",
+    "registrar": "0x335d199e8442ddad556c874a065801ba0ac63350",
+    "babyJubJub": "0xaf9b2e652a5f7ca8a778548dbd93b0f7e11d2d04",
+    "verifiers": {
+      "registration": "0xc209d4402a2e1c12b7e91155d71cefe42df1bca7",
+      "mint": "0x050323ac0c920effb5bcfeed4feb4b7a035b31d3",
+      "withdraw": "0xe9df883c6758acc8058db196a73841cb7f5eb1c4",
+      "transfer": "0x9e7bf355f92d35e7e9f372b1737aa83bcad55cf0",
+      "burn": "0x3834ebc73323f24eb8ddc83a348095854c953b92"
+    },
+    "decimals": 6
+  },
+  "config": {
+    "minStake": "5000000",
+    "slashBps": 1000,
+    "unbondSecs": 1800,
+    "spotCheckBps": 3000,
+    "toleranceBps": 5000,
+    "checkFee": "200",
+    "minWindowSecs": 3,
+    "maxWindowSecs": 600,
+    "indexMaxStepBps": 2500
+  },
+  "deployTxs": {
+    "token": {
+      "address": "0x2210a2161b13a1a2375951577b506707867f9739",
+      "tx": "0xb496238c6798c78879315ea4169dc93b3d68b27596844ffd8d803b1b7fed0d6f",
+      "block": 60942014,
+      "gasUsed": 1201399
+    },
+    "index": {
+      "address": "0x7a9192cb425c638bb6680033081c73eb0d841abc",
+      "tx": "0x92488dc8a2c85e3798899683da0f5d6d6a7c78733fd526e688656373818d4632",
+      "block": 60942839,
+      "gasUsed": 1038778
+    },
+    "registry": {
+      "address": "0x8fcdb5bef522f5e1ee286bacf153ca2b19dcbca2",
+      "tx": "0x8a91557ef0fc392b270f266cf3a83a592a9d1d7d706e0cb8ace859e919abc344",
+      "block": 60942845,
+      "gasUsed": 2076797
+    },
+    "similarity": {
+      "address": "0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b",
+      "tx": "0x07a7404eb9da0e942a81aacc5b3e85083a5328322ccd9791f553d73f454901f1",
+      "block": 60942851,
+      "gasUsed": 254416
+    },
+    "market": {
+      "address": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
+      "tx": "0x63387e339a49142df656ecccbfb1527bdffac35277dceff66fb3c94c4e4ac8a8",
+      "block": 60942855,
+      "gasUsed": 5362081
+    },
+    "router": {
+      "address": "0xd2555e5b231957f4810f78029341cf4936e89f74",
+      "tx": "0x4143a54a86ebbfc542a09bd6c9df7302d7b933f7a6780c92c0a23822da51853f",
+      "block": 60942856,
+      "gasUsed": 664284
+    },
+    "registrationVerifier": {
+      "address": "0xc209d4402a2e1c12b7e91155d71cefe42df1bca7",
+      "tx": "0x91571b40be534fffc8299e332e3e5c60f2db076d4ab4c0874b9b04c675f2391a",
+      "block": 60942043,
+      "gasUsed": 432065
+    },
+    "mintVerifier": {
+      "address": "0x050323ac0c920effb5bcfeed4feb4b7a035b31d3",
+      "tx": "0x4e66372881ceb9804a924b39f6e135a8ce0049667a4ed120cf36b86bb40cfb66",
+      "block": 60942046,
+      "gasUsed": 1123496
+    },
+    "withdrawVerifier": {
+      "address": "0xe9df883c6758acc8058db196a73841cb7f5eb1c4",
+      "tx": "0xe1feee57c462cd56736044df13fab1fae7b92ffdee4db7dc4bf2179ee44583c4",
+      "block": 60942052,
+      "gasUsed": 836344
+    },
+    "transferVerifier": {
+      "address": "0x9e7bf355f92d35e7e9f372b1737aa83bcad55cf0",
+      "tx": "0x5d91f195d63573af9f0f4682d8e0456180b62b6a4717424eb4959032dbcb64ef",
+      "block": 60942055,
+      "gasUsed": 1410659
+    },
+    "burnVerifier": {
+      "address": "0x3834ebc73323f24eb8ddc83a348095854c953b92",
+      "tx": "0x59a3c7cad741f7e5a252dfd5b326d3dc645ef64568c2d3c885003c29b1cfe890",
+      "block": 60942057,
+      "gasUsed": 944233
+    },
+    "babyJubJub": {
+      "address": "0xaf9b2e652a5f7ca8a778548dbd93b0f7e11d2d04",
+      "tx": "0x2ad79de6d4ffb3aa7023ba46937cac28db63c1700e6a9798ce95786e5466b9a4",
+      "block": 60942060,
+      "gasUsed": 399499
+    },
+    "registrar": {
+      "address": "0x335d199e8442ddad556c874a065801ba0ac63350",
+      "tx": "0xf44a7ee3d4682e2d50a20b7219db7da8a17ec5b924b1183ed2f19eef02a62d50",
+      "block": 60942063,
+      "gasUsed": 423984
+    },
+    "encryptedERC": {
+      "address": "0xf0f1d107bbca6568e0ff0cec580cf053e1b73787",
+      "tx": "0xbdd3b396c3e5e6fb5a1e5f5e82e0b30992dcfbf85286647cca4425518bf71233",
+      "block": 60942067,
+      "gasUsed": 4026747
+    }
+  },
+  "wiringTxs": {
+    "registrySetMarket": {
+      "tx": "0x48f6c7dbda512553bc592ddfa6201f4c7beaf4ef108a66c5b79e25d50feee89c",
+      "block": 60942860,
+      "gasUsed": 44212
+    },
+    "indexSetMarket": {
+      "tx": "0x55636c360e353e241d7bb0d82ae1ddf2f894ac7a52c505b6b0b5729b33388958",
+      "block": 60942863,
+      "gasUsed": 44959
+    },
+    "marketSetRouter": {
+      "tx": "0x8122c67999b51fdf53d612319885a564c34f76a5ace011276e5b8fb31bfb759a",
+      "block": 60942865,
+      "gasUsed": 46476
+    }
+  },
+  "source": {
+    "eerc": "https://github.com/ava-labs/EncryptedERC @ 8dc98cd4d63ad3aa6d86b70b8f4bbcd70f1e8be1 (contracts/prod verifiers, unmodified)"
+  },
+  "evidence": {
+    "funding": [
+      {
+        "at": "2026-11-12T10:36:34.991Z",
+        "from": "0x86076053d71E1c95b3c08e68BA39049024D69E67",
+        "to": "0xDDb9a3bB6666eb92901D3836ccB2919BBDd8752E",
+        "avax": "0.08",
+        "tx": "0xc35077c1060acb56ec80ab496a4cf5ef55c0cc20f85e61358908bca17612ba4b"
+      }
+    ],
+    "setup": [
+      {
+        "at": "2026-11-12T10:40:30.839Z",
+        "gas.desk": "0x26e212f85319feb252a176dd788ed1ab01c1b7a7eebdc8c73dcb2042eda2c71e",
+        "gas.auditor": "0x2a3bf087bbb2456f249c7d44720da94f274e9c0543267fb2cfdacc7839e7074d",
+        "gas.buyer": "0x64c65ed85ea3a70f80bdb31990b7ac2787ece60f3e60ae6879a8e6df97311b35",
+        "gas.qa": "0x8001bad9f3575563326f9088b608c8620198f8f9fdd6a04ac6243f9001260de0",
+        "gas.owner.atlas": "0xc922d2313ec2531916229ba74ea166d1973d83eb85eda7555a05db31fa639db5",
+        "gas.node.atlas": "0xec010582aca89c66070297f1a307cc545a174c1beaf502ac420c127f1d9889e6",
+        "gas.owner.birch": "0x5320d8677a96f581e89032ba5f385016fe690eb590d8ead2af5f03a3574affea",
+        "gas.node.birch": "0x17d3255a1478b43f6b780005597b3c18a9ba6ec23bc417eebe28105731f4d3de",
+        "gas.owner.cobalt": "0xe1c3357814e911c380e3b534385d62560a781e5f17e23f8a269c961e3fed93e2",
+        "gas.node.cobalt": "0x2e563379b6d4df0eeb2d57fc57107ce620a7714d65c8f301f99b688165bb0349",
+        "gas.owner.dune": "0x2be4eb34bbbb73fc897b2a3bc5388ae7f2aa08be4ece2caa700b71554844bbf5",
+        "gas.node.dune": "0x6a953ad1990ff8dbb9c173fc50a23047a680b8c7738b34aa214082960b300d22",
+        "faucet.buyer": "0x46705add6e8bec44d3e3dc81be666cd537b3d6d5862441c6940586ccb512607f",
+        "faucet.qa": "0x769b5f6b425842525064432c4f798b7f204e3526300ae6bcd1d5860d54f50c71",
+        "faucet.desk": "0x0e8188f616cd2facf7377c2f82f11e413516154d6334acf18c88f229756eda28",
+        "faucet.owner.atlas": "0x13dc976d5fccad4e7c3526b76d7b349ef52096cb1edaa7a4175ce3b62fb94ea8",
+        "approve.atlas": "0xdab24a5928bfe4b7f4b04e80c5af104cf47c7d5ebde5dfd0f8ab28b6bba0e641",
+        "register.atlas": "0x79fea7314be1bdb2c7d89e4912f8643f56d2deafc6dbb81a853179af50c04329",
+        "faucet.owner.birch": "0x78ec92ffb770eddbbc55ce0a7e307bccbdb5bde8c50e9450306bea9cc16b5e67",
+        "approve.birch": "0x2b2cd23146db9d8483a579b15348f18df0b177d8dd1aade19c37a97a50b7558f",
+        "register.birch": "0xc9ebb0eab5d9d32a178e7865efe5d271e39866e49db939934aa43d5f0483b510",
+        "faucet.owner.cobalt": "0x881a4adff69d3a086d4da40f8886f635ed6a9f813d62ddd3f6d25d7b06cb7ce7",
+        "approve.cobalt": "0xe5f2adebcc9b12ce328b50816789f6e2371b8acabcb12e4137dc52c4d86fb00d",
+        "register.cobalt": "0x6361e5e20975fc855be5a32ba95678316fe947da6b11eb07fcf33a7ec219e22c",
+        "faucet.owner.dune": "0xe1adb947420f47cf763539209c9f34f25cf83db604cf9c0ce1305afc5ab51d42",
+        "approve.dune": "0x98894a8fe78360fc4a6a327799c7a333b2f1a42d2c04d6006abe69a375dbb6e7",
+        "register.dune": "0xde9d6ac24ed3ea42a10c526b9da7066013f750b6868e4c4b40c5d5e958620460"
+      },
+      {
+        "at": "2026-11-12T11:00:11.999Z",
+        "approve.atlas": "0x25e6717f730ab90bc41505ea3bf71a701c16e794249cafa6e7368b026510ee06",
+        "register.atlas": "0x773a44bae35cc19c30483d9c8c88ae6bc2aa358134970d5616e8668d86ef8630",
+        "approve.birch": "0xbdc2af63c882bcf9bfb1c4c3e56e1eeb51943c91fb130e54950bf7035226b998",
+        "register.birch": "0xb8bc30afea00619a75aa59be4799d80403cf66b6584b572bb8764820c0b28e1b",
+        "approve.cobalt": "0x61219fd4f594a52350d09d270966638bf5833a6f38acdc14db5cec752d9df89b",
+        "register.cobalt": "0x4e6850e1f768885780d6c2f8f1e105a36427306e26ba187b88247395673ff2e8",
+        "approve.dune": "0xbc4fc5e0ded4a1f93b8eb03e8a340e5adec96711c73604c237227b913c06b883",
+        "register.dune": "0x8dc0f901a8279dcf904fd87c2e27fd41df64cf0c4f2f818c74f57c6916d088a2"
+      }
+    ],
+    "x402Calls": [
+      {
+        "at": "2026-11-12T10:56:55.783Z",
+        "job": 4,
+        "settleTx": "0xc45944fdadc20e443cd61070d785815e272733562e9a63734aaadc96fae147b5",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "332",
+        "tokens": 188,
+        "bids": 4,
+        "verify": false,
+        "seconds": 151.628
+      }
+    ]
+  },
+  "previous": [
+    {
+      "contracts": {
+        "testDollar": "0x2210a2161b13a1a2375951577b506707867f9739",
+        "index": "0xa2d103e86eca75105f774a7d38a68ef46b13e8ae",
+        "registry": "0x93daccd80e79a9fdf9b172c6418b5dc503020ce9",
+        "similarity": "0x6b20465fc8ce5eed377dfbd7d07fcb2b214fc542",
+        "market": "0x313006cf58d3a415f63dba272c7856ec5a06a07c",
+        "router": "0x03a66507ed5cfc46410dc6a18d8a58f24b37661d"
+      },
+      "deployedAt": "2026-11-12T10:38:03.468Z",
+      "startBlock": 60942009,
+      "note": "earlier market deployment; same tUSD and eERC"
+    }
+  ]
+}

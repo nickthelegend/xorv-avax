@@ -343,8 +343,10 @@ contract XorvMarket is ReentrancyGuard {
         if (j.revealed == j.bidCount) _closeAuction(id);
     }
 
-    /// @notice Winner delivers. The spot-check draw uses the hash of a block that does not exist yet,
-    ///         so the winner cannot shape its output to dodge the check.
+    /// @notice Winner delivers. The spot-check draw uses the hash of the block this delivery lands in,
+    ///         which is only known once that block is produced, so the winner cannot pick an output that
+    ///         dodges the check. (Avalanche makes blocks only when there are transactions, so waiting for
+    ///         a later block could stall the job on a quiet chain.)
     function deliver(uint256 id, string calldata output, uint32 tokens) external {
         Job storage j = _job(id);
         if (j.status != Status.Running) revert WrongStatus(j.status);
@@ -354,7 +356,7 @@ contract XorvMarket is ReentrancyGuard {
         if (len == 0 || len > MAX_OUTPUT) revert BadOutput();
         j.tokens = tokens > j.maxTokens ? j.maxTokens : tokens;
         j.resultHash = keccak256(bytes(output));
-        j.drawBlock = uint64(block.number + 1);
+        j.drawBlock = uint64(block.number);
         j.status = Status.Delivered;
         emit Delivered(id, msg.sender, output, j.tokens, j.resultHash, j.drawBlock);
     }
@@ -442,7 +444,7 @@ contract XorvMarket is ReentrancyGuard {
                 _settlePaid(id, Outcome.PaidCheckMatched);
             } else {
                 j.status = Status.Mismatch;
-                j.drawBlock = uint64(block.number + 1);
+                j.drawBlock = uint64(block.number);
             }
             return;
         }

@@ -39,7 +39,7 @@ export class HttpError extends Error {
   }
 }
 
-export const WINDOWS = { commitSecs: 6, revealSecs: 6, workSecs: 90 };
+export const WINDOWS = { commitSecs: 10, revealSecs: 10, workSecs: 90 };
 
 export class Facilitator {
   private d: Deployment;

@@ -5,9 +5,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createWalletClient, http, publicActions, type Hex } from 'viem';
+import { createWalletClient, publicActions, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { chainFor } from './chain.ts';
+import { chainFor, rpcTransport } from './chain.ts';
 import type { Deployment } from './types.ts';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -42,7 +42,7 @@ export function keyByName(name: string): Hex {
 export function walletFor(d: Deployment, keyName: string, rpc?: string) {
   const account = privateKeyToAccount(keyByName(keyName));
   const url = rpc ?? process.env.XORV_RPC ?? d.rpc;
-  return createWalletClient({ account, chain: chainFor(d.chainId, url), transport: http(url, { retryCount: 3, timeout: 30_000 }) }).extend(publicActions);
+  return createWalletClient({ account, chain: chainFor(d.chainId, url.split(',')[0]), transport: rpcTransport(d, rpc ?? process.env.XORV_RPC) }).extend(publicActions);
 }
 
 export type Wallet = ReturnType<typeof walletFor>;

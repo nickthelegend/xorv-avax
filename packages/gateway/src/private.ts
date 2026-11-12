@@ -67,7 +67,7 @@ export class PrivateLane {
       const e = await this.lane();
       const desk = e.address;
       const from = BigInt((this.d as any).startBlock ?? 0);
-      const q = async (eventName: string, args: Record<string, Hex>) => this.reader.getLogsChunked({ address: this.d.eerc!.encryptedERC, abi: encryptedErcAbi, eventName, args, fromBlock: from });
+      const q = async (eventName: string, args: Record<string, Hex>) => this.reader.logs({ address: this.d.eerc!.encryptedERC, abi: encryptedErcAbi, eventName, args, fromBlock: from });
       const [inT, outT, dep, wd] = await Promise.all([q('PrivateTransfer', { to: desk }), q('PrivateTransfer', { from: desk }), q('Deposit', { user: desk }), q('Withdraw', { user: desk })]);
       const all = [...inT.map((l) => ({ l, incoming: true })), ...outT.map((l) => ({ l, incoming: false })), ...dep.map((l) => ({ l, incoming: true, deposit: true })), ...wd.map((l) => ({ l, incoming: false }))]
         .sort((a: any, b: any) => (a.l.blockNumber === b.l.blockNumber ? a.l.logIndex - b.l.logIndex : Number(a.l.blockNumber - b.l.blockNumber)));

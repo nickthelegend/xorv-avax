@@ -5,7 +5,7 @@
 import { FUJI_RPC } from '../packages/sdk/src/chain.ts';
 import { walletFor } from '../packages/sdk/src/node.ts';
 import type { Deployment } from '../packages/sdk/src/types.ts';
-import { artifact, deploy, deploymentPath, send, writeJson } from './lib.ts';
+import { artifact, deploy, deploymentPath, readJson, send, writeJson } from './lib.ts';
 
 const network = process.env.XORV_NETWORK ?? 'fuji';
 const chainId = network === 'fuji' ? 43113 : 31337;
@@ -29,7 +29,12 @@ async function main() {
   const startBlock = Number(await w.getBlockNumber());
   const txs: Record<string, unknown> = {};
 
-  const token = await deploy(w, artifact('TestDollar.sol', 'TestDollar'), [], {}, 'TestDollar (tUSD)');
+  // XORV_REUSE=1 keeps the existing test dollar and eERC deployment (balances and registrations) and
+  // redeploys only the market side.
+  const prev0 = readJson(deploymentPath(network));
+  const reuse = process.env.XORV_REUSE === '1' && prev0.contracts?.testDollar && prev0.eerc;
+  const token = reuse ? { ...prev0.deployTxs.token, address: prev0.contracts.testDollar } : await deploy(w, artifact('TestDollar.sol', 'TestDollar'), [], {}, 'TestDollar (tUSD)');
+  if (reuse) console.log(`  reusing TestDollar ${token.address} and eERC ${prev0.eerc.encryptedERC}`);
   const index = await deploy(w, artifact('XorvIndex.sol', 'XorvIndex'), [config.indexMaxStepBps], {}, 'XorvIndex');
   const registry = await deploy(w, artifact('XorvRegistry.sol', 'XorvRegistry'), [token.address, config.minStake, config.slashBps, config.unbondSecs], {}, 'XorvRegistry');
   const similarity = await deploy(w, artifact('Similarity.sol', 'Similarity'), [], {}, 'Similarity (library)');
@@ -48,24 +53,30 @@ async function main() {
   txs.indexSetMarket = await send(w, { address: index.address, abi: idx.abi, functionName: 'setMarket', args: [market.address] }, 'index.setMarket');
   txs.marketSetRouter = await send(w, { address: market.address, abi: mkt.abi, functionName: 'setRouter', args: [router.address] }, 'market.setRouter');
 
-  console.log('eERC (Ava Labs EncryptedERC, converter mode over tUSD)');
-  const v = {
-    registration: await deploy(w, artifact('RegistrationVerifier.sol', 'RegistrationVerifier'), [], {}, 'RegistrationVerifier'),
-    mint: await deploy(w, artifact('MintVerifier.sol', 'MintVerifier'), [], {}, 'MintVerifier'),
-    withdraw: await deploy(w, artifact('WithdrawVerifier.sol', 'WithdrawVerifier'), [], {}, 'WithdrawVerifier'),
-    transfer: await deploy(w, artifact('TransferVerifier.sol', 'TransferVerifier'), [], {}, 'TransferVerifier'),
-    burn: await deploy(w, artifact('BurnVerifier.sol', 'BurnVerifier'), [], {}, 'BurnVerifier'),
-  };
-  const bjj = await deploy(w, artifact('BabyJubJub.sol', 'BabyJubJub'), [], {}, 'BabyJubJub (library)');
-  const registrar = await deploy(w, artifact('Registrar.sol', 'Registrar'), [v.registration.address], {}, 'Registrar');
-  const eerc = await deploy(
-    w,
-    artifact('EncryptedERC.sol', 'EncryptedERC'),
-    [{ registrar: registrar.address, isConverter: true, name: '', symbol: '', decimals: 6, mintVerifier: v.mint.address, withdrawVerifier: v.withdraw.address, transferVerifier: v.transfer.address, burnVerifier: v.burn.address }],
-    { BabyJubJub: bjj.address },
-    'EncryptedERC (converter)',
-  );
+  let v: Record<string, any>, bjj: any, registrar: any, eerc: any;
+  if (reuse) {
+    v = Object.fromEntries(Object.keys(prev0.eerc.verifiers).map((k) => [k, prev0.deployTxs[`${k}Verifier`]]));
+    ({ babyJubJub: bjj, registrar, encryptedERC: eerc } = prev0.deployTxs);
+  } else {
+    console.log('eERC (Ava Labs EncryptedERC, converter mode over tUSD)');
+    v = {
+      registration: await deploy(w, artifact('RegistrationVerifier.sol', 'RegistrationVerifier'), [], {}, 'RegistrationVerifier'),
+      mint: await deploy(w, artifact('MintVerifier.sol', 'MintVerifier'), [], {}, 'MintVerifier'),
+      withdraw: await deploy(w, artifact('WithdrawVerifier.sol', 'WithdrawVerifier'), [], {}, 'WithdrawVerifier'),
+      transfer: await deploy(w, artifact('TransferVerifier.sol', 'TransferVerifier'), [], {}, 'TransferVerifier'),
+      burn: await deploy(w, artifact('BurnVerifier.sol', 'BurnVerifier'), [], {}, 'BurnVerifier'),
+    };
+    bjj = await deploy(w, artifact('BabyJubJub.sol', 'BabyJubJub'), [], {}, 'BabyJubJub (library)');
+    registrar = await deploy(w, artifact('Registrar.sol', 'Registrar'), [v.registration.address], {}, 'Registrar');
+    eerc = await deploy(
+      w,
+      artifact('EncryptedERC.sol', 'EncryptedERC'),
+      [{ registrar: registrar.address, isConverter: true, name: '', symbol: '', decimals: 6, mintVerifier: v.mint.address, withdrawVerifier: v.withdraw.address, transferVerifier: v.transfer.address, burnVerifier: v.burn.address }],
+      { BabyJubJub: bjj.address },
+      'EncryptedERC (converter)',
+    );
 
+  }
   const all = { token, index, registry, similarity, market, router, ...Object.fromEntries(Object.entries(v).map(([k, x]) => [`${k}Verifier`, x])), babyJubJub: bjj, registrar, encryptedERC: eerc };
   const d: Deployment = {
     network: network === 'fuji' ? 'Avalanche Fuji C-Chain' : 'Anvil (local)',
@@ -82,12 +93,16 @@ async function main() {
       babyJubJub: bjj.address,
       verifiers: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x.address])),
       decimals: 6,
+      ...(reuse ? { auditor: prev0.eerc.auditor, desk: prev0.eerc.desk } : {}),
     },
     config: { ...config, minStake: config.minStake.toString(), checkFee: config.checkFee.toString() },
     deployTxs: Object.fromEntries(Object.entries(all).map(([k, x]) => [k, { address: x.address, tx: x.tx, block: x.block, gasUsed: x.gasUsed }])),
     wiringTxs: txs,
     source: { eerc: 'https://github.com/ava-labs/EncryptedERC @ 8dc98cd4d63ad3aa6d86b70b8f4bbcd70f1e8be1 (contracts/prod verifiers, unmodified)' },
   };
+  if (prev0.evidence) (d as any).evidence = prev0.evidence;
+  if (reuse) (d as any).previous = [...(prev0.previous ?? []), { contracts: prev0.contracts, deployedAt: prev0.deployedAt, startBlock: prev0.startBlock, note: 'earlier market deployment; same tUSD and eERC' }];
+  if (reuse) (d as any).startBlock = prev0.startBlock;
   writeJson(deploymentPath(network), d);
   const gas = Object.values(all).reduce((s, x) => s + x.gasUsed, 0);
   console.log(`wrote deployments/${network}.json · ${Object.keys(all).length} contracts · ${gas.toLocaleString()} gas`);

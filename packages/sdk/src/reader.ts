@@ -1,9 +1,15 @@
-import { createPublicClient, http, keccak256, toBytes, type Hex, type PublicClient } from 'viem';
+import { createPublicClient, encodeEventTopics, keccak256, parseEventLogs, toBytes, type Hex, type PublicClient } from 'viem';
 import { testDollarAbi, x402RouterAbi, xorvIndexAbi, xorvMarketAbi, xorvRegistryAbi } from './abi.ts';
-import { chainFor } from './chain.ts';
+import { chainFor, rpcTransport } from './chain.ts';
 import { OUTCOME, STATUS, type Bid, type Check, type Deployment, type Job, type Provider } from './types.ts';
 
 export const modelId = (name: string): Hex => keccak256(toBytes(name));
+export const EXPLORER_API = 'https://api.routescan.io/v2/network/testnet/evm/43113/etherscan/api';
+
+function matchArgs(got: any, want?: Record<string, unknown>) {
+  if (!want) return true;
+  return Object.entries(want).every(([k, v]) => String(got?.[k]).toLowerCase() === String(v).toLowerCase());
+}
 
 export interface IndexObservation {
   timestamp: number;
@@ -63,7 +69,7 @@ export class XorvReader {
   readonly d: Deployment;
   constructor(d: Deployment, rpc?: string) {
     this.d = d;
-    this.client = createPublicClient({ chain: chainFor(d.chainId, rpc ?? d.rpc), transport: http(rpc ?? d.rpc, { batch: { wait: 16 }, retryCount: 3, timeout: 20_000 }) }) as PublicClient;
+    this.client = createPublicClient({ chain: chainFor(d.chainId, rpc?.split(',')[0] ?? d.rpc), transport: rpcTransport(d, rpc) }) as PublicClient;
   }
 
   private m = () => ({ address: this.d.contracts.market, abi: xorvMarketAbi }) as const;
@@ -166,22 +172,54 @@ export class XorvReader {
 
   // ------------------------------------------------------------------ events
 
-  /** Market events for one job (post, bids, delivery text, checks, payouts, close), oldest first. */
-  async jobEvents(id: number, fromBlock?: bigint) {
-    const from = fromBlock ?? BigInt((this.d as any).startBlock ?? 0);
-    const logs = await this.getLogsChunked({ address: this.d.contracts.market, abi: xorvMarketAbi, args: { id: BigInt(id) }, fromBlock: from });
-    const slashes = await this.getLogsChunked({ address: this.d.contracts.registry, abi: xorvRegistryAbi, eventName: 'Slashed', args: { jobId: BigInt(id) }, fromBlock: from });
-    return [...logs, ...slashes].sort((a: any, b: any) => (a.blockNumber === b.blockNumber ? a.logIndex - b.logIndex : Number(a.blockNumber - b.blockNumber)));
+  /** Market and registry events for one job (post, bids, delivery text, checks, payouts, slashes), oldest first. */
+  async jobEvents(id: number) {
+    const [m, r] = await Promise.all([
+      this.logs({ address: this.d.contracts.market, abi: xorvMarketAbi, topic1: id }),
+      this.logs({ address: this.d.contracts.registry, abi: xorvRegistryAbi, eventName: 'Slashed', args: { jobId: BigInt(id) } }),
+    ]);
+    return [...m, ...r].sort((a: any, b: any) => (a.blockNumber === b.blockNumber ? a.logIndex - b.logIndex : Number(a.blockNumber - b.blockNumber)));
   }
 
-  /** Fuji's public RPC caps eth_getLogs ranges, so long ranges are walked in 2,048-block chunks. */
-  async getLogsChunked(q: any): Promise<any[]> {
-    const latest = await this.client.getBlockNumber();
+  /**
+   * Decoded logs. On Fuji the public RPC caps eth_getLogs at 100 blocks, so full history comes from the
+   * Snowtrace (Routescan) indexer API; on a local chain it is one eth_getLogs call.
+   */
+  async logs(q: { address: Hex; abi: any; eventName?: string; args?: Record<string, unknown>; topic1?: number | bigint; fromBlock?: bigint }): Promise<any[]> {
+    if (this.d.chainId !== 43113) {
+      const raw = await this.client.getLogs({ address: q.address, fromBlock: q.fromBlock ?? BigInt((this.d as any).startBlock ?? 0), toBlock: 'latest' } as any);
+      const parsed = parseEventLogs({ abi: q.abi, logs: raw as any, ...(q.eventName ? { eventName: q.eventName } : {}) }) as any[];
+      return parsed.filter((l) => (q.topic1 === undefined || BigInt(l.topics[1] ?? -1) === BigInt(q.topic1)) && matchArgs(l.args, q.args));
+    }
+    const topics: (Hex | null)[] = q.eventName ? (encodeEventTopics({ abi: q.abi, eventName: q.eventName, args: q.args } as any) as any) : [null, `0x${BigInt(q.topic1 ?? 0).toString(16).padStart(64, '0')}`];
+    const params = new URLSearchParams({ module: 'logs', action: 'getLogs', address: q.address, fromBlock: String(q.fromBlock ?? (this.d as any).startBlock ?? 0), toBlock: 'latest', offset: '1000' });
+    topics.forEach((t, i) => t && params.set(`topic${i}`, t));
+    const present = topics.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+    for (let k = 1; k < present.length; k++) params.set(`topic${present[k - 1]}_${present[k]}_opr`, 'and');
     const out: any[] = [];
-    const step = 2048n;
-    for (let a = BigInt(q.fromBlock ?? 0n); a <= latest; a += step) {
-      const b = a + step - 1n > latest ? latest : a + step - 1n;
-      out.push(...(await this.client.getContractEvents({ ...q, fromBlock: a, toBlock: b })));
+    for (let page = 1; page < 50; page++) {
+      params.set('page', String(page));
+      const r = await fetch(`${EXPLORER_API}?${params}`);
+      if (!r.ok) throw new Error(`Snowtrace API HTTP ${r.status}`);
+      const j = await r.json();
+      const rows = Array.isArray(j.result) ? j.result : [];
+      if (j.status !== '1' && rows.length === 0) break;
+      out.push(...rows.map((x: any) => ({ address: x.address, topics: x.topics.filter(Boolean), data: x.data === '' ? '0x' : x.data, blockNumber: BigInt(x.blockNumber), logIndex: Number(x.logIndex === '0x' ? 0 : x.logIndex), transactionHash: x.transactionHash, timeStamp: Number(x.timeStamp) })));
+      if (rows.length < 1000) break;
+    }
+    const parsed = parseEventLogs({ abi: q.abi, logs: out as any, strict: false }) as any[];
+    return parsed.map((l, i) => ({ ...l, timeStamp: (l as any).timeStamp ?? out[i]?.timeStamp }));
+  }
+
+  /** Recent logs straight from the RPC, walking back `blocks` blocks in 100-block windows (for nodes). */
+  async recentLogs(q: { address: Hex; abi: any; eventName: string; args?: Record<string, unknown> }, blocks = 300n): Promise<any[]> {
+    const latest = await this.client.getBlockNumber();
+    const start = latest > blocks ? latest - blocks : 0n;
+    const step = this.d.chainId === 43113 ? 99n : 100_000n;
+    const out: any[] = [];
+    for (let a = start; a <= latest; a += step + 1n) {
+      const b = a + step > latest ? latest : a + step;
+      out.push(...(await this.client.getContractEvents({ ...q, fromBlock: a, toBlock: b } as any)));
     }
     return out;
   }

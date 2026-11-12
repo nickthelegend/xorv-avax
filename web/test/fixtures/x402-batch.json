@@ -1,0 +1,58 @@
+{
+  "final_execution_status": "FINAL",
+  "status": {
+    "SuccessValue": "eyJpZCI6MCwibWVyY2hhbnQiOiJ4b3J2LWlraWMyLnRlc3RuZXQiLCJjYWxscyI6NSwidG90YWwiOiI1MDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwiaGFzaCI6ImYyYmU0NGNkMzYwMGNhM2M1NzYwOTc1NTQyMjNjMjIyOTM1MTY4MTZmNDllZDEyNGIyYmVlOGRlNzVjZGMyZjUiLCJzZXR0bGVkX21zIjoxNzk0NDY5NTIzMzc1fQ=="
+  },
+  "transaction": {
+    "hash": "NJeugk7mR7BeP8ohAyEMa2ntPseVUKWu3oCdgwva8uk",
+    "receiver_id": "escrow.xorv-ikic2.testnet",
+    "signer_id": "xorv-ikic2.testnet",
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "x402_settle"
+        }
+      }
+    ]
+  },
+  "receipts_outcome": [
+    {
+      "outcome": {
+        "executor_id": "escrow.xorv-ikic2.testnet",
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"xorv\",\"version\":\"1.0.0\",\"event\":\"x402_batch\",\"data\":[{\"id\":0,\"merchant\":\"xorv-ikic2.testnet\",\"calls\":5,\"total\":\"5000000000000000000000\",\"hash\":\"f2be44cd3600ca3c576097554223c22293516816f49ed124b2bee8de75cdc2f5\",\"settled_ms\":1794469523375}]}"
+        ],
+        "status": {
+          "SuccessValue": "eyJpZCI6MCwibWVyY2hhbnQiOiJ4b3J2LWlraWMyLnRlc3RuZXQiLCJjYWxscyI6NSwidG90YWwiOiI1MDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwiaGFzaCI6ImYyYmU0NGNkMzYwMGNhM2M1NzYwOTc1NTQyMjNjMjIyOTM1MTY4MTZmNDllZDEyNGIyYmVlOGRlNzVjZGMyZjUiLCJzZXR0bGVkX21zIjoxNzk0NDY5NTIzMzc1fQ=="
+        }
+      }
+    },
+    {
+      "outcome": {
+        "executor_id": "xorv-ikic2.testnet",
+        "logs": [],
+        "status": {
+          "SuccessValue": ""
+        }
+      }
+    },
+    {
+      "outcome": {
+        "executor_id": "xorv-ikic2.testnet",
+        "logs": [],
+        "status": {
+          "SuccessValue": ""
+        }
+      }
+    },
+    {
+      "outcome": {
+        "executor_id": "xorv-ikic2.testnet",
+        "logs": [],
+        "status": {
+          "SuccessValue": ""
+        }
+      }
+    }
+  ]
+}

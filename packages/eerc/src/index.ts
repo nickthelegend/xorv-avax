@@ -8,7 +8,7 @@ import path from 'node:path';
 import { existsSync } from 'node:fs';
 import * as snarkjs from 'snarkjs';
 import { parseEventLogs, type Hex } from 'viem';
-import { encryptedErcAbi, registrarAbi, testDollarAbi, type Deployment } from '@xorv/sdk';
+import { XorvReader, encryptedErcAbi, registrarAbi, testDollarAbi, type Deployment } from '@xorv/sdk';
 import { ROOT, type Wallet } from '@xorv/sdk/node';
 import { decryptPCT, decryptPoint, encryptMessage, keyFromSignature, keyMessage, pctOf, pointOf, poseidonEncryption, registrationHash, type EercKey } from './crypto.ts';
 
@@ -210,13 +210,7 @@ export class Eerc {
   }
 
   async privateTransferLogs(fromBlock: bigint, args: { from?: Hex; to?: Hex } = {}) {
-    const latest = await this.w.getBlockNumber();
-    const out: any[] = [];
-    for (let a = fromBlock; a <= latest; a += 2048n) {
-      const b = a + 2047n > latest ? latest : a + 2047n;
-      out.push(...(await this.w.getContractEvents({ ...this.e, eventName: 'PrivateTransfer', args, fromBlock: a, toBlock: b })));
-    }
-    return out;
+    return new XorvReader(this.d, (this.w.transport as any).url).logs({ ...this.e, eventName: 'PrivateTransfer', args, fromBlock });
   }
 
   /** As the auditor: decrypts the amount of a PrivateTransfer or Withdraw event. */

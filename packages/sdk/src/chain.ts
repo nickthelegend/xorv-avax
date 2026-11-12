@@ -1,4 +1,4 @@
-import { defineChain, type Chain } from 'viem';
+import { defineChain, fallback, http, type Chain, type Transport } from 'viem';
 import { avalancheFuji } from 'viem/chains';
 
 export const FUJI_RPC = 'https://api.avax-test.network/ext/bc/C/rpc';
@@ -21,3 +21,15 @@ export function chainFor(chainId: number, rpc?: string): Chain {
 
 export const txUrl = (hash: string, chainId = 43113) => (chainId === 43113 ? `${SNOWTRACE}/tx/${hash}` : `local:${hash}`);
 export const addressUrl = (a: string, chainId = 43113) => (chainId === 43113 ? `${SNOWTRACE}/address/${a}` : `local:${a}`);
+
+/**
+ * Public Fuji RPCs, used in order; viem falls back to the next on errors or rate limits (HTTP 429).
+ * The official endpoint is last: it rate-limits a busy client hard.
+ */
+export const FUJI_RPCS = ['https://avalanche-fuji-c-chain-rpc.publicnode.com', 'https://avalanche-fuji.drpc.org', FUJI_RPC];
+
+export function rpcTransport(d: { chainId: number; rpc: string }, rpc?: string): Transport {
+  const urls = rpc ? rpc.split(',') : d.chainId === 43113 ? FUJI_RPCS : [d.rpc];
+  const t = urls.map((u) => http(u.trim(), { retryCount: 2, timeout: 20_000, batch: { wait: 16 } }));
+  return t.length === 1 ? t[0] : fallback(t, { rank: false });
+}

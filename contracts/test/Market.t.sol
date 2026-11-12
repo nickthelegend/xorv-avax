@@ -258,8 +258,8 @@ contract MarketTest is Base {
         vm.expectRevert(XorvMarket.DrawNotReady.selector);
         market.resolveDraw(id);
         vm.roll(vm.getBlockNumber() + 1);
-        vm.expectRevert(XorvMarket.DrawNotReady.selector);
         market.resolveDraw(id);
+        assertEq(uint8(market.getJob(id).status), uint8(XorvMarket.Status.Checking));
     }
 
     function test_agedOutDrawBlockForcesACheck() public {

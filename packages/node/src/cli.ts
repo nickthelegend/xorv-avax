@@ -54,7 +54,7 @@ async function main() {
     stateDir: path.resolve(ROOT, process.env.XORV_STATE_DIR ?? '.xorv/nodes'),
     fault: (flag(args, 'fault', 'none') as Fault) ?? 'none',
     keeper: flag(args, 'keeper') === 'true',
-    pollMs: Number(flag(args, 'poll', '1500')),
+    pollMs: Number(flag(args, 'poll', '2500')),
   });
 }
 

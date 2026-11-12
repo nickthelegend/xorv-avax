@@ -112,8 +112,13 @@ async function paymentRequired(res: ServerResponse, body: any, resource: string)
 }
 
 async function deliveredText(job: Job): Promise<string | null> {
-  const logs = await reader.getLogsChunked({ address: d.contracts.market, abi: xorvMarketAbi, eventName: 'Delivered', args: { id: BigInt(job.id) }, fromBlock: ((n) => (n > 3000n ? n - 3000n : 0n))(await reader.client.getBlockNumber()) });
-  return (logs[0]?.args?.output as string) ?? null;
+  // Load-balanced public RPCs can return the new state a moment before the matching log; retry briefly.
+  for (let i = 0; i < 6; i++) {
+    const logs = await reader.recentLogs({ address: d.contracts.market, abi: xorvMarketAbi, eventName: 'Delivered', args: { id: BigInt(job.id) } }, 400n).catch(() => []);
+    if (logs[0]?.args?.output) return logs[0].args.output as string;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  return null;
 }
 
 async function waitForDelivery(id: number, timeoutMs = 150_000): Promise<Job> {
@@ -122,7 +127,7 @@ async function waitForDelivery(id: number, timeoutMs = 150_000): Promise<Job> {
     const j = await reader.job(id).catch(() => null);
     if (j && !['Bidding', 'Running'].includes(j.status)) return j;
     if (Date.now() - t0 > timeoutMs) throw new HttpError(504, `job ${id} was not delivered within ${timeoutMs / 1000} s; follow it at /jobs/${id}`);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 2500));
   }
 }
 
@@ -183,7 +188,7 @@ const server = createServer(async (req, res) => {
     let m: RegExpMatchArray | null;
     if (req.method === 'GET' && (m = p.match(/^\/api\/jobs\/(\d+)$/))) {
       const id = Number(m[1]);
-      const [job, events] = await Promise.all([reader.job(id), reader.jobEvents(id, BigInt((d as any).startBlock ?? 0))]);
+      const [job, events] = await Promise.all([reader.job(id), reader.jobEvents(id)]);
       return send(res, 200, { job, events: events.map((e: any) => ({ event: e.eventName, tx: e.transactionHash, block: Number(e.blockNumber), args: e.args })) });
     }
     if (req.method === 'POST' && p === '/api/x402/requirements') {
