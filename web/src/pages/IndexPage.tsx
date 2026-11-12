@@ -170,7 +170,7 @@ export function IndexPage() {
   const api = `curl ${location.origin}/api/index`;
   return (
     <div className="wrap page">
-      <PageHead title="Xorv Compute Index" art="gavel" sub="What AI work actually costs, per model, from sealed-bid auctions that were delivered and paid on Avalanche Fuji." />
+      <PageHead title="Xorv Compute Index" art="index" sub="What AI work actually costs, per model, from sealed-bid auctions that were delivered and paid on Avalanche Fuji." />
       <div className="idx-rules">
         <p><Icon name="check" size={15} />Only paid jobs count: delivered, checked or not sampled, at least two revealed bids, and a buyer who is not the winner.</p>
         <p><Icon name="shield" size={15} />One clearing moves the index at most {D.config.indexMaxStepBps / 100}%, so a cheap outlier cannot drag it. The job record keeps the true price.</p>

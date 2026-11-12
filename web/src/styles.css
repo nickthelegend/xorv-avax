@@ -289,7 +289,7 @@ u.dot { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3
 .chat-empty > img { width: 40px; height: 40px; margin: 0 auto 18px; filter: brightness(0) invert(1); }
 .chat-empty h1 { font-size: 30px; font-weight: 600; letter-spacing: -.02em; }
 .chat-empty p { color: var(--ink-2); margin-top: 8px; }
-.sugg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 28px; text-align: left; }
+.sugg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 28px; text-align: left; }
 .sugg button { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); text-align: left; min-height: 72px; transition: border-color .2s, background .2s; }
 .sugg button:hover { border-color: var(--line-2); background: var(--surface-2); }
 .sugg b { display: block; font-weight: 500; font-size: 14.5px; }
@@ -528,7 +528,7 @@ u.dot { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3
   .stats { grid-template-columns: repeat(2, 1fr); margin-top: 40px; row-gap: 22px; }
   .stat + .stat { border-left: 0; }
   .stat b { font-size: 30px; }
-  .sugg { grid-template-columns: 1fr; }
+  .sugg { grid-template-columns: minmax(0, 1fr); }
   .chat-empty { padding-top: 6vh; }
   .chat-empty h1 { font-size: 24px; }
   .thread { padding: 20px 16px; }
@@ -710,3 +710,29 @@ a.pill { height: 32px; padding: 0 10px; }
 .story b { color: var(--ink); font-weight: 500; }
 .story-bad { border-color: rgba(248, 113, 113, .35); }
 .sec-h h2 a { font-size: inherit; color: inherit; min-height: 0; }
+
+/* ---- ship round: landing positioning ---- */
+.hero .hero-art { display: grid; margin: 0 auto 20px; }
+.how.how3 { grid-template-columns: repeat(3, 1fr); }
+.how.how3 li { grid-template-columns: 72px 1fr; }
+.row-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.app-band { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; align-items: center; padding: 32px; }
+.app-band h2 { font-size: 28px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+.app-band p { color: var(--ink-2); margin-top: 12px; max-width: 560px; }
+.app-band .codebox pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.app-band .app-art { justify-self: end; }
+.contracts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+.contracts a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); font-size: 13px; color: var(--ink-2); transition: border-color .2s var(--ease); }
+.contracts a:hover { border-color: var(--line-2); color: var(--ink); }
+.contracts a span { grid-column: 1 / -1; color: var(--ink-3); font-size: 12.5px; }
+.contracts a b { font-weight: 500; color: var(--ink); }
+@media (max-width: 980px) { .how.how3 { grid-template-columns: 1fr; gap: 18px; } .app-band { grid-template-columns: 1fr; } .app-band .app-art { justify-self: start; order: -1; width: 120px !important; height: 120px !important; } }
+@media (max-width: 640px) { .hero .hero-art { width: 120px !important; height: 120px !important; } .app-band { padding: 20px; } .app-band h2 { font-size: 23px; } }
+
+/* ---- ship round: chat fixes ---- */
+.sugg button { min-width: 0; }
+.setup .ph-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px !important; }
+@media (max-width: 640px) { .chat-bar .seg button { white-space: nowrap; } }
+@media (max-width: 640px) { .state-art { flex-direction: column; align-items: center; text-align: center; } .state-art .ph-actions { justify-content: center; } }
+.cards3.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .br-lg { display: none; } .contracts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cards3.n2 { grid-template-columns: minmax(0, 1fr); } }

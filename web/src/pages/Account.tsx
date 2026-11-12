@@ -19,7 +19,7 @@ function Connect() {
   const fresh = useStartFresh();
   const busy = wallet.connecting || fresh.busy;
   return (
-    <State kind="setup" art="coin" title="Pay per message on Avalanche Fuji"
+    <State kind="setup" art="key" title="Start paying per message"
       action={<div className="ph-actions" style={{ justifyContent: 'center' }}>
         <button className="btn btn-w btn-sm" onClick={() => void (wallet.hasLocal ? wallet.connect('local') : fresh.start())} disabled={busy}>{fresh.busy ? 'Getting test funds…' : wallet.hasLocal ? 'Use my test wallet' : 'Start with a test wallet'}</button>
         {wallet.hasInjected || wallet.qaAvailable

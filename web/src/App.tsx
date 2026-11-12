@@ -23,7 +23,7 @@ function decodeSegment(value: string): string | null {
 function route(path: string): Route {
   const p = path.replace(/\/+$/, '') || '/';
   let x: RegExpMatchArray | null;
-  if (p === '/') return { key: 'home', title: "Xorv · One API for the AI nobody's using", el: <Landing /> };
+  if (p === '/') return { key: 'home', title: 'Xorv · Every AI request goes to the lowest bidder', el: <Landing /> };
   if (p === '/chat') return { key: 'chat', nav: 'chat', title: 'Xorv · Chat', el: <Chat />, bare: true };
   if (p === '/index') return { key: 'index', nav: 'index', title: 'Xorv · Compute Index', el: <IndexPage /> };
   if (p === '/models') return { key: 'models', nav: 'models', title: 'Xorv · Models', el: <Models /> };

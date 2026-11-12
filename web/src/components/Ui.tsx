@@ -87,6 +87,8 @@ const ART = {
   gpu: 'Graphics card', chat: 'Chat bubble', envelope: 'Sealed envelope', gavel: 'Gavel on its block', rack: 'Server rack',
   coin: 'Coin', key: 'Key', magnifier: 'Magnifying glass', shield: 'Cracked shield', empty: 'Empty tray',
   success: 'Check-mark badge', warning: 'Warning sign', trophy: 'Trophy',
+  hero: 'A chat bubble on an auction block, with a gavel', pay: 'A coin going into a slot', bids: 'Three sealed envelopes',
+  index: 'A rising price line on a stand', app: 'A laptop showing a chat',
 } as const;
 export type ArtName = keyof typeof ART;
 export function Art({ name, size = 96, label, className = '' }: { name: ArtName; size?: number; label?: boolean; className?: string }) {

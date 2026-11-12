@@ -203,7 +203,7 @@ export function Chat() {
         </div>
         <div className="rooms">
           <div className="rooms-h"><span>{visible.length} chat{visible.length === 1 ? '' : 's'}</span><span>this browser</span></div>
-          {!visible.length && <p className="rooms-empty">No chats yet. Each message you send becomes a sealed-bid job on Avalanche.</p>}
+          {!visible.length && <p className="rooms-empty">No chats yet.</p>}
           {visible.map((r) => (
             <div key={r.id} className={`room ${r.id === cur ? 'on' : ''}`}>
               <button onClick={() => { setCur(r.id); setSide(false); }} aria-current={r.id === cur}>{r.title}</button>
@@ -246,7 +246,7 @@ export function Chat() {
             <div className="chat-empty">
               <Art name="chat" size={112} />
               <h1>Ask anything</h1>
-              <p>Each message is a sealed-bid auction on Avalanche. You see who answered, what it cost and whether a second node checked it.</p>
+              <p>Providers bid for every message. The lowest bid answers.</p>
               <div className="sugg">
                 {SUGGESTIONS.map(([t, q]) => <button key={t} onClick={() => send(q)} disabled={!ready || busy}><b>{t}</b><small>{q}</small></button>)}
               </div>
@@ -262,7 +262,7 @@ export function Chat() {
           {offline && <p className="setup" role="status"><b>Setup required:</b> start the gateway, <code>{GATEWAY_START}</code></p>}
           {!offline && health && needs.length > 0 && <p className="setup" role="status"><b>Setup required:</b> {needs.join('; ')}</p>}
           {!offline && health && !needs.length && !wallet.address && (
-            <div className="setup" role="status"><b>Pay per message in tUSD on Avalanche Fuji.</b> <span className="dim">A test wallet gets free test funds in one tap.</span>
+            <div className="setup" role="status"><b>Pay per message, no account.</b> <span className="dim">A test wallet gets free test funds in one tap.</span>
               <p className="ph-actions" style={{ marginTop: 10 }}>
                 <button className="btn btn-sm btn-w" onClick={() => void (wallet.hasLocal ? wallet.connect('local') : fresh.start())} disabled={fresh.busy || wallet.connecting}>{fresh.busy ? 'Getting test funds…' : wallet.hasLocal ? 'Use my test wallet' : 'Start with a test wallet'}</button>
                 {(wallet.hasInjected || wallet.qaAvailable) && <button className="btn btn-sm" onClick={() => void wallet.connect()} disabled={wallet.connecting}>{wallet.connecting ? 'Connecting…' : 'Connect Core or MetaMask'}</button>}
@@ -278,7 +278,7 @@ export function Chat() {
           )}
           <form className="composer" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
             <label htmlFor="chat-in" className="sr">Message</label>
-            <textarea id="chat-in" ref={ta} rows={1} value={text} maxLength={3000} placeholder={ready ? 'Ask anything…' : 'Chat opens once a wallet and the gateway are ready'}
+            <textarea id="chat-in" ref={ta} rows={1} value={text} maxLength={3000} placeholder={ready ? 'Ask anything…' : 'Connect a wallet to chat'}
               onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(200, e.target.scrollHeight)}px`; }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(text); } }} />
             <div className="composer-row">
@@ -287,7 +287,7 @@ export function Chat() {
               <button className="send" type="submit" aria-label="Send" disabled={!ready || busy || pending || !text.trim()}><Icon name="up" size={18} /></button>
             </div>
           </form>
-          <p className="composer-note">{verify ? 'Verified: a second staked node always re-runs this answer, and the market compares them on-chain.' : `The lowest sealed bid answers. ${(m.data?.config.spotCheckBps ?? 3000) / 100}% of answers are re-run by a second node.`}</p>
+          <p className="composer-note">{verify ? 'Verified: a second staked node always re-runs this answer, and the market compares them on-chain.' : `${(m.data?.config.spotCheckBps ?? 3000) / 100}% of answers are re-run by a second node; liars lose stake.`}</p>
         </div>
       </section>
     </div>
