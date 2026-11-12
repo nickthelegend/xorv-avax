@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://xorv-api.201-18-198-162.sslip.io/api/:path*" },
+    { "source": "/v1/:path*", "destination": "https://xorv-api.201-18-198-162.sslip.io/v1/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/eerc/(.*)", "headers": [{ "key": "cache-control", "value": "public, max-age=86400" }] }
+  ]
+}

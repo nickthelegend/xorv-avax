@@ -747,6 +747,18 @@
       "sponsorAvax": "0.003",
       "sponsorTx": "0xdfd85dac356bd6faa90b8e433164bd2fe3e86e52abfa4131c2621313f15e4899",
       "refillTx": "0x786477c73f0664624622673fa9956f117180daaa4b593dc83fb63f5c3a51e636"
-    }
+    },
+    "hubTopUps": [
+      {
+        "to": "station",
+        "avax": "0.1",
+        "tx": "0x31b7c73c0af4bec765d5ee55cd68574f39ae6173b27e06ce0852d407eeb4886b"
+      },
+      {
+        "to": "relayer",
+        "avax": "0.01",
+        "tx": "0xe17003978fa43388fbdad3f3f9f1f33e8dc3c8185c4175ef91763bdf7623183a"
+      }
+    ]
   }
 }
