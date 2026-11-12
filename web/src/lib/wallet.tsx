@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createWalletClient, custom, type Address, type Hex, type LocalAccount, type WalletClient } from 'viem';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { fuji, rpcTransport, signPayment, type PaymentPayload, type PaymentRequirements } from '@xorv/sdk';
 import { D } from './data';
 
@@ -9,24 +10,40 @@ import { D } from './data';
  */
 export const QA = import.meta.env.VITE_XORV_QA === '1';
 
-type Kind = 'injected' | 'qa';
+/** injected: Core or MetaMask. local: a test wallet whose key lives in this browser (Fuji only). qa: Playwright. */
+export type Kind = 'injected' | 'qa' | 'local';
 interface Wallet {
   address: Address | null;
   kind: Kind | null;
   connecting: boolean;
   error: string | null;
   hasInjected: boolean;
+  hasLocal: boolean;
   qaAvailable: boolean;
   connect: (kind?: Kind) => Promise<void>;
   disconnect: () => void;
   signPayment: (req: PaymentRequirements) => Promise<PaymentPayload>;
   signMessage: (message: string) => Promise<Hex>;
+  signRaw: (hash: Hex) => Promise<Hex>;
   write: (req: { address: Address; abi: any; functionName: string; args?: unknown[] }) => Promise<Hex>;
+  /** The viem wallet client, for Ava Labs' eERC SDK. */
+  client: WalletClient | null;
 }
 
 const Ctx = createContext<Wallet | null>(null);
+
 const FUJI_HEX = '0xa869';
 const STORE = 'xorv.wallet';
+/** The in-browser test wallet's key. Fuji test funds only; anyone with this browser profile can use it. */
+const LOCAL_KEY = 'xorv.testwallet.v1';
+const readLocalKey = (): Hex | null => {
+  try {
+    const k = localStorage.getItem(LOCAL_KEY);
+    return k && /^0x[0-9a-f]{64}$/i.test(k) ? (k as Hex) : null;
+  } catch {
+    return null;
+  }
+};
 
 const eth = () => (window as any).ethereum as { request: (a: { method: string; params?: unknown[] }) => Promise<any>; on?: any; removeListener?: any } | undefined;
 
@@ -60,10 +77,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const hasInjected = typeof window !== 'undefined' && !!eth();
   const qaAvailable = QA && typeof window !== 'undefined' && typeof (window as any).__XORV_QA_KEY__ === 'string';
+  const [hasLocal, setHasLocal] = useState(() => !!readLocalKey());
 
   const useInjected = useCallback(async (request: boolean) => {
     const p = eth();
-    if (!p) throw new Error('No browser wallet found. Install Core or MetaMask, or use a QA build.');
+    if (!p) throw new Error('No browser wallet found. Use a test wallet, or install Core or MetaMask.');
     const accounts: string[] = await p.request({ method: request ? 'eth_requestAccounts' : 'eth_accounts' });
     if (!accounts[0]) return false;
     await ensureFuji();
@@ -88,12 +106,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return true;
   } : async () => false, []);
 
+  const useLocal = useCallback(async (create: boolean) => {
+    let key = readLocalKey();
+    if (!key && create) {
+      key = generatePrivateKey();
+      try { localStorage.setItem(LOCAL_KEY, key); } catch { throw new Error('This browser blocks storage, so a test wallet cannot be kept here. Use Core or MetaMask.'); }
+      setHasLocal(true);
+    }
+    if (!key) return false;
+    const acct = privateKeyToAccount(key);
+    setLocal(acct);
+    setClient(createWalletClient({ account: acct, chain: fuji, transport: rpcTransport(D) }));
+    setAddress(acct.address);
+    setKind('local');
+    return true;
+  }, []);
+
   const connect = useCallback(async (k?: Kind) => {
     setConnecting(true);
     setError(null);
     try {
-      const want = k ?? (qaAvailable ? 'qa' : 'injected');
+      const want = k ?? (qaAvailable ? 'qa' : hasInjected ? 'injected' : 'local');
       if (want === 'qa') await useQa();
+      else if (want === 'local') await useLocal(true);
       else await useInjected(true);
       try { localStorage.setItem(STORE, want); } catch { /* private mode */ }
     } catch (e) {
@@ -101,7 +136,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setConnecting(false);
     }
-  }, [qaAvailable, useInjected, useQa]);
+  }, [qaAvailable, hasInjected, useInjected, useQa, useLocal]);
 
   const disconnect = useCallback(() => {
     setAddress(null);
@@ -116,6 +151,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     let saved: string | null = null;
     try { saved = localStorage.getItem(STORE); } catch { /* ignore */ }
     if (saved === 'qa' && qaAvailable) void useQa();
+    else if (saved === 'local') void useLocal(false);
     else if (saved === 'injected' && hasInjected) void useInjected(false).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -133,7 +169,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     connecting,
     error,
     hasInjected,
+    hasLocal,
     qaAvailable,
+    client,
     connect,
     disconnect,
     signPayment: async (req) => {
@@ -145,12 +183,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!address || !client) throw new Error('Connect a wallet first.');
       return local ? local.signMessage({ message }) : client.signMessage({ account: address, message });
     },
+    signRaw: async (hash) => {
+      if (!address || !client) throw new Error('Connect a wallet first.');
+      return local ? local.signMessage({ message: { raw: hash } }) : client.signMessage({ account: address, message: { raw: hash } });
+    },
     write: async (req) => {
       if (!address || !client) throw new Error('Connect a wallet first.');
       if (kind === 'injected') await ensureFuji();
       return client.writeContract({ ...req, account: local ?? address, chain: fuji } as any);
     },
-  }), [address, kind, connecting, error, hasInjected, qaAvailable, connect, disconnect, client, local]);
+  }), [address, kind, connecting, error, hasInjected, hasLocal, qaAvailable, connect, disconnect, client, local]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -159,4 +201,10 @@ export function useWallet() {
   const w = useContext(Ctx);
   if (!w) throw new Error('useWallet outside WalletProvider');
   return w;
+}
+
+/** The in-browser test wallet's account, if this browser has one (for signing right after it is created). */
+export function localAccount(): LocalAccount | null {
+  const k = readLocalKey();
+  return k ? privateKeyToAccount(k) : null;
 }

@@ -6,15 +6,19 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5390 --strictPort",
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
-    "build:qa": "VITE_XORV_QA=1 vite build --outDir dist-qa",
+    "build": "node scripts/copy-eerc.mjs && tsc --noEmit -p tsconfig.json && vite build",
+    "build:qa": "node scripts/copy-eerc.mjs && VITE_XORV_QA=1 vite build --outDir dist-qa",
     "preview": "vite preview --host 127.0.0.1 --port 5390 --strictPort",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "shots": "node scripts/shots.mjs",
-    "qa:flow": "node scripts/qa-flow.mjs"
+    "qa:flow": "node scripts/qa-flow.mjs",
+    "eerc": "node scripts/copy-eerc.mjs"
   },
   "dependencies": {
+    "@avalabs/eerc-sdk": "1.0.2",
     "@xorv/sdk": "workspace:*",
+    "blake-hash": "2.0.0",
+    "buffer": "6.0.3",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-markdown": "10.1.0",

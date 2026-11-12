@@ -26,7 +26,7 @@ export interface Health {
 export interface ServedModel { id: string; name: string; nodes: number; index_rate_per_1k: string | null }
 export interface Paid { job: number; tx: string; explorer: string; value: string; receipt?: { transaction: string; payer: string; network: string } }
 export interface PrivatePosted { job: number; tx: string; explorer: string; escrow: string; creditLeft: string; postedBy: string }
-export interface Credit { address: string; credit: string; topups: { from: string; amount: string; tx: string; block: number }[]; jobs: { job: number; escrow: string; settled: boolean; tx: string }[] }
+export interface Credit { address: string; credit: string; topups: { from: string; amount: string; tx: string; block: number }[]; jobs: { job: number; escrow: string; settled: boolean; tx: string }[]; receipt?: unknown; signature?: string }
 export interface PrivateStatus { enabled: boolean; setup: string | null; encryptedERC: string; registrar: string; desk: string | null; auditor: string | null; privateJobs: number; attributedTopups: number }
 
 async function call<T>(path: string, init?: RequestInit): Promise<{ body: T; res: Response }> {

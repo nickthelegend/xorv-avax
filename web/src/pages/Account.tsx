@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatEther, type Hex } from 'viem';
 import { creditMessage, encryptedErcAbi, registrarAbi, testDollarAbi } from '@xorv/sdk';
 import { C, D, addrUrl, jobTitle, jobsOf, modelName, money, rate1m, reader, txUrl, useMarket, useNow, usePoll, utc } from '../lib/data';
@@ -8,14 +8,25 @@ import { CopyButton, Icon, State } from '../components/Ui';
 import { PageHead, Tile } from '../components/Shell';
 import { StatusTag } from '../components/Market';
 import { QA, useWallet, walletMessage } from '../lib/wallet';
+import { STATION, useDripped, useFunds, useStartFresh } from '../lib/funds';
+import { keyOpen, loadPrivate, onKeys } from '../lib/eerc-keys';
+import { verifyReceipt, type DeskReceipt, type ReceiptCheck } from '@xorv/sdk';
 
 type Tab = 'wallet' | 'private';
 
 function Connect() {
   const wallet = useWallet();
+  const fresh = useStartFresh();
+  const busy = wallet.connecting || fresh.busy;
   return (
-    <State kind="setup" art="coin" title="Connect a wallet on Avalanche Fuji" action={wallet.hasInjected || wallet.qaAvailable ? <button className="btn btn-w btn-sm" onClick={() => void wallet.connect()} disabled={wallet.connecting}>{wallet.connecting ? 'Connecting…' : 'Connect wallet'}</button> : <a className="btn btn-sm" href="https://core.app/" target="_blank" rel="noreferrer">Get Core wallet <Icon name="external" size={13} /></a>}>
-      Your wallet signs x402 payments in tUSD, the test dollar Xorv uses on Fuji. {wallet.error && <span className="bad-c"> {wallet.error}</span>}
+    <State kind="setup" art="coin" title="Pay per message on Avalanche Fuji"
+      action={<div className="ph-actions" style={{ justifyContent: 'center' }}>
+        <button className="btn btn-w btn-sm" onClick={() => void (wallet.hasLocal ? wallet.connect('local') : fresh.start())} disabled={busy}>{fresh.busy ? 'Getting test funds…' : wallet.hasLocal ? 'Use my test wallet' : 'Start with a test wallet'}</button>
+        {wallet.hasInjected || wallet.qaAvailable
+          ? <button className="btn btn-sm" onClick={() => void wallet.connect()} disabled={busy}>{wallet.connecting ? 'Connecting…' : 'Connect Core or MetaMask'}</button>
+          : <a className="btn btn-sm" href="https://core.app/" target="_blank" rel="noreferrer">Get Core wallet <Icon name="external" size={13} /></a>}
+      </div>}>
+      A test wallet lives in this browser and gets free tUSD in one tap. {(wallet.error || fresh.error) && <span className="bad-c"> {wallet.error ?? fresh.error}</span>}
     </State>
   );
 }
@@ -34,6 +45,9 @@ function WalletTab({ address }: { address: Hex }) {
   }, 15_000, [address]);
   const jobs = usePoll(() => jobsOf(address), 20_000, [address]);
   const [faucet, setFaucet] = useState<{ busy: boolean; tx?: string; error?: string }>({ busy: false });
+  const dripped = useDripped(address);
+  const funds = useFunds(() => { bal.reload(); dripped.reload(); });
+  const canDrip = !!STATION && dripped.data === false;
   const nextDrip = bal.data && bal.data.last ? bal.data.last + 3600 : 0;
   const spent = (jobs.data ?? []).reduce((a, j) => a + j.charge, 0n);
   async function drip() {
@@ -59,6 +73,16 @@ function WalletTab({ address }: { address: Hex }) {
           <Tile label="Network" value="Fuji" note={<a className="link" href={addrUrl(address)} target="_blank" rel="noreferrer">Snowtrace ↗</a>} />
         </div>
       )}
+      {canDrip && (
+        <section className="sec">
+          <div className="sec-h"><div><h2>Test funds</h2><p>One tap, no gas: 2 tUSD, plus a little AVAX if this wallet has none.</p></div><a href={addrUrl(STATION!)} target="_blank" rel="noreferrer">Gas station <Icon name="external" size={13} /></a></div>
+          <div className="ph-actions">
+            <button className="btn btn-w btn-sm" onClick={() => void funds.get()} disabled={funds.busy}>{funds.busy ? 'Sending…' : 'Get test funds'}</button>
+          </div>
+          {funds.error && <p className="note bad-c" style={{ marginTop: 10 }}>{funds.error}</p>}
+        </section>
+      )}
+      {funds.tx && <p className="note" style={{ marginTop: 12 }}>Funded: {money(funds.tusd ?? '0', 2)} tUSD{funds.avax && funds.avax !== '0' ? ` and ${funds.avax} AVAX` : ''} · <a className="link" href={txUrl(funds.tx)} target="_blank" rel="noreferrer">{funds.tx.slice(0, 12)}…</a></p>}
       <section className="sec">
         <div className="sec-h"><div><h2>Add tUSD</h2><p>The test dollar's faucet gives 100 tUSD per address per hour. x402 payments need no AVAX; the facilitator pays the gas.</p></div></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560 }}>
@@ -90,62 +114,107 @@ function WalletTab({ address }: { address: Hex }) {
   );
 }
 
+type Flow = { busy: boolean; steps: { label: string; tx?: string }[]; error?: string; done?: string };
+
 function PrivateTab({ address }: { address: Hex }) {
   const wallet = useWallet();
   const e = D.eerc;
+  const [, bump] = useState(0);
+  useEffect(() => onKeys(() => bump((n) => n + 1)), []);
+  const open = keyOpen(address);
   const chain = usePoll(async () => {
     if (!e) return null;
-    const [registered, tokenId] = await Promise.all([
+    const [registered, tokenId, tusd] = await Promise.all([
       reader.client.readContract({ address: e.registrar, abi: registrarAbi, functionName: 'isUserRegistered', args: [address] }) as Promise<boolean>,
       reader.client.readContract({ address: e.encryptedERC, abi: encryptedErcAbi, functionName: 'tokenIds', args: [C.testDollar] }) as Promise<bigint>,
+      reader.tokenBalance(address),
     ]);
     const b = registered && tokenId ? ((await reader.client.readContract({ address: e.encryptedERC, abi: encryptedErcAbi, functionName: 'balanceOf', args: [address, tokenId] })) as any) : null;
-    return { registered, tokenId, balance: b ? { c1: [b[0].c1.x, b[0].c1.y], c2: [b[0].c2.x, b[0].c2.y], pending: b[2].length as number, txIndex: Number(b[4]) } : null };
-  }, 20_000, [address]);
-  const [credit, setCredit] = useState<{ busy: boolean; data?: Credit; error?: string }>({ busy: false });
+    const mine = open ? await (await loadPrivate()).privateBalance(address).catch(() => null) : null;
+    return { registered, tokenId, tusd, mine, balance: b ? { c1: [b[0].c1.x, b[0].c1.y], c2: [b[0].c2.x, b[0].c2.y], pending: b[2].length as number, txIndex: Number(b[4]) } : null };
+  }, 20_000, [address, open]);
+  const [credit, setCredit] = useState<{ busy: boolean; data?: Credit; error?: string; checks?: ReceiptCheck[]; ok?: boolean }>({ busy: false });
+  const [amount, setAmount] = useState('0.5');
+  const [flow, setFlow] = useState<Flow>({ busy: false, steps: [] });
+  const micro = /^\d{0,6}(\.\d{0,6})?$/.test(amount.trim()) && Number(amount) > 0 ? BigInt(Math.round(Number(amount) * 1e6)) : 0n;
+
   async function show() {
     setCredit({ busy: true });
     try {
       const ts = Math.floor(Date.now() / 1000);
       const signature = await wallet.signMessage(creditMessage(address, ts));
-      setCredit({ busy: false, data: await gateway.credit({ address, ts, signature }) });
+      const data = await gateway.credit({ address, ts, signature });
+      setCredit({ busy: false, data });
+      if (data.receipt && data.signature) {
+        const v = await verifyReceipt(D, reader, data.receipt as DeskReceipt, data.signature as Hex, address, async (tx, claimed) => (await loadPrivate()).proofMoved(address, tx, claimed));
+        setCredit({ busy: false, data, checks: v.checks, ok: v.ok });
+      }
     } catch (err) {
       setCredit({ busy: false, error: err instanceof GatewayError ? (err.offline ? `The gateway is not running. Start it with ${GATEWAY_START}` : err.message) : walletMessage(err) });
     }
   }
+  async function unlock() {
+    if (!wallet.client) return;
+    try { await (await loadPrivate()).openKey(address, wallet.client); chain.reload(); } catch (err) { setFlow({ busy: false, steps: [], error: walletMessage(err) }); }
+  }
+  async function topUp() {
+    if (!wallet.client || !micro) return;
+    setFlow({ busy: true, steps: [] });
+    const step = (label: string, tx?: string) => setFlow((f) => ({ ...f, steps: [...f.steps, { label, tx }] }));
+    try {
+      const tx = await (await loadPrivate()).topUpDesk(address, wallet.client, wallet.write, micro, step);
+      setFlow((f) => ({ ...f, busy: false, done: tx }));
+      chain.reload();
+    } catch (err) {
+      setFlow((f) => ({ ...f, busy: false, error: walletMessage(err) }));
+    }
+  }
   if (!e) return <State kind="setup" art="shield" title="eERC is not deployed here">This deployment has no EncryptedERC contracts.</State>;
   const c = chain.data;
-  const cmd = 'XORV_NETWORK=fuji XORV_PAY_AS=<YOUR_KEY_NAME> node scripts/private-topup.ts 0.5';
+  const lowTusd = !!c && c.tusd < micro && (c.mine ?? 0n) < micro;
   return (
     <>
       <div className="tiles">
         <Tile label="eERC registration" value={c ? (c.registered ? 'Registered' : 'Not registered') : '…'} note={<a className="link" href={addrUrl(e.registrar)} target="_blank" rel="noreferrer">Registrar ↗</a>} />
-        <Tile label="Encrypted balance" value={c?.balance ? 'Ciphertext' : c ? '—' : '…'} note={c?.balance ? `${c.balance.pending} pending amount${c.balance.pending === 1 ? '' : 's'} · ${c.balance.txIndex} changes` : 'register to hold one'} />
+        <Tile label="Encrypted balance" value={c?.mine != null ? money(c.mine, 2) : c?.balance ? 'Ciphertext' : c ? '—' : '…'} note={c?.mine != null ? 'decrypted in this tab' : c?.balance ? `${c.balance.pending} pending amount${c.balance.pending === 1 ? '' : 's'} · ${c.balance.txIndex} changes` : 'register to hold one'} />
         <Tile label="Desk credit" value={credit.data ? money(credit.data.credit) : 'Hidden'} note={credit.data ? `${credit.data.topups.length} top-ups · ${credit.data.jobs.length} private jobs` : 'only you can ask, with a signature'} />
       </div>
+      <section className="sec">
+        <div className="sec-h"><div><h2>Top up privately</h2><p>Proofs are made in this browser with Ava Labs' eERC SDK. The deposit amount is public; the transfer to the desk is not.</p></div>{!open && <button className="btn btn-sm" onClick={() => void unlock()} disabled={!wallet.client}>Open my eERC key</button>}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560 }}>
+          <div className="ph-actions" style={{ alignItems: 'flex-end' }}>
+            <div className="field" style={{ flex: '1 1 160px' }}>
+              <label htmlFor="topup">Amount (tUSD)</label>
+              <input id="topup" className="input" inputMode="decimal" value={amount} onChange={(ev) => setAmount(ev.target.value)} disabled={flow.busy} />
+            </div>
+            <button className="btn btn-w btn-sm" style={{ height: 44 }} onClick={() => void topUp()} disabled={flow.busy || !micro || lowTusd || !wallet.client}>{flow.busy ? 'Working…' : 'Top up privately'}</button>
+          </div>
+          {lowTusd && <p className="note">Not enough tUSD for this top-up. <Link to="/account" className="link">Get test funds</Link>.</p>}
+          {flow.steps.length > 0 && <ol className="steps">{flow.steps.map((s, i) => <li key={i} className={`step ${i === flow.steps.length - 1 && flow.busy ? 'now' : 'done'}`}><i /><span>{s.label}{s.tx && <a href={txUrl(s.tx)} target="_blank" rel="noreferrer">{s.tx.slice(0, 10)}… ↗</a>}</span></li>)}</ol>}
+          {flow.error && <p className="note bad-c">{flow.error}</p>}
+          {flow.done && <p className="note">Done. The desk credits it within 30 seconds. <Link to="/chat" className="link">Chat with private credit</Link>.</p>}
+        </div>
+      </section>
+      <section className="sec">
+        <div className="sec-h"><div><h2>Your credit at the Xorv desk</h2><p>The desk signs a receipt of every line it holds for you. This tab checks each line against Fuji.</p></div></div>
+        <div className="ph-actions"><button className="btn btn-w btn-sm" onClick={() => void show()} disabled={credit.busy}>{credit.busy ? 'Checking…' : 'Sign to see and check my credit'}</button><Link to="/chat" className="btn btn-sm">Chat with private credit</Link></div>
+        {credit.error && <p className="note bad-c" style={{ marginTop: 10 }}>{credit.error}</p>}
+        {credit.checks && (
+          <>
+            <ol className="steps" style={{ marginTop: 14 }}>
+              {credit.checks.map((k, i) => <li key={i} className={`step ${k.ok === false ? 'bad' : k.ok ? 'good' : ''}`}><i /><span><b>{k.label}</b>{k.detail && <span className="faint"> · {k.detail}</span>}{k.tx && <a href={txUrl(k.tx)} target="_blank" rel="noreferrer">{k.tx.slice(0, 10)}… ↗</a>}</span></li>)}
+            </ol>
+            <p className="note">{credit.ok ? 'Every line checks out on Fuji.' : 'Some lines do not check out. The signed receipt is your evidence.'}{!open && ' Open your eERC key to check the amounts too.'}</p>
+          </>
+        )}
+      </section>
       {c?.balance && (
         <section className="sec">
-          <div className="sec-h"><div><h2>What the chain shows</h2><p>Your eERC balance on Fuji is an ElGamal ciphertext on BabyJubJub. Anyone can read these numbers; only your key turns them into an amount.</p></div></div>
+          <div className="sec-h"><div><h2>What the chain shows</h2><p>Your eERC balance on Fuji is an ElGamal ciphertext on BabyJubJub. Only your key turns it into an amount.</p></div></div>
           <div className="codebox"><div className="codebox-h"><span>EncryptedERC.balanceOf({address.slice(0, 8)}…, {String(c.tokenId)})</span></div>
             <pre>{`c1 = (${String(c.balance.c1[0]).slice(0, 24)}…, ${String(c.balance.c1[1]).slice(0, 24)}…)\nc2 = (${String(c.balance.c2[0]).slice(0, 24)}…, ${String(c.balance.c2[1]).slice(0, 24)}…)`}</pre></div>
         </section>
       )}
-      <section className="sec">
-        <div className="sec-h"><div><h2>Your credit at the Xorv desk</h2><p>The desk decrypts each top-up it receives and keeps a ledger. It answers only a signed request from your address.</p></div></div>
-        <div className="ph-actions"><button className="btn btn-w btn-sm" onClick={() => void show()} disabled={credit.busy}>{credit.busy ? 'Sign in your wallet…' : 'Sign to see my credit'}</button><Link to="/chat" className="btn btn-sm">Chat with private credit</Link></div>
-        {credit.error && <p className="note bad-c" style={{ marginTop: 10 }}>{credit.error}</p>}
-        {credit.data && credit.data.topups.length > 0 && (
-          <div className="tbl-wrap" style={{ marginTop: 12 }}>
-            <table className="tbl"><thead><tr><th>Encrypted top-up</th><th className="r">Amount (decrypted by the desk)</th></tr></thead>
-              <tbody>{credit.data.topups.map((t) => <tr key={t.tx}><td><a className="link mono-c" href={txUrl(t.tx)} target="_blank" rel="noreferrer">{t.tx.slice(0, 14)}…</a></td><td className="r num">{money(t.amount)}</td></tr>)}</tbody></table>
-          </div>
-        )}
-      </section>
-      <section className="sec">
-        <div className="sec-h"><div><h2>Top up privately</h2><p>Proofs for eERC transfers are made by the Node client in this repo (snarkjs with Ava Labs' official circuits), not in the browser. It deposits tUSD if needed, then sends the desk an encrypted transfer.</p></div></div>
-        <div className="codebox"><div className="codebox-h"><span>terminal</span><CopyButton text={cmd} className="btn btn-sm btn-ghost" /></div><pre>{cmd}</pre></div>
-        <p className="note" style={{ marginTop: 8 }}>The deposit amount is public (it is an ERC-20 transfer). The transfer to the desk is not: Snowtrace shows sender and receiver, and the amount only as ciphertext. <Link to="/private" className="link">See every encrypted transfer</Link>.</p>
-      </section>
     </>
   );
 }
@@ -155,7 +224,7 @@ export function Account({ tab }: { tab: Tab }) {
   const tabs: [Tab, string, string][] = [['wallet', '/account', 'Wallet'], ['private', '/account/private', 'Private credit']];
   return (
     <div className="wrap page">
-      <PageHead title="Account" art={tab === 'private' ? 'shield' : 'coin'} sub={wallet.address ? <>{QA && wallet.kind === 'qa' ? 'QA signer' : 'Connected'} · <span className="mono-c">{wallet.address}</span></> : 'Your tUSD, your jobs and your private credit on Avalanche Fuji.'}
+      <PageHead title="Account" art={tab === 'private' ? 'shield' : 'coin'} sub={wallet.address ? <>{QA && wallet.kind === 'qa' ? 'QA signer' : wallet.kind === 'local' ? 'Test wallet in this browser' : 'Connected'} · <span className="mono-c">{wallet.address}</span></> : 'Your tUSD, your jobs and your private credit on Avalanche Fuji.'}
         actions={wallet.address ? <button className="btn btn-sm" onClick={wallet.disconnect}>Disconnect</button> : undefined} />
       <div className="seg" role="tablist" aria-label="Account" style={{ marginBottom: 20 }}>
         {tabs.map(([k, to, l]) => <Link key={k} to={to} role="tab" aria-selected={tab === k} className={`seg-link ${tab === k ? 'on' : ''}`}>{l}</Link>)}

@@ -6,6 +6,7 @@ import { Link } from '../lib/router';
 import { Art, Icon } from '../components/Ui';
 import { Md } from '../components/MdLazy';
 import { QA, useWallet, walletMessage } from '../lib/wallet';
+import { STATION, useDripped, useFunds, useStartFresh } from '../lib/funds';
 
 type Pay = 'x402' | 'private';
 type UserMsg = { role: 'user'; content: string };
@@ -114,6 +115,9 @@ export function Chat() {
   const g = useGateway(15_000);
   const gm = usePoll(() => gateway.models().catch(() => null), 30_000);
   const bal = usePoll(() => (wallet.address ? reader.tokenBalance(wallet.address) : Promise.resolve(null)), 15_000, [wallet.address]);
+  const dripped = useDripped(wallet.address);
+  const fresh = useStartFresh(() => { bal.reload(); dripped.reload(); });
+  const funds = useFunds(() => { bal.reload(); dripped.reload(); });
   const [rooms, setRooms] = useState<Room[]>(load);
   const [cur, setCur] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -208,7 +212,7 @@ export function Chat() {
         </div>
         <div className="chat-side-f">
           <span><i className={`live-dot ${health && !needs.length ? '' : 'off'}`} style={{ display: 'inline-block', marginRight: 6 }} />{label}</span>
-          <span>{wallet.address ? <>{QA && wallet.kind === 'qa' ? 'QA signer' : 'Wallet'} · <b>{wallet.address.slice(0, 8)}…</b> · {bal.data != null ? money(bal.data, 2) : '—'} tUSD</> : 'No wallet connected'} · <Link to="/account" className="link">account</Link></span>
+          <span>{wallet.address ? <>{QA && wallet.kind === 'qa' ? 'QA signer' : wallet.kind === 'local' ? 'Test wallet' : 'Wallet'} · <b>{wallet.address.slice(0, 8)}…</b> · {bal.data != null ? money(bal.data, 2) : '—'} tUSD</> : 'No wallet connected'} · <Link to="/account" className="link">account</Link></span>
         </div>
       </aside>
 
@@ -257,9 +261,20 @@ export function Chat() {
           {offline && <p className="setup" role="status"><b>Setup required:</b> start the gateway, <code>{GATEWAY_START}</code></p>}
           {!offline && health && needs.length > 0 && <p className="setup" role="status"><b>Setup required:</b> {needs.join('; ')}</p>}
           {!offline && health && !needs.length && !wallet.address && (
-            <div className="setup" role="status"><b>Connect a wallet to pay per message.</b> <span className="dim">Xorv takes tUSD on Avalanche Fuji.</span><p>{wallet.hasInjected || wallet.qaAvailable ? <button className="btn btn-sm btn-w" style={{ marginLeft: 8 }} onClick={() => void wallet.connect()}>{wallet.connecting ? 'Connecting…' : 'Connect'}</button> : 'Install Core or MetaMask to continue.'}</p>{wallet.error && <p className="bad-c">{wallet.error}</p>}</div>
+            <div className="setup" role="status"><b>Pay per message in tUSD on Avalanche Fuji.</b> <span className="dim">A test wallet gets free test funds in one tap.</span>
+              <p className="ph-actions" style={{ marginTop: 10 }}>
+                <button className="btn btn-sm btn-w" onClick={() => void (wallet.hasLocal ? wallet.connect('local') : fresh.start())} disabled={fresh.busy || wallet.connecting}>{fresh.busy ? 'Getting test funds…' : wallet.hasLocal ? 'Use my test wallet' : 'Start with a test wallet'}</button>
+                {(wallet.hasInjected || wallet.qaAvailable) && <button className="btn btn-sm" onClick={() => void wallet.connect()} disabled={wallet.connecting}>{wallet.connecting ? 'Connecting…' : 'Connect Core or MetaMask'}</button>}
+              </p>
+              {(wallet.error || fresh.error) && <p className="bad-c">{wallet.error ?? fresh.error}</p>}</div>
           )}
-          {!offline && wallet.address && lowFunds && <p className="setup" role="status"><b>Not enough tUSD.</b> This message escrows up to {money(escrow)}. <Link to="/account" className="link">Draw 100 tUSD from the faucet</Link>.</p>}
+          {!offline && wallet.address && lowFunds && (
+            <div className="setup" role="status"><b>Not enough tUSD.</b> This message escrows up to {money(escrow)}.{' '}
+              {STATION && dripped.data === false
+                ? <button className="btn btn-sm btn-w" style={{ marginLeft: 8 }} onClick={() => void funds.get()} disabled={funds.busy || fresh.busy}>{funds.busy || fresh.busy ? 'Sending…' : 'Get test funds'}</button>
+                : <Link to="/account" className="link">Draw 100 tUSD from the faucet</Link>}
+              {(funds.error || fresh.error) && <p className="bad-c">{funds.error ?? fresh.error}</p>}</div>
+          )}
           <form className="composer" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
             <label htmlFor="chat-in" className="sr">Message</label>
             <textarea id="chat-in" ref={ta} rows={1} value={text} maxLength={3000} placeholder={ready ? 'Ask anything…' : 'Chat opens once a wallet and the gateway are ready'}

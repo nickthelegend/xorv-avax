@@ -59,7 +59,7 @@ function AccountButton({ onDone }: { onDone?: () => void }) {
   const wallet = useWallet();
   return (
     <Link to="/account" className="btn btn-w btn-sm acct-btn" title={wallet.address ? `${wallet.address} · Avalanche Fuji` : 'Connect a wallet on Avalanche Fuji'}
-      onClick={(e) => { onDone?.(); if (!wallet.address) { e.preventDefault(); navigate('/account'); void wallet.connect(); } }}>
+      onClick={(e) => { onDone?.(); if (!wallet.address) { e.preventDefault(); navigate('/account'); if (wallet.hasInjected || wallet.qaAvailable) void wallet.connect(); else if (wallet.hasLocal) void wallet.connect('local'); } }}>
       {wallet.address ? short(wallet.address) : wallet.connecting ? 'Connecting…' : 'Connect'}
     </Link>
   );

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
 
 // /api and /v1 go to the local Xorv gateway (packages/gateway). When it is down the proxy answers
 // with a small JSON status so the app shows "Setup required" instead of a console error per poll.
@@ -15,4 +16,13 @@ const proxy = {
   '/api': { target: gateway, changeOrigin: true, timeout: 200_000, proxyTimeout: 200_000, configure: offline },
   '/v1': { target: gateway, changeOrigin: true, timeout: 200_000, proxyTimeout: 200_000, configure: offline },
 };
-export default defineConfig({ plugins: [react()], server: { fs: { allow: ['..'] }, proxy }, preview: { proxy }, build: { chunkSizeWarningLimit: 900 } });
+export default defineConfig({
+  plugins: [react()],
+  // Ava Labs' eERC SDK (browser proofs) needs Node's Buffer and `global`.
+  define: { global: 'globalThis' },
+  resolve: { alias: { buffer: 'buffer/', wagmi: fileURLToPath(new URL('./src/wagmi-stub.ts', import.meta.url)) } },
+  optimizeDeps: { esbuildOptions: { define: { global: 'globalThis' } } },
+  server: { fs: { allow: ['..'] }, proxy },
+  preview: { proxy },
+  build: { chunkSizeWarningLimit: 900, target: 'es2022' },
+});
