@@ -35,6 +35,7 @@ const routes = [
   ['/rankings', 'rankings'],
   [`/jobs/${lastJob}`, 'job'],
   ...((d.evidence?.slash ?? []).slice(-1).map((s) => [`/jobs/${s.job}`, 'job-slashed'])),
+  ...(process.env.CLAMP_JOB ? [[`/jobs/${process.env.CLAMP_JOB}`, 'job-clamped']] : []),
   ['/private', 'private'],
   ['/account', 'account'],
   ['/nope', 'not-found'],

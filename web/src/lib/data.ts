@@ -21,6 +21,18 @@ import accounts from '../../../deployments/accounts.json';
 
 export const D = fuji as unknown as Deployment & { startBlock?: number; evidence?: Record<string, any[]> };
 export const reader = new XorvReader(D);
+
+// The Snowtrace API allows a couple of requests per second per browser. Run the app's explorer reads one
+// at a time with a short gap so a busy page does not trip the limit (a limited reply reads as "no logs").
+{
+  const raw = reader.logs.bind(reader);
+  let chain: Promise<unknown> = Promise.resolve();
+  reader.logs = ((q: Parameters<typeof raw>[0]) => {
+    const run = chain.then(() => raw(q));
+    chain = run.catch(() => undefined).then(() => new Promise((r) => setTimeout(r, 450)));
+    return run;
+  }) as typeof reader.logs;
+}
 export const C = D.contracts;
 export const SNOW = 'https://testnet.snowtrace.io';
 export const txUrl = (h: string) => `${SNOW}/tx/${h}`;

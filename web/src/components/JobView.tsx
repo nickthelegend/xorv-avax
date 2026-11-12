@@ -153,7 +153,7 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
             {ev(d, 'Payout').map((p, i) => <div key={`p${i}`}><dt><a href={addrUrl(p.args.to)} target="_blank" rel="noreferrer">{nameOf(m, p.args.to)}</a><small>{PAYOUT[Number(p.args.kind)] ?? 'payout'}</small></dt><dd>+{money(p.args.amount)}</dd></div>)}
           </dl>
           <p className="note" style={{ marginTop: 8 }}>
-            {d.index ? <>Recorded in the Compute Index at {rate1m(d.index.args.indexRate)} / 1M <TxL h={d.index.transactionHash} /></> : ev1(d, 'IndexSkipped') ? <>Not indexed: {SKIP[Number(ev1(d, 'IndexSkipped').args.reason)]}.</> : j.status === 'Faulted' || j.status === 'Expired' ? 'Not indexed: no paid delivery.' : null}
+            {d.index ? <>Recorded in the Compute Index: cleared {rate1m(d.index.args.rate)}, index moved to {rate1m(d.index.args.indexRate)} / 1M{d.index.args.rate !== d.index.args.indexRate ? ' (clamped: one clearing moves the index at most 25%)' : ''} <TxL h={d.index.transactionHash} /></> : ev1(d, 'IndexSkipped') ? <>Not indexed: {SKIP[Number(ev1(d, 'IndexSkipped').args.reason)]}.</> : j.status === 'Faulted' || j.status === 'Expired' ? 'Not indexed: no paid delivery.' : null}
           </p>
         </Sec>
       )}

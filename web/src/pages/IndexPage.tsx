@@ -145,7 +145,7 @@ function ForwardCard({ f, now, who, T }: { f: ForwardRow; now: number; who: (a: 
         <span>Long (pays strike, gains if compute gets dearer): {who(f.long)}</span>
         <span>Short (gains if compute gets cheaper): {who(f.short)}</span>
       </div>
-      {f.state === 'Settled' && <p className={`fwd-out ${f.payoffToLong >= 0n ? 'ok-c' : 'bad-c'}`}>{f.payoffToLong >= 0n ? `Long received ${money(f.payoffToLong)} from the short` : `Short received ${money(-f.payoffToLong)} from the long`} · index {rate1m(f.settleRate)} vs strike {rate1m(f.strike)}</p>}
+      {f.state === 'Settled' && <p className="fwd-out">{f.payoffToLong >= 0n ? `Long received ${money(f.payoffToLong)} from the short` : `Short received ${money(-f.payoffToLong)} from the long`} · index {rate1m(f.settleRate)} vs strike {rate1m(f.strike)}</p>}
       {f.state === 'Live' && f.mark && <p className="fwd-out faint">Marked to the index now: {f.mark.payoff >= 0n ? `long +${money(f.mark.payoff)}` : `short +${money(-f.mark.payoff)}`}. Final payoff uses the TWAP at expiry.</p>}
       <div className="fwd-txs"><T h={f.txs.offered} l="Offered" /><T h={f.txs.taken} l="Taken" /><T h={f.txs.settled} l="Settled" /><T h={f.txs.cancelled} l="Cancelled" /></div>
     </div>
