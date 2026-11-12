@@ -44,6 +44,12 @@ export function receiptMessage(r: DeskReceipt): string {
   ].join('\n');
 }
 
+/** micro-tUSD as dollars, with enough digits for small amounts. */
+const usd = (micro: bigint | string) => {
+  const v = Number(BigInt(micro)) / 1e6;
+  return `$${v.toLocaleString('en-US', { minimumFractionDigits: v !== 0 && Math.abs(v) < 0.01 ? 6 : 2, maximumFractionDigits: 6 })}`;
+};
+
 export interface ReceiptCheck { ok: boolean | null; label: string; detail?: string; tx?: Hex }
 
 /** The sender's own amount of a transfer: the proof's sender ciphertext (public signals 6..9), as two points. */
@@ -80,7 +86,7 @@ export async function verifyReceipt(
     const ev = rc ? parseEventLogs({ abi: encryptedErcAbi, logs: rc.logs, eventName: 'PrivateTransfer' }).find((l) => l.address.toLowerCase() === e.encryptedERC.toLowerCase() && (l.args as any).from.toLowerCase() === me.toLowerCase() && (l.args as any).to.toLowerCase() === desk) : undefined;
     let amountOk: boolean | null = null;
     if (ev && senderAmount) amountOk = await senderAmount(t.tx, BigInt(t.amount)).catch(() => false);
-    checks.push({ ok: !ev ? false : amountOk, label: `Top-up of ${t.amount} micro-tUSD`, detail: !ev ? 'no encrypted transfer from you to the desk in this transaction' : amountOk === null ? 'transfer found on Fuji; open your eERC key to check the amount' : amountOk ? 'transfer found on Fuji; amount matches your proof' : 'amount does NOT match your proof', tx: t.tx });
+    checks.push({ ok: !ev ? false : amountOk, label: `Top-up of ${usd(t.amount)}`, detail: !ev ? 'no encrypted transfer from you to the desk in this transaction' : amountOk === null ? 'transfer found on Fuji; open your eERC key to check the amount' : amountOk ? 'transfer found on Fuji; amount matches your proof' : 'amount does NOT match your proof', tx: t.tx });
     total += BigInt(t.amount);
   }
 
@@ -100,11 +106,11 @@ export async function verifyReceipt(
     let refundNote = '';
     if (j.settled && job) {
       total += BigInt(j.escrow) - job.charge;
-      refundNote = ` · refund ${BigInt(j.escrow) - job.charge} after a charge of ${job.charge}`;
+      refundNote = ` · ${usd(BigInt(j.escrow) - job.charge)} back after a charge of ${usd(job.charge)}`;
     }
     const closed = !!job && ['Done', 'Faulted', 'Expired'].includes(job.status);
-    checks.push({ ok: !!posted && byDesk && (!j.settled || closed), label: `Private job #${j.job}, escrow ${j.escrow}`, detail: !posted ? 'no JobPosted for this job in that transaction' : !byDesk ? 'the job was not posted by the desk' : `posted by the desk on Fuji${refundNote}`, tx: j.tx });
+    checks.push({ ok: !!posted && byDesk && (!j.settled || closed), label: `Private job #${j.job}, escrow ${usd(j.escrow)}`, detail: !posted ? 'no JobPosted for this job in that transaction' : !byDesk ? 'the job was not posted by the desk' : `posted by the desk on Fuji${refundNote}`, tx: j.tx });
   }
-  checks.push({ ok: total === BigInt(r.credit), label: `Credit ${r.credit} = top-ups − escrows + refunds`, detail: total === BigInt(r.credit) ? 'adds up from the chain' : `the chain gives ${total}` });
+  checks.push({ ok: total === BigInt(r.credit), label: `Credit ${usd(r.credit)} = top-ups − escrows + refunds`, detail: total === BigInt(r.credit) ? 'adds up from the chain' : `the chain gives ${usd(total)}` });
   return { ok: checks.every((c) => c.ok !== false), checks };
 }

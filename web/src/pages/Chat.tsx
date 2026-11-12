@@ -145,7 +145,8 @@ export function Chat() {
   const needs = health?.setup_required ?? [];
   const escrow = (DEFAULT_MAX_RATE * BigInt(DEFAULT_MAX_TOKENS)) / 1000n + 2n * (m.data?.config.checkFee ?? 200n);
   const lowFunds = pay === 'x402' && bal.data != null && bal.data < escrow;
-  const ready = !!health && needs.length === 0 && models.includes(model) && !!wallet.address && !lowFunds;
+  // x402 needs a known tUSD balance: right after a test wallet is made, its funds are still on the way.
+  const ready = !!health && needs.length === 0 && models.includes(model) && !!wallet.address && !lowFunds && (pay !== 'x402' || bal.data != null) && !fresh.busy && !funds.busy;
   const pending = room?.messages.some((x) => x.role === 'assistant' && !x.content && !x.error) ?? false;
   const update = (id: string, f: (r: Room) => Room) => setRooms((rs) => rs.map((r) => (r.id === id ? f(r) : r)).sort((a, b) => b.updated - a.updated));
 
