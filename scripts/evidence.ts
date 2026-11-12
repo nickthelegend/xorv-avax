@@ -21,7 +21,8 @@ for (const j of jobs.reverse()) {
   const x = (ev.x402Calls ?? []).find((c: any) => c.job === j.id && Date.parse(c.at) > since);
   const q = (ev.webQaFlow ?? []).find((c: any) => c.job === j.id);
   const p = (ev.privateChats ?? []).find((c: any) => c.job === j.id && Date.parse(c.at) > since);
-  const how = q ? `x402 from the web app (QA signer) ${tx(q.settleTx)}` : x ? `x402 ${tx(x.settleTx)}` : p ? `private credit (desk) ${tx(p.postTx)}` : j.viaX402 ? 'x402' : 'allowance';
+  const mcp = (ev.mcpAsk ?? []).find((c: any) => c.job === j.id);
+  const how = mcp ? `x402 from the MCP tool ${tx(mcp.settleTx)}` : q ? `x402 from the web app (QA signer) ${tx(q.settleTx)}` : x ? `x402 ${tx(x.settleTx)}` : p ? `private credit (desk) ${tx(p.postTx)}` : j.viaX402 ? 'x402' : 'allowance';
   console.log(`| [#${j.id}](https://testnet.snowtrace.io/address/${d.contracts.market}) | ${how} | ${modelInfo(j.model).name}${j.alwaysCheck ? ' (verify)' : ''} | ${j.bidCount} (${j.revealed}) | ${j.clearedRate ? perMillion(j.clearedRate, 3) : '-'} | ${j.tokens} | ${usd(j.charge, 6)} | ${OUTCOME_TEXT[j.outcome]} |`);
 }
 

@@ -14,7 +14,7 @@ Everything below is live on Fuji with real Groq model runs.
 - **The Xorv Compute Index.** Only delivered, unslashed jobs with at least two revealed bids and a buyer who is not the winner are recorded. Each clearing moves the index at most 25%. It exposes `latest`, `twap(model, window)` and `vwap(model, window)` to any contract, a web page and `GET /api/index`.
 - **eERC private credit.** Ava Labs' official EncryptedERC (converter mode over tUSD) with its production verifiers. A buyer tops up the Xorv desk with an encrypted transfer; only the buyer, the desk and the auditor can read the amount. The desk credits the buyer and posts the buyer's chats under its own address, so the public job record does not name the buyer.
 - **Agents.** An MCP server (`node packages/mcp/src/main.ts`) gives agents `xorv_index`, `xorv_models`, `xorv_job` and `xorv_ask`, which pays the 402 itself and returns the answer with its Fuji settlement ([job #11](https://testnet.snowtrace.io/tx/0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c)).
-- **Compute forwards (stretch).** `XorvForward` pays the difference between a strike and the index TWAP over the forward's life, capped at margin. One forward is live on Fuji.
+- **Compute forwards (stretch).** `XorvForward` pays the difference between a strike and the index TWAP over the forward's life, capped at margin. One forward ran and settled on Fuji.
 
 ## Live on Fuji
 
@@ -36,6 +36,45 @@ Avalanche Fuji C-Chain (43113). All contracts are this repo's, deployed by `0xDD
 Every address, deployment transaction and recorded run is in [deployments/fuji.json](deployments/fuji.json). An earlier market deployment (same tUSD and eERC, market `0x3130…a07c`) was replaced after Fuji testing showed the spot-check draw waited for a later block that a quiet Avalanche chain may not produce; its jobs stay on-chain but are not counted here.
 
 <!-- EVIDENCE:START -->
+#### Jobs on the current market (18)
+
+| Job | Paid with | Model | Bids (revealed) | Cleared, $/1M tokens | Tokens | Charged | Outcome |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| [#0](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x7d65ee05…`](https://testnet.snowtrace.io/tx/0x7d65ee05f15fd5a03005909e69a0f308d1a140194d1da4cd255ec17537b4cd27) | GPT-OSS 20B | 4 (4) | $0.316 | 185 | $0.000059 | Paid. Not sampled for a spot check. |
+| [#1](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from the web app (QA signer) [`0x8ebdb9da…`](https://testnet.snowtrace.io/tx/0x8ebdb9dad18270bdb267cfbbd8928526df848bac26d4f72ace3e37f2a3e14099) | GPT-OSS 20B | 4 (4) | $0.321 | 180 | $0.000058 | Paid. Not sampled for a spot check. |
+| [#2](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xb8dd954b…`](https://testnet.snowtrace.io/tx/0xb8dd954bfba4adcfddd3b5f72309248e716d8154a0b326161ba7a4d7f6bb93cc) | GPT-OSS 20B | 4 (4) | $0.220 | 141 | $0.000032 | Paid. Not sampled for a spot check. |
+| [#3](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x9281ba11…`](https://testnet.snowtrace.io/tx/0x9281ba11259dceeea471794b07fc6ec4f7f253dc17b57cafd983b949a6fc927a) | GPT-OSS 120B | 3 (3) | $0.529 | 194 | $0.000103 | Paid. A second node re-ran it and matched. |
+| [#4](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xdc7e464b…`](https://testnet.snowtrace.io/tx/0xdc7e464b66b807bf28d9f0d7bb0a0938c4c1b1385e9426f204aa3cb9f4474d82) | GPT-OSS 20B (verify) | 4 (3) | $0.232 | 157 | $0.000037 | Paid. A second node re-ran it and matched. |
+| [#5](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x56f444a6…`](https://testnet.snowtrace.io/tx/0x56f444a6ec552b2d4d7cecce2c9f43e7a94a5a62cfa945019e9520c90241ee6a) | GPT-OSS 20B | 3 (3) | $0.265 | 163 | $0.000044 | Paid. Not sampled for a spot check. |
+| [#6](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x5de4dd62…`](https://testnet.snowtrace.io/tx/0x5de4dd62d27c331427311948009757a04ea6aded544bae3989b3d79cf5b912f2) | GPT-OSS 20B | 4 (4) | $0.222 | 116 | $0.000026 | Paid. Not sampled for a spot check. |
+| [#7](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | private credit (desk) [`0x2a4e644a…`](https://testnet.snowtrace.io/tx/0x2a4e644a6d6dc790d6846a4c457388fecaedebbc64b21cb4b9532a2dfd307903) | GPT-OSS 20B | 4 (4) | $0.240 | 141 | $0.000034 | Paid. Not sampled for a spot check. |
+| [#8](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xade14313…`](https://testnet.snowtrace.io/tx/0xade14313780bb9d9981d6456507158467d73954491b21c20243eb2f2397925c7) | GPT-OSS 20B (verify) | 4 (4) | $0.001 | 1200 | $0.000000 | Faulted. The tiebreaker sided with the checker and the provider was slashed. |
+| [#9](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xd4854b90…`](https://testnet.snowtrace.io/tx/0xd4854b905b74d4a03ae35e15c34489c308c099ae929c1dcc7667e1b10d1cf783) | GPT-OSS 20B | 4 (4) | $0.242 | 150 | $0.000037 | Paid. Not sampled for a spot check. |
+| [#10](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x9948428d…`](https://testnet.snowtrace.io/tx/0x9948428dde354c683c58b8e8ec7bc15f8ef77258db86bde86fe45b25ee3f9631) | GPT-OSS 120B | 4 (4) | $0.464 | 174 | $0.000081 | Paid. A second node re-ran it and matched. |
+| [#11](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from the MCP tool [`0x26b608b5…`](https://testnet.snowtrace.io/tx/0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c) | GPT-OSS 20B | 4 (4) | $0.237 | 126 | $0.000030 | Paid. A second node re-ran it and matched. |
+| [#12](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x178c8309…`](https://testnet.snowtrace.io/tx/0x178c8309dc12826b7a49ef216befefa51e0f5ee8994347c74fcc48de5d1a0d4e) | GPT-OSS 20B (verify) | 4 (4) | $0.239 | 182 | $0.000044 | Paid. A second node re-ran it and matched. |
+| [#13](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xeb86c8ff…`](https://testnet.snowtrace.io/tx/0xeb86c8fff87545f16787d9b245287364c4066123c8d7fb7c77a87ea4404cbab9) | GPT-OSS 20B | 4 (4) | $0.229 | 129 | $0.000030 | Paid. A second node re-ran it and matched. |
+| [#14](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x4372d1a3…`](https://testnet.snowtrace.io/tx/0x4372d1a37ec4f3ed27e289b2052f5397e1e44d69ca72703bfcbd52f43b395ed9) | GPT-OSS 120B (verify) | 4 (4) | $0.464 | 149 | $0.000070 | Paid. A second node re-ran it and matched. |
+| [#15](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x2efd52ea…`](https://testnet.snowtrace.io/tx/0x2efd52ead65235cd37e6f9b8e992fc4fde4d14dde2adc97ef30acc71f3c17c3c) | GPT-OSS 20B | 4 (4) | $0.226 | 145 | $0.000033 | Paid. Not sampled for a spot check. |
+| [#16](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xd8edea71…`](https://testnet.snowtrace.io/tx/0xd8edea716f9e3a9e6a997d871e72ba25a06a62a71b210e942660b85cc272cf18) | GPT-OSS 20B | 4 (4) | $0.233 | 132 | $0.000031 | Paid. A second node re-ran it and matched. |
+| [#17](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x212ee852…`](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) | GPT-OSS 20B | 4 (4) | $0.062 | 136 | $0.000009 | Paid. Not sampled for a spot check. |
+
+#### Index
+
+- GPT-OSS 20B: index $0.174 per 1M tokens, TWAP 1h $0.260, VWAP 24h $0.241 over 2083 tokens, 14 clearings.
+- GPT-OSS 120B: index $0.464 per 1M tokens, TWAP 1h $0.490, VWAP 24h $0.491 over 517 tokens, 3 clearings.
+
+#### Totals
+
+jobs 18, clearings 18, staked $39.00, paid to providers $0.002758, slashed $1.00 in 1 slash(es)
+
+#### The index under a dumping seller (job #17)
+
+dune's margin was set to 0.3, so it bid about 70% under everyone else. It won at $0.062 per 1M tokens and delivered a real answer, so the clearing is real and the job record keeps it. The index moved only the allowed 25%, from $0.233 to $0.174 ([settlement](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) posted the job; the clamp is visible in `XorvIndex.observations`: `rate` 62, `indexRate` 174). dune's margin learned its way back up after the win.
+
+#### A compute forward, settled (forward #0)
+
+The buyer went long 10M tokens of GPT-OSS 20B at a strike of $0.240 per 1M against provider atlas for 25 minutes, 2 tUSD margin each ([offer](https://testnet.snowtrace.io/tx/0xd2c079f836f217ab8a9c360e25aed51ef58982f437d5ca6276f40c7e8fabdb87), [take](https://testnet.snowtrace.io/tx/0x7577caa3b3ce12b1abca2f48e8f7aca572877788d13f9da03637ec6d46b1ecd0)). Seven auctions cleared during its life. At expiry the index TWAP over the forward's life was $0.234, so compute got cheaper and the long paid the short 0.06 tUSD ([settle](https://testnet.snowtrace.io/tx/0x7479dddceedacfc3b44b1ba127a2656a3c0ab85304650e3c3f9d4d295f7e4463)).
 <!-- EVIDENCE:END -->
 
 ### A real slash on Fuji
@@ -112,7 +151,7 @@ Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `pack
 - A chat takes about 25–35 seconds: two 10-second auction windows plus model time and Fuji confirmations. The answer is returned at delivery; checks continue after.
 - Gas: on Fuji a transaction is charged at least half its gas limit, so the nodes' fixed limits overpay slightly; at Fuji's fee level that is negligible.
 - The public Fuji RPC rate-limited this machine during testing; the apps fall back across publicnode, drpc and the official endpoint, and read history from the Snowtrace indexer API.
-- Forwards settle within a day after expiry at the TWAP from start to the settle time; the live one runs 25 minutes so it can settle during judging.
+- Forwards settle within a day after expiry at the TWAP from start to the settle time. The Fuji forward ran 25 minutes (a week is the intended term).
 
 ## Prior work
 

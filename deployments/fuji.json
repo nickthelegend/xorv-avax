@@ -326,6 +326,78 @@
         "bids": 4,
         "verify": false,
         "seconds": 30.416
+      },
+      {
+        "at": "2026-11-12T11:57:40.247Z",
+        "job": 12,
+        "settleTx": "0x178c8309dc12826b7a49ef216befefa51e0f5ee8994347c74fcc48de5d1a0d4e",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "239",
+        "tokens": 182,
+        "bids": 4,
+        "verify": true,
+        "seconds": 24.519
+      },
+      {
+        "at": "2026-11-12T12:00:39.668Z",
+        "job": 13,
+        "settleTx": "0xeb86c8fff87545f16787d9b245287364c4066123c8d7fb7c77a87ea4404cbab9",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "229",
+        "tokens": 129,
+        "bids": 4,
+        "verify": false,
+        "seconds": 26.88
+      },
+      {
+        "at": "2026-11-12T12:03:41.368Z",
+        "job": 14,
+        "settleTx": "0x4372d1a37ec4f3ed27e289b2052f5397e1e44d69ca72703bfcbd52f43b395ed9",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "464",
+        "tokens": 149,
+        "bids": 4,
+        "verify": true,
+        "seconds": 29.41
+      },
+      {
+        "at": "2026-11-12T12:06:40.233Z",
+        "job": 15,
+        "settleTx": "0x2efd52ead65235cd37e6f9b8e992fc4fde4d14dde2adc97ef30acc71f3c17c3c",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "226",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 26.982
+      },
+      {
+        "at": "2026-11-12T12:09:39.659Z",
+        "job": 16,
+        "settleTx": "0xd8edea716f9e3a9e6a997d871e72ba25a06a62a71b210e942660b85cc272cf18",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "233",
+        "tokens": 132,
+        "bids": 4,
+        "verify": false,
+        "seconds": 26.82
+      },
+      {
+        "at": "2026-11-12T12:17:25.610Z",
+        "job": 17,
+        "settleTx": "0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "62",
+        "tokens": 136,
+        "bids": 4,
+        "verify": false,
+        "seconds": 32.175
       }
     ],
     "webQaFlow": [
@@ -527,6 +599,106 @@
         "job": 11,
         "settleTx": "0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c",
         "note": "MCP stdio server paid with x402 from the buyer key"
+      }
+    ],
+    "forwardSettlements": [
+      {
+        "at": "2026-11-12T12:16:29.370Z",
+        "id": 0,
+        "settleTx": "0x7479dddceedacfc3b44b1ba127a2656a3c0ab85304650e3c3f9d4d295f7e4463",
+        "settleRate": "234",
+        "strike": "240",
+        "payoffToLong": "-60000"
+      }
+    ],
+    "indexClamp": [
+      {
+        "at": "2026-11-12T12:17:34.556Z",
+        "market": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
+        "job": 17,
+        "status": "Done",
+        "outcome": "PaidNotSampled",
+        "winner": "0x85b225E219E7FE56F50026F89d31a54899177408",
+        "rate": "62",
+        "tokens": 136,
+        "note": "dune's margin set to 0.3 (dumping ~70% under the market); it won at 62 micro/1k and delivered a real answer; the index moved only 25%, from 233 to 174",
+        "events": [
+          {
+            "event": "JobPosted",
+            "tx": "0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec",
+            "block": 60945917
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0x7afee4555d2be0991b3826ce6cf5971edd027ddc59d1e923df50cc510294c400",
+            "block": 60945919
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0xf72f32c333726da6d73a2319e17c82dc6f7139485201892e25f7d0ef731d0f17",
+            "block": 60945920
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0x3587b2e0164aad076c86e63581fc948076f275d8ffdebb25c117340fda0b2438",
+            "block": 60945922
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0x8a2a9931dce28e5fdfad5023076bb64d3209104dd1b841747cc97e9716d8cb64",
+            "block": 60945922
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0xe2703ef6ab633f86058055d6482adb01cb2eedc1a586bf7acfe167f32fa4c875",
+            "block": 60945923
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x03463e44414fe0f0de5d77b80a2876e10413544deea06cc381df36286c47299a",
+            "block": 60945924
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x7d7c55d135baeee17474cc89b987e5b47fd1e0d799ffdae3b75badcae6b84269",
+            "block": 60945925
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x62f8a0561c82b8446817c20c779f7776ed7d0648377376cabdaf6915d0bd5ddd",
+            "block": 60945926
+          },
+          {
+            "event": "AuctionCleared",
+            "tx": "0x62f8a0561c82b8446817c20c779f7776ed7d0648377376cabdaf6915d0bd5ddd",
+            "block": 60945926
+          },
+          {
+            "event": "Delivered",
+            "tx": "0xef36a5b43020bfc330f55de3197271478d43ae58c7430a1bbd2907f1c35d304e",
+            "block": 60945930
+          },
+          {
+            "event": "DrawResolved",
+            "tx": "0x60c178d3c23761eda942e8e02b403b063ad9c8ac7e4b226ba5e6a1194ae8e510",
+            "block": 60945933
+          },
+          {
+            "event": "Payout",
+            "tx": "0x60c178d3c23761eda942e8e02b403b063ad9c8ac7e4b226ba5e6a1194ae8e510",
+            "block": 60945933
+          },
+          {
+            "event": "Payout",
+            "tx": "0x60c178d3c23761eda942e8e02b403b063ad9c8ac7e4b226ba5e6a1194ae8e510",
+            "block": 60945933
+          },
+          {
+            "event": "JobClosed",
+            "tx": "0x60c178d3c23761eda942e8e02b403b063ad9c8ac7e4b226ba5e6a1194ae8e510",
+            "block": 60945933
+          }
+        ]
       }
     ]
   },
