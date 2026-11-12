@@ -405,6 +405,30 @@
         "bids": 4,
         "verify": false,
         "seconds": 32.175
+      },
+      {
+        "at": "2026-11-12T17:49:24.770Z",
+        "job": 23,
+        "settleTx": "0xc1c6b64462c0462d88827b7c3febf6e4b912e4e289bf182206fdc9002ce8c720",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "217",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 29.845
+      },
+      {
+        "at": "2026-11-12T17:50:38.018Z",
+        "job": 24,
+        "settleTx": "0xd4a30e1ccd73af47a5af677dadfd6c8ce6ba2567be0578a0db516eee3ff8929a",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "212",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 24.27
       }
     ],
     "webQaFlow": [
@@ -749,7 +773,7 @@
         "x402": {
           "job": 21,
           "settlement": "https://testnet.snowtrace.io/tx/0x3b6ad2dd7792dae146c400b3e94021363a3658fdc77fb27c1e6fbddec2f29141",
-          "answer": "Because each bidder submits a single, confidential bid without knowledge of the others\u2019 offers, colluding parties cannot coordinate a common price or adjust their bids in real time to keep the price low. The lack of inter\u2011bid communication and the single\u2011shot nature of the auction make it difficult for competitors to signal or enforce a collusive agreement, thereby discouraging price collusion."
+          "answer": "Because each bidder submits a single, confidential bid without knowledge of the others’ offers, colluding parties cannot coordinate a common price or adjust their bids in real time to keep the price low. The lack of inter‑bid communication and the single‑shot nature of the auction make it difficult for competitors to signal or enforce a collusive agreement, thereby discouraging price collusion."
         },
         "topup": [
           "https://testnet.snowtrace.io/tx/0xaa69efc2a996ebea36d59dd599bc979a0bb5569ba06637fb6fa4e5c958bcadbd",
@@ -758,19 +782,55 @@
           "https://testnet.snowtrace.io/tx/0x6ef07a1352ce0dca948b906518ca9a4f48849ffd531a2688fc520ab3c4f01efb"
         ],
         "receipt": [
-          "step good: Signed by the Xorv desk \u00b7 0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+          "step good: Signed by the Xorv desk · 0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
           "step good: For this wallet, chain and eERC",
-          "step good: Top-up of $0.50 \u00b7 transfer found on Fuji; amount matches your proof0x6ef07a13\u2026 \u2197",
-          "step good: Every top-up you sent the desk is listed \u00b7 1 on Fuji, 1 in the receipt",
-          "step good: Credit $0.50 = top-ups \u2212 escrows + refunds \u00b7 adds up from the chain"
+          "step good: Top-up of $0.50 · transfer found on Fuji; amount matches your proof0x6ef07a13… ↗",
+          "step good: Every top-up you sent the desk is listed · 1 on Fuji, 1 in the receipt",
+          "step good: Credit $0.50 = top-ups − escrows + refunds · adds up from the chain"
         ],
         "private": {
           "job": 22,
           "settlement": "https://testnet.snowtrace.io/tx/0xa9bb56e2cf20e7474794d8a46a2fb5300c772fcc1c0402b07a5af75594a35382",
-          "answer": "Fraud Prevention \u2013 By encrypting customer balances, a business can ensure that only authorized personnel can view or modify account information, reducing the risk of internal theft or unauthorized adjustments.\nRegulatory Compliance \u2013 Encrypting balances helps meet data protection regulations (such as GDPR or PCI DSS) by safeguarding sensitive financial data during storage and transmission, thereby"
+          "answer": "Fraud Prevention – By encrypting customer balances, a business can ensure that only authorized personnel can view or modify account information, reducing the risk of internal theft or unauthorized adjustments.\nRegulatory Compliance – Encrypting balances helps meet data protection regulations (such as GDPR or PCI DSS) by safeguarding sensitive financial data during storage and transmission, thereby"
         },
         "consoleErrors": 0,
         "fundTx": "0xa083e7e4482968570f3c9e51f16323b97dee6caef14492eb325bccc5bddfcccc"
+      }
+    ],
+    "filmRun": [
+      {
+        "at": "2026-11-12",
+        "what": "demo film, recorded live on https://xorv-avax.vercel.app from an empty browser (videos/xorv-avax)",
+        "testWallet": "0x195f…27EE (made in the browser, funded once by XorvGasStation)",
+        "take1": {
+          "x402Job": 25,
+          "x402Settlement": "https://testnet.snowtrace.io/tx/0xc0523e814651b8a98c0067fafabba0a4bc7096d3e3804372f091041e61090cd8",
+          "privateJob": 26,
+          "deskPost": "https://testnet.snowtrace.io/tx/0x8b527265feb761053ce3aa1b3020dc986aca1fff2fe045cb141802265c9f471d",
+          "topup": [
+            "https://testnet.snowtrace.io/tx/0xd72c0d7af9c5ffda6c06acc6d56a6d132f3e96e04d7648a207619d85a73e9789",
+            "https://testnet.snowtrace.io/tx/0xf1bd12f79e620b8511f3646289a33b8cf446eb313031a795daa1bd7268d4c2dc",
+            "https://testnet.snowtrace.io/tx/0xf5cbc979b1fa4bd5acf6b1b19c1ec273526b77928a04d10576a41f5604c00ac3",
+            "https://testnet.snowtrace.io/tx/0x1e64b3844a24ef1a50c4e84fdc1ddd0b1b604ffbad7d44e0bc3856738825df16"
+          ]
+        },
+        "take2InFilm": {
+          "x402Job": 27,
+          "x402Settlement": "https://testnet.snowtrace.io/tx/0x586da186de2f569fa48971cc208b4fb2f7ad0d3179b2910b87365536cbef7847",
+          "privateJob": 28,
+          "deskPost": "https://testnet.snowtrace.io/tx/0x7f690eabadf38d266390e8f28d365b809c4f1c5edec087c21ab8dcad7dd2c047",
+          "topup": [
+            "https://testnet.snowtrace.io/tx/0xbc3329a28c238c090d51c4af49d9c502d64ca5a4135de488a8f9b4ae98343ba1",
+            "https://testnet.snowtrace.io/tx/0x9bab3f169e506a2040f6ba91555cda88295fc6a119474b737a85c596e8ef9f20"
+          ]
+        },
+        "terminal": {
+          "x402Jobs": [
+            23,
+            24
+          ],
+          "note": "scripts/x402-client.ts against the hosted API; job #24 is the one in the film"
+        }
       }
     ]
   },
