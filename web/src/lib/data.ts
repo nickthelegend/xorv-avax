@@ -36,7 +36,7 @@ export function money(micro: bigint | number | string | null | undefined, digits
   return `$${v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
 }
 /** A rate in micro-dollars per 1k tokens shown as dollars per 1M tokens. */
-export function rate1m(r: bigint | number | null | undefined, digits = 2) {
+export function rate1m(r: bigint | number | null | undefined, digits = 3) {
   if (r == null) return '—';
   const v = (Number(r) * 1000) / 1e6;
   return `$${v.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;

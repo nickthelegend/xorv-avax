@@ -209,6 +209,30 @@
         "bids": 4,
         "verify": false,
         "seconds": 151.628
+      },
+      {
+        "at": "2026-11-12T11:01:04.566Z",
+        "job": 0,
+        "settleTx": "0x7d65ee05f15fd5a03005909e69a0f308d1a140194d1da4cd255ec17537b4cd27",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "316",
+        "tokens": 185,
+        "bids": 4,
+        "verify": false,
+        "seconds": 26.321
+      }
+    ],
+    "webQaFlow": [
+      {
+        "at": "2026-11-12T11:31:43.016Z",
+        "flow": "web /chat, QA signer, x402 exact (EIP-3009) -> X402Router.payAndPost -> sealed-bid auction -> delivery",
+        "job": 1,
+        "settleTx": "0x8ebdb9dad18270bdb267cfbbd8928526df848bac26d4f72ace3e37f2a3e14099",
+        "payer": "0xea1021F144df6bB6B565c85422Bb5d285140bc10",
+        "answerChars": 410,
+        "pageErrors": 0,
+        "snowtrace": "https://testnet.snowtrace.io/tx/0x8ebdb9dad18270bdb267cfbbd8928526df848bac26d4f72ace3e37f2a3e14099"
       }
     ]
   },

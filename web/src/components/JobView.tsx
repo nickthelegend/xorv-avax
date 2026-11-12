@@ -132,10 +132,12 @@ export function JobView({ d, m }: { d: JobDetail; m: Market | null }) {
 
       <Sec id="txs" title="Transactions" meta={`${new Set(d.events.map((e) => e.transactionHash)).size} on Avalanche Fuji`}>
         <div className="card card-pad txs">
-          {d.x402 && <a href={txUrl(d.x402.transactionHash)} target="_blank" rel="noreferrer"><span>{short(d.x402.args.facilitator)}</span><b>x402 settled: {money(d.x402.args.value)} from {short(d.x402.args.buyer)}</b><em>{d.x402.transactionHash.slice(0, 10)}… <Icon name="external" size={11} /></em></a>}
-          {d.events.filter((e, i, a) => a.findIndex((x) => x.transactionHash === e.transactionHash) === i && !(d.x402 && e.transactionHash === d.x402.transactionHash)).map((e) => (
-            <a key={e.transactionHash} href={txUrl(e.transactionHash)} target="_blank" rel="noreferrer"><span>{nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.to ?? '')}</span><b>{e.eventName}</b><em>{e.transactionHash.slice(0, 10)}… <Icon name="external" size={11} /></em></a>
-          ))}
+          {[...new Set(d.events.map((e) => e.transactionHash as string))].map((h) => {
+            const es = d.events.filter((e) => e.transactionHash === h);
+            const names = [...new Set(es.map((e) => e.eventName as string))].join(' · ');
+            const e = es[0];
+            return <a key={h} href={txUrl(h)} target="_blank" rel="noreferrer"><span>{d.x402 && h === d.x402.transactionHash ? 'x402' : nameOf(m, e.args.node ?? e.args.buyer ?? e.args.owner ?? e.args.to ?? '')}</span><b>{d.x402 && h === d.x402.transactionHash ? `x402 settled ${money(d.x402.args.value)} · ${names}` : names}</b><em>{h.slice(0, 10)}… <Icon name="external" size={11} /></em></a>;
+          })}
           {!d.events.length && <p className="note">The Snowtrace indexer has not returned this job's events yet. They appear within a few seconds.</p>}
         </div>
       </Sec>

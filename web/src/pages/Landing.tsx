@@ -22,7 +22,7 @@ export function Landing() {
     <>
       <section className="hero">
         <div className="wrap">
-          <h1>One API for the AI<br />nobody's using<span className="soft">, and the real price of compute</span></h1>
+          <h1>One API for the AI<br />nobody's using<span className="soft">and the real price of compute</span></h1>
           <p>Every request is a sealed-bid auction among staked nodes on Avalanche. You pay per call over x402, liars lose stake, and what each auction cleared at becomes an on-chain price index.</p>
           <div className="hero-search"><Search big placeholder="Search models, providers, jobs" /></div>
           <div className="hero-cta">
@@ -70,7 +70,7 @@ export function Landing() {
               <div key={i.id} className="idx-teaser-row">
                 <span>{i.name.split(':').slice(1).join(':')}</span>
                 <b className="num">{rate1m(i.rate)}</b>
-                <small className="faint num">{i.observations} clearings · TWAP 1h {i.twap1h != null ? rate1m(i.twap1h) : '—'}</small>
+                <small className="faint num">{i.observations} clearing{i.observations === 1 ? '' : 's'} · TWAP 1h {i.twap1h != null ? rate1m(i.twap1h) : '—'}</small>
               </div>
             )) : <p className="note">{d ? 'No paid clearing yet. The first checked auction with two revealed bids sets the first price.' : 'Reading the index…'}</p>}
           </div>

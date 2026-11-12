@@ -257,7 +257,7 @@ export function Chat() {
           {offline && <p className="setup" role="status"><b>Setup required:</b> start the gateway, <code>{GATEWAY_START}</code></p>}
           {!offline && health && needs.length > 0 && <p className="setup" role="status"><b>Setup required:</b> {needs.join('; ')}</p>}
           {!offline && health && !needs.length && !wallet.address && (
-            <div className="setup" role="status"><b>Connect a wallet to pay per message.</b><p>Xorv takes tUSD on Avalanche Fuji. {wallet.hasInjected || wallet.qaAvailable ? <button className="btn btn-sm btn-w" style={{ marginLeft: 8 }} onClick={() => void wallet.connect()}>{wallet.connecting ? 'Connecting…' : 'Connect'}</button> : 'Install Core or MetaMask to continue.'}</p>{wallet.error && <p className="bad-c">{wallet.error}</p>}</div>
+            <div className="setup" role="status"><b>Connect a wallet to pay per message.</b> <span className="dim">Xorv takes tUSD on Avalanche Fuji.</span><p>{wallet.hasInjected || wallet.qaAvailable ? <button className="btn btn-sm btn-w" style={{ marginLeft: 8 }} onClick={() => void wallet.connect()}>{wallet.connecting ? 'Connecting…' : 'Connect'}</button> : 'Install Core or MetaMask to continue.'}</p>{wallet.error && <p className="bad-c">{wallet.error}</p>}</div>
           )}
           {!offline && wallet.address && lowFunds && <p className="setup" role="status"><b>Not enough tUSD.</b> This message escrows up to {money(escrow)}. <Link to="/account" className="link">Draw 100 tUSD from the faucet</Link>.</p>}
           <form className="composer" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
