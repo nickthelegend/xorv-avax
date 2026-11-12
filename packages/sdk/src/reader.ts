@@ -192,7 +192,9 @@ export class XorvReader {
       return parsed.filter((l) => (q.topic1 === undefined || BigInt(l.topics[1] ?? -1) === BigInt(q.topic1)) && matchArgs(l.args, q.args));
     }
     const topics: (Hex | null)[] = q.eventName ? (encodeEventTopics({ abi: q.abi, eventName: q.eventName, args: q.args } as any) as any) : [null, `0x${BigInt(q.topic1 ?? 0).toString(16).padStart(64, '0')}`];
-    const params = new URLSearchParams({ module: 'logs', action: 'getLogs', address: q.address, fromBlock: String(q.fromBlock ?? (this.d as any).startBlock ?? 0), toBlock: 'latest', offset: '1000' });
+    // The explorer API is cached per URL; a changing toBlock keeps a stale empty answer from being reused.
+    const head = await this.client.getBlockNumber();
+    const params = new URLSearchParams({ module: 'logs', action: 'getLogs', address: q.address, fromBlock: String(q.fromBlock ?? (this.d as any).startBlock ?? 0), toBlock: String(head), offset: '1000' });
     topics.forEach((t, i) => t && params.set(`topic${i}`, t));
     const present = topics.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
     for (let k = 1; k < present.length; k++) params.set(`topic${present[k - 1]}_${present[k]}_opr`, 'and');
