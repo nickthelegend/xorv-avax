@@ -1,15 +1,16 @@
 # Xorv on Avalanche: where it stands against the rubric
 
-Honest self-score after the 9/10 round (Nov 12, 2026), against the Avalanche Speedrun weights.
+Honest self-score after the 9/10 round (Nov 12, 2026) and the ship round (Nov 12–13: screen audit in
+[SCREEN-AUDIT.md](SCREEN-AUDIT.md), landing re-positioned, new art and OG card), against the Avalanche Speedrun weights.
 
-| Criterion (weight) | Before (Nov 12 am) | After hosting | 9/10 round | Why |
-|---|---|---|---|---|
-| Does it work (30%) | 7.5 | 8 | 8.8 | A judge with an empty browser finishes the main flow on the hosted app: one tap makes a test wallet and `XorvGasStation` funds it, then a paid chat runs a sealed-bid auction on Fuji and answers in about 40 s with its Snowtrace settlement (job #21, 0 console errors). The private lane runs from the same page (job #22). Not higher: a chat still takes 25-40 s (two 10-second auction windows), and Groq is the only model host. |
-| Idea and originality (25%) | 8 | 8 | 8.2 | Per-request sealed-bid auctions over idle AI capacity, paid with x402, feeding an on-chain compute price index that forwards settle against. Private spend through eERC. |
-| Technical depth (20%) | 8 | 8 | 9 | On-chain text similarity and slashing, a manipulation-resistant index, x402 settled into escrow in one transaction, forwards, eERC proofs made in the browser with Ava Labs' SDK, signed desk receipts checked down to the sender ciphertext of the buyer's own proof, a gas station whose limits live on-chain. 99 tests, no mocked chains. |
-| Avalanche fit (15%) | 7.5 | 7.5 | 8 | x402 on Fuji where per-request auctions are affordable; eERC for a real job (private AI spend with an auditor); the gas station works because C-Chain gas is cheap. No own L1, no ICM/ICTT. |
-| Demo and communication (10%) | 7 | 7 | 7.5 | Screenshots at 1440 and 375, README with every transaction, slides outline. The 3-minute film is not cut. |
-| **Weighted** | **7.7** | **7.8** | **8.4** | |
+| Criterion (weight) | Before (Nov 12 am) | After hosting | 9/10 round | Ship round | Why |
+|---|---|---|---|---|---|
+| Does it work (30%) | 7.5 | 8 | 8.8 | 8.9 | A judge with an empty browser finishes the main flow on the hosted app: one tap makes a test wallet and `XorvGasStation` funds it, then a paid chat runs a sealed-bid auction on Fuji and answers in about 40 s with its Snowtrace settlement (job #21, 0 console errors). The private lane runs from the same page (job #22). Not higher: a chat still takes 25-40 s (two 10-second auction windows), and Groq is the only model host. Ship round: the chat's suggestion cards no longer run off a phone screen, and the test-wallet button is a clear separate action. |
+| Idea and originality (25%) | 8 | 8 | 8.2 | 8.2 | Per-request sealed-bid auctions over idle AI capacity, paid with x402, feeding an on-chain compute price index that forwards settle against. Private spend through eERC. |
+| Technical depth (20%) | 8 | 8 | 9 | 9 | On-chain text similarity and slashing, a manipulation-resistant index, x402 settled into escrow in one transaction, forwards, eERC proofs made in the browser with Ava Labs' SDK, signed desk receipts checked down to the sender ciphertext of the buyer's own proof, a gas station whose limits live on-chain. 99 tests, no mocked chains. |
+| Avalanche fit (15%) | 7.5 | 7.5 | 8 | 8 | x402 on Fuji where per-request auctions are affordable; eERC for a real job (private AI spend with an auditor); the gas station works because C-Chain gas is cheap. No own L1, no ICM/ICTT. |
+| Demo and communication (10%) | 7 | 7 | 7.5 | 8 | Screenshots at 1440 and 375, README with every transaction, slides outline. The 3-minute film is not cut. Ship round: the first screen now reads in one line (who pays, for what, how it is priced) with an OG card; the film is still not cut. |
+| **Weighted** | **7.7** | **7.8** | **8.4** | **8.5** | |
 
 ## What is left for 9/10, in order of value
 

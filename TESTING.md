@@ -36,6 +36,8 @@ Every test that touches a chain runs against real contracts: Foundry's EVM for t
 
 `web/scripts/qa-flow.mjs` drives the built app in headless Chrome with a build-flagged QA signer (`VITE_XORV_QA=1`; the key is injected at runtime by Playwright and never enters a bundle or the repo) and sends one real paid chat on Fuji through the UI. `web/scripts/shots.mjs` captures every route at 1440 px and 375 px and checks for horizontal overflow and console errors. Results: [deployments/fuji.json](deployments/fuji.json) `evidence.webQaFlow`, screenshots in `/Volumes/Extreme SSD/Projects/grokbot/orchestration/shots/avax-xorv/`.
 
+Ship round (Nov 12–13): `XORV_WEB=https://xorv-avax.vercel.app SHOTS_DIR=…/shots/avax-xorv/ship/after node web/scripts/shots.mjs` on the hosted app: 14 routes × 2 widths = 28 screenshots, 0 px horizontal overflow, 0 console errors (same run before the round: `ship/before`). Each screen is scored before and after in [docs/SCREEN-AUDIT.md](docs/SCREEN-AUDIT.md). An unpaid `POST /v1/chat/completions` on the hosted app answers `402 Payment Required`, as the landing says.
+
 ## What is not tested
 
 - Output similarity is word-set Jaccard. It catches junk and unrelated answers; it does not judge quality, and two honest runs of a nondeterministic model can disagree (the tolerance is 50%).

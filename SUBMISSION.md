@@ -4,7 +4,7 @@ Draft for Nick. Event: https://build.avax.network/events/3f8d455d-1eb5-425b-b859
 
 **Name:** Xorv
 
-**One-liner:** One API for the AI nobody's using, and the real price of compute: every request is a sealed-bid auction on Avalanche, paid per call with x402, and every clearing feeds an on-chain compute price index.
+**One-liner:** Every AI request goes to the lowest bidder. Pay-per-message AI where each request is a sealed-bid auction on Avalanche, paid with x402, and every winning price becomes an on-chain compute price index.
 
 ## Description
 

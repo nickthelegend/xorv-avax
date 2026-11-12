@@ -1,6 +1,6 @@
 # Xorv: slides (9)
 
-1. **Xorv.** One API for the AI nobody's using, and the real price of compute. Live on Avalanche Fuji. (Landing screenshot.)
+1. **Xorv.** Every AI request goes to the lowest bidder. Pay per message; the price becomes an on-chain index. Live on Avalanche Fuji. (Landing screenshot.)
 
 2. **The problem.** AI is bought at list prices from a few APIs, idle capacity earns nothing, and nobody can see what AI work really costs. A company's AI spend is also competitive information.
 

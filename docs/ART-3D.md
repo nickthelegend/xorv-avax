@@ -6,7 +6,7 @@ objects do too. Xorv is infrastructure, so the objects carry no face.
 - **Material:** satin white porcelain for the main body, matte black ceramic for structure, small brushed graphite
   details. Engineered proportions, precise rounded bevels, no toy look. No colour, no chrome, no polished silver, no
   glitter.
-- **Palette (from `packages/web/src/styles.css`):** main porcelain `#efefef` (`--ink`), structure matte black `#101010`
+- **Palette (from `web/src/styles.css`):** main porcelain `#efefef` (`--ink`), structure matte black `#101010`
   (`--surface`), detail graphite `#3a3a3a` (the button hover border), rim light pure white `#ffffff` (`--white`). The
   UI's status green `#4ade80` and red `#f87171` never appear in the art.
 - **Face:** none. The object alone carries the meaning.
@@ -29,8 +29,15 @@ Style line used in every prompt (ChatGPT, one fresh chat, one image per message)
 The first check-mark badge and trophy came back with polished chrome rims and stems; both were regenerated with
 "no shiny metal, no chrome, no silver anywhere" and matte black ceramic in place of the graphite.
 
-Files: `packages/web/public/art/3d/xorv-3d-<subject>.webp` (trimmed, padded square, 640 px, transparent, 17-31 KB
+Files: `web/public/art/3d/xorv-3d-<subject>.webp` (trimmed, padded square, 640 px, transparent, 17-31 KB
 each). 3D art generated with ChatGPT.
+
+Ship round (Nov 12–13), same style line, one fresh ChatGPT chat: **hero** (a porcelain chat bubble on a black ceramic
+auction block with a gavel: the product in one object), **pay** (a porcelain coin in a black ceramic slot: pay per
+message), **bids** (three sealed porcelain envelopes), **index** (a stepped porcelain price line on a black base),
+**app** (a porcelain laptop with plain chat bubbles), and **og-bg** (1536×1024 scene for the social card;
+`web/scripts/og.mjs` lays real type over it into `web/public/brand/xorv-og-v2.jpg`). All checked monochrome (largest
+per-pixel channel spread ≤ 5 of 255), trimmed, padded square, 21–30 KB.
 
 ## Where each object is used
 
@@ -39,10 +46,15 @@ Sparingly, at OpenRouter density. Never inside a chat thread.
 | Object | File | Used in |
 |---|---|---|
 | Chat bubble | `xorv-3d-chat.webp` | `/chat` empty state (112 px, 80 px on phones), in place of the small logo mark |
-| Sealed envelope | `xorv-3d-envelope.webp` | Landing "How every answer clears": Sealed bids |
-| Gavel | `xorv-3d-gavel.webp` | Landing row: Lowest bid wins |
-| Magnifier | `xorv-3d-magnifier.webp` | Landing row: Random re-runs (percentage read from `get_config`) |
-| Cracked shield | `xorv-3d-shield.webp` | Landing row: Liars get slashed (percentage read from `get_config`) |
+| Chat bubble on an auction block | `xorv-3d-hero.webp` | Landing hero, above the headline (176 px, 120 px on phones) |
+| Coin in a slot | `xorv-3d-pay.webp` | Landing "How it works": Ask, pay per message |
+| Three sealed envelopes | `xorv-3d-bids.webp` | Landing "How it works": Providers bid blind |
+| Magnifier | `xorv-3d-magnifier.webp` | Landing "How it works": Checked, then priced (percentages read from the contract config) |
+| Stepped price line | `xorv-3d-index.webp` | Landing "A price for AI that nobody can fake"; `/index` header |
+| Laptop with chat | `xorv-3d-app.webp` | Landing "Use it from chat, code or an agent" (240 px, 120 px below 980 px) |
+| Sealed envelope | `xorv-3d-envelope.webp` | No longer on the landing (kept in the kit) |
+| Gavel | `xorv-3d-gavel.webp` | No longer used (kept in the kit) |
+| Cracked shield | `xorv-3d-shield.webp` | `/private` header |
 | Server rack | `xorv-3d-rack.webp` | `/providers` header; "Setup required: start the Xorv gateway" on Credits and API keys |
 | GPU card | `xorv-3d-gpu.webp` | `/providers/join` header |
 | Trophy | `xorv-3d-trophy.webp` | `/rankings` header |

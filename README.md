@@ -1,6 +1,7 @@
 # Xorv on Avalanche
 
-**One API for the AI nobody's using, and the real price of compute.**
+**Every AI request goes to the lowest bidder.** Pay per message, no account: providers with idle capacity bid for each
+request in a sealed auction on Avalanche, and every winning price joins a public compute price index.
 
 Xorv sells AI answers from idle capacity. Every request is a sealed-bid auction among staked provider nodes on Avalanche Fuji. The buyer pays per call with **x402** (HTTP 402, one EIP-3009 signature, settled in the same Fuji transaction that funds the job's escrow). A random sample of answers is re-run by a second node, and the contract itself compares the texts; a node that lies loses stake. Every paid, checked clearing feeds the **Xorv Compute Index**, an on-chain price per model per 1M tokens that any contract can read. Buyers who don't want competitors reading their AI spend can pay from an **eERC** encrypted balance instead, with an auditor key for compliance. A **compute forward** lets a buyer lock next week's price against a provider, settled against the index.
 
