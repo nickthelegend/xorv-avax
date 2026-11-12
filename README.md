@@ -13,6 +13,7 @@ Everything below is live on Fuji with real Groq model runs.
 - **Spot checks and slashing.** 30% of deliveries (100% when the buyer asks to verify) are re-run by a drawn node. The contract computes word-set similarity on-chain. On a mismatch a third node breaks the tie and whoever it contradicts loses 10% of stake. A real lying node was slashed on Fuji ([job #8](#a-real-slash-on-fuji)).
 - **The Xorv Compute Index.** Only delivered, unslashed jobs with at least two revealed bids and a buyer who is not the winner are recorded. Each clearing moves the index at most 25%. It exposes `latest`, `twap(model, window)` and `vwap(model, window)` to any contract, a web page and `GET /api/index`.
 - **eERC private credit.** Ava Labs' official EncryptedERC (converter mode over tUSD) with its production verifiers. A buyer tops up the Xorv desk with an encrypted transfer; only the buyer, the desk and the auditor can read the amount. The desk credits the buyer and posts the buyer's chats under its own address, so the public job record does not name the buyer.
+- **Agents.** An MCP server (`node packages/mcp/src/main.ts`) gives agents `xorv_index`, `xorv_models`, `xorv_job` and `xorv_ask`, which pays the 402 itself and returns the answer with its Fuji settlement ([job #11](https://testnet.snowtrace.io/tx/0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c)).
 - **Compute forwards (stretch).** `XorvForward` pays the difference between a strike and the index TWAP over the forward's life, capped at margin. One forward is live on Fuji.
 
 ## Live on Fuji
@@ -97,11 +98,12 @@ node scripts/keys.ts                             # test accounts into the gitign
 XORV_ENV_FILE=/path/to/.env.with.GROQ_API_KEY pnpm gateway     # gateway on :5421 + four provider nodes
 node scripts/x402-client.ts "your question" [--verify]          # a buyer agent paying with x402
 cd web && pnpm build && pnpm preview             # the app; /api and /v1 proxy to the gateway
+node packages/mcp/src/main.ts                    # MCP server (stdio) for agents
 ```
 
 Provider nodes need `GROQ_API_KEY` (read by name only, passed to node processes and nothing else). A fresh deployment: `node scripts/fund-deployer.ts`, `node scripts/deploy.ts`, `node scripts/setup-providers.ts`, then `node scripts/private-lane.ts` for the eERC auditor and registrations. Slashing demo: start the gateway with `XORV_GATEWAY_NODES=atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15:deliver` and send a `--verify` chat.
 
-Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `packages/sdk` (reads, x402, similarity), `packages/node` (provider node), `packages/gateway` (OpenAI-compatible API, x402 facilitator, private desk), `packages/eerc` (eERC client), `web/` (Vite + React), `scripts/`, `deployments/`.
+Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `packages/sdk` (reads, x402, similarity), `packages/node` (provider node), `packages/gateway` (OpenAI-compatible API, x402 facilitator, private desk), `packages/eerc` (eERC client), `packages/mcp` (agent tools), `web/` (Vite + React), `scripts/`, `deployments/`.
 
 ## Limits
 

@@ -17,7 +17,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "circuits": "node scripts/fetch-eerc-circuits.mjs",
     "gateway": "node packages/gateway/src/server.ts",
-    "node": "node packages/node/src/cli.ts"
+    "node": "node packages/node/src/cli.ts",
+    "mcp": "node packages/mcp/src/main.ts",
+    "test:local": "bash scripts/test-local.sh"
   },
   "devDependencies": {
     "typescript": "5.9.3",
