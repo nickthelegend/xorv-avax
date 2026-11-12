@@ -110,7 +110,7 @@ settle: winner paid rate × tokens, unused escrow refunded, XorvIndex.record(mod
 - **Randomness.** The spot-check draw and the checker pick come from the hash of the delivery block, known only after it is produced. Avalanche makes blocks on demand, so waiting for a later block could stall a job on a quiet chain; an aged-out hash forces a check.
 - **Keys.** A provider's owner key stakes and withdraws; its node key only bids, delivers and checks.
 - **Index rules.** See above. The job record always keeps the true clearing; only the index input is clamped.
-- **x402 details.** Network `avalanche-fuji`, scheme `exact`, asset tUSD (EIP-712 domain "Xorv Test Dollar", version 1), `payTo` the router. The gateway checks the signature, expiry, payee, amount and balance before spending gas, then settles. If someone front-runs the facilitator by submitting the signature straight to the token, the job is not created, the call fails loudly, and `X402Router.refundStray` returns that exact payment (the token records which signed transfer consumed each nonce).
+- **x402 details** (wire format in [docs/X402.md](docs/X402.md)). Network `avalanche-fuji`, scheme `exact`, asset tUSD (EIP-712 domain "Xorv Test Dollar", version 1), `payTo` the router. The gateway checks the signature, expiry, payee, amount and balance before spending gas, then settles. If someone front-runs the facilitator by submitting the signature straight to the token, the job is not created, the call fails loudly, and `X402Router.refundStray` returns that exact payment (the token records which signed transfer consumed each nonce).
 
 ## eERC: what is hidden and what is not
 
