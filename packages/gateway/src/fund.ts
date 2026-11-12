@@ -46,10 +46,18 @@ class Limiter {
   }
 }
 
-/** The requester's IP: the first X-Forwarded-For hop (Vercel, then Traefik, append theirs), else the socket. */
+/**
+ * The requester's IP. Behind Vercel's rewrite, Traefik sees Vercel's address, so Vercel's own header comes first;
+ * then the first X-Forwarded-For hop, X-Real-IP, the socket. A direct caller can forge these headers, which only
+ * spreads it across per-tag caps: the station's daily cap and once-per-wallet rule hold on-chain regardless.
+ */
 export function clientIp(headers: IncomingHttpHeaders, socketIp = ''): string {
-  const xff = String(headers['x-forwarded-for'] ?? '').split(',')[0]?.trim();
-  return xff || String(headers['x-real-ip'] ?? '') || socketIp;
+  const first = (h: string | string[] | undefined) => String(h ?? '').split(',')[0]?.trim();
+  return first(headers['x-vercel-forwarded-for']) || first(headers['x-forwarded-for']) || first(headers['x-real-ip']) || socketIp;
+}
+
+export function ipSource(headers: IncomingHttpHeaders): string {
+  return headers['x-vercel-forwarded-for'] ? 'x-vercel-forwarded-for' : headers['x-forwarded-for'] ? 'x-forwarded-for' : headers['x-real-ip'] ? 'x-real-ip' : 'socket';
 }
 
 export class FundDesk {

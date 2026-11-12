@@ -25,7 +25,7 @@ import { ROOT, keyByName, loadDeployment, readEnvFile, walletFor, type Wallet } 
 import { NodePool, parseNodes } from './nodes.ts';
 import { Facilitator, HttpError } from './x402.ts';
 import { PrivateLane } from './private.ts';
-import { FundDesk, clientIp } from './fund.ts';
+import { FundDesk, clientIp, ipSource } from './fund.ts';
 
 const d = loadDeployment();
 const rpc = process.env.XORV_RPC ?? d.rpc;
@@ -213,7 +213,7 @@ const server = createServer(async (req, res) => {
       const c = await completion(s.job, s.tx);
       return send(res, c.status, c.body, { 'x-payment-response': paymentResponse });
     }
-    if (p === '/api/fund' && req.method === 'GET') return send(res, 200, await funds.status(clientIp(req.headers, req.socket.remoteAddress)));
+    if (p === '/api/fund' && req.method === 'GET') return send(res, 200, { ...(await funds.status(clientIp(req.headers, req.socket.remoteAddress))), requester: ipSource(req.headers) });
     if (p === '/api/fund' && req.method === 'POST') return send(res, 200, await funds.fund(await readJson(req), clientIp(req.headers, req.socket.remoteAddress)));
     if (p.startsWith('/api/private')) return send(res, ...(await lane.route(req.method ?? 'GET', p, req.method === 'POST' ? await readJson(req) : {}, req.headers)));
     if (req.method === 'GET' && !p.startsWith('/api') && !p.startsWith('/v1') && serveStatic(p, res)) return;
