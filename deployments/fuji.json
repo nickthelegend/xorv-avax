@@ -302,6 +302,30 @@
         "bids": 4,
         "verify": true,
         "seconds": 24.196
+      },
+      {
+        "at": "2026-11-12T11:51:37.685Z",
+        "job": 9,
+        "settleTx": "0xd4854b905b74d4a03ae35e15c34489c308c099ae929c1dcc7667e1b10d1cf783",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "242",
+        "tokens": 150,
+        "bids": 4,
+        "verify": false,
+        "seconds": 27.774
+      },
+      {
+        "at": "2026-11-12T11:54:39.732Z",
+        "job": 10,
+        "settleTx": "0x9948428dde354c683c58b8e8ec7bc15f8ef77258db86bde86fe45b25ee3f9631",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "464",
+        "tokens": 174,
+        "bids": 4,
+        "verify": false,
+        "seconds": 30.416
       }
     ],
     "webQaFlow": [
@@ -494,6 +518,15 @@
         "short": "0x010B876aCd66e60F87E63ABdC18bFf64F153E99C",
         "offerTx": "0xd2c079f836f217ab8a9c360e25aed51ef58982f437d5ca6276f40c7e8fabdb87",
         "takeTx": "0x7577caa3b3ce12b1abca2f48e8f7aca572877788d13f9da03637ec6d46b1ecd0"
+      }
+    ],
+    "mcpAsk": [
+      {
+        "at": "2026-11-12T11:57:10.612Z",
+        "tool": "xorv_ask",
+        "job": 11,
+        "settleTx": "0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c",
+        "note": "MCP stdio server paid with x402 from the buyer key"
       }
     ]
   },
