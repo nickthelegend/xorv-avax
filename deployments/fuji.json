@@ -410,6 +410,17 @@
         "answerChars": 410,
         "pageErrors": 0,
         "snowtrace": "https://testnet.snowtrace.io/tx/0x8ebdb9dad18270bdb267cfbbd8928526df848bac26d4f72ace3e37f2a3e14099"
+      },
+      {
+        "at": "2026-11-12T13:50:12.917Z",
+        "flow": "web /chat, QA signer, x402 exact (EIP-3009) -> X402Router.payAndPost -> sealed-bid auction -> delivery",
+        "job": 18,
+        "settleTx": "0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a",
+        "payer": "0xea1021F144df6bB6B565c85422Bb5d285140bc10",
+        "answerChars": 441,
+        "pageErrors": 0,
+        "snowtrace": "https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a",
+        "gateway": "https://xorv-api.201-18-198-162.sslip.io (hosted on the VPS; the QA web build ran on the Mac with its /api proxy pointed there)"
       }
     ],
     "eerc": [

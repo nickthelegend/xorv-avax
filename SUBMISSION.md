@@ -40,7 +40,7 @@ Spend is private when it needs to be. With Ava Labs' official eERC (encrypted ER
 - Live contracts (Snowtrace testnet): market [0x57fc…814b](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b), index [0x7a91…1abc](https://testnet.snowtrace.io/address/0x7a9192cb425c638bb6680033081c73eb0d841abc), x402 router [0xd255…9f74](https://testnet.snowtrace.io/address/0xd2555e5b231957f4810f78029341cf4936e89f74), registry [0x8fcd…bca2](https://testnet.snowtrace.io/address/0x8fcdb5bef522f5e1ee286bacf153ca2b19dcbca2), forward [0x67ee…9428](https://testnet.snowtrace.io/address/0x67eeb02e16629d784165f3613b53e8ed29089428), eERC [0xf0f1…3787](https://testnet.snowtrace.io/address/0xf0f1d107bbca6568e0ff0cec580cf053e1b73787). All other addresses and every recorded transaction: README "Live on Fuji" and `deployments/fuji.json`.
 - The slash: [tiebreak tx](https://testnet.snowtrace.io/tx/0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6).
 - A private (eERC) top-up: [tx](https://testnet.snowtrace.io/tx/0xfebe3b0161010135571554605b92e5afe3a16e13021b6a1cabc184d49ff36f34) (amount is ciphertext).
-- Hosted app: none; the app and gateway run locally (`pnpm gateway`, `cd web && pnpm preview`).
+- Hosted app: https://xorv-avax.vercel.app (pays with a Fuji browser wallet holding tUSD). Hosted gateway and four provider nodes: https://xorv-api.201-18-198-162.sslip.io. Job #18 was paid and answered through the hosted gateway ([settlement](https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a), QA signer from a laptop).
 
 ## Bonus criteria
 

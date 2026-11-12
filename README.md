@@ -36,7 +36,7 @@ Avalanche Fuji C-Chain (43113). All contracts are this repo's, deployed by `0xDD
 Every address, deployment transaction and recorded run is in [deployments/fuji.json](deployments/fuji.json). An earlier market deployment (same tUSD and eERC, market `0x3130…a07c`) was replaced after Fuji testing showed the spot-check draw waited for a later block that a quiet Avalanche chain may not produce; its jobs stay on-chain but are not counted here.
 
 <!-- EVIDENCE:START -->
-#### Jobs on the current market (18)
+#### Jobs on the current market (19)
 
 | Job | Paid with | Model | Bids (revealed) | Cleared, $/1M tokens | Tokens | Charged | Outcome |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,15 +58,16 @@ Every address, deployment transaction and recorded run is in [deployments/fuji.j
 | [#15](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x2efd52ea…`](https://testnet.snowtrace.io/tx/0x2efd52ead65235cd37e6f9b8e992fc4fde4d14dde2adc97ef30acc71f3c17c3c) | GPT-OSS 20B | 4 (4) | $0.226 | 145 | $0.000033 | Paid. Not sampled for a spot check. |
 | [#16](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xd8edea71…`](https://testnet.snowtrace.io/tx/0xd8edea716f9e3a9e6a997d871e72ba25a06a62a71b210e942660b85cc272cf18) | GPT-OSS 20B | 4 (4) | $0.233 | 132 | $0.000031 | Paid. A second node re-ran it and matched. |
 | [#17](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x212ee852…`](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) | GPT-OSS 20B | 4 (4) | $0.062 | 136 | $0.000009 | Paid. Not sampled for a spot check. |
+| [#18](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from the web app (QA signer) [`0xbe1efe7f…`](https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a) | GPT-OSS 20B | 4 (4) | $0.219 | 186 | $0.000041 | Paid. Not sampled for a spot check. |
 
 #### Index
 
-- GPT-OSS 20B: index $0.174 per 1M tokens, TWAP 1h $0.260, VWAP 24h $0.241 over 2083 tokens, 14 clearings.
-- GPT-OSS 120B: index $0.464 per 1M tokens, TWAP 1h $0.490, VWAP 24h $0.491 over 517 tokens, 3 clearings.
+- GPT-OSS 20B: index $0.217 per 1M tokens, TWAP 1h $0.178, VWAP 24h $0.240 over 2269 tokens, 15 clearings.
+- GPT-OSS 120B: index $0.464 per 1M tokens, TWAP 1h $0.464, VWAP 24h $0.491 over 517 tokens, 3 clearings.
 
 #### Totals
 
-jobs 18, clearings 18, staked $39.00, paid to providers $0.002758, slashed $1.00 in 1 slash(es)
+jobs 19, clearings 19, staked $39.00, paid to providers $0.002799, slashed $1.00 in 1 slash(es)
 
 #### The index under a dumping seller (job #17)
 
@@ -95,6 +96,20 @@ Job #8: dune ran with `--fault deliver`. It underbid at 1 micro-tUSD per 1k toke
 | Private chat: job #7 posted by the desk, paid from the buyer's credit | [`0x2a4e644a…`](https://testnet.snowtrace.io/tx/0x2a4e644a6d6dc790d6846a4c457388fecaedebbc64b21cb4b9532a2dfd307903) |
 
 The desk decrypted 1.75 tUSD from the second top-up, the auditor read the same 1.75 from the transfer event, and every decrypted balance matched its on-chain ElGamal ciphertext. On Snowtrace those transfers show sender and receiver but only ciphertext for the amount. The first two top-ups were spent by the script's desk withdrawal before the gateway's ledger had seen them, so they were never credited; the gateway now re-reads top-ups every 30 seconds and must record them before the desk spends (spending clears eERC's pending amounts).
+
+## Hosted
+
+- **App:** https://xorv-avax.vercel.app (Vercel, production build; no QA signer, so paying from it needs a Fuji wallet
+  such as Core or MetaMask holding tUSD). `/api/*` and `/v1/*` are rewritten to the hosted gateway.
+- **Gateway + four provider nodes:** https://xorv-api.201-18-198-162.sslip.io (`/api/health`, `/v1/models`,
+  `POST /v1/chat/completions` → 402) on the hackathon VPS, one container, `deploy/docker-compose.yml`. The nodes run
+  Groq with the provider key; the server holds only the desk (facilitator) key, the four node keys and `GROQ_API_KEY`.
+- **Checked:** job #18 was paid and answered through the hosted gateway
+  ([settlement](https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a)): the
+  web app's QA build ran on a laptop with its `/api` proxy pointed at the VPS, signed x402 with the QA test key, and the
+  four hosted nodes bid, dune won and delivered. The Vercel page loads the live index, models and job table from the same
+  gateway with no console errors.
+- Agents: `XORV_GATEWAY=https://xorv-api.201-18-198-162.sslip.io node scripts/x402-client.ts "question"`.
 
 ## How it works
 
