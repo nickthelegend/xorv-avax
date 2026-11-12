@@ -3,6 +3,7 @@
 # /opt/hk/xorv/.env holds only XORV_DESK_KEY, XORV_NODE_{ATLAS,BIRCH,COBALT,DUNE}_KEY and GROQ_API_KEY (Fuji test
 # keys and the provider key; read by name, never printed). It is mounted read-only as the repo .env, which is where the
 # gateway and the node processes look for keys. Redeploy: cd /opt/hk/xorv/app && docker compose -f deploy/docker-compose.yml up -d --build
+name: xorv
 services:
   gateway:
     build: { context: .., dockerfile: deploy/Dockerfile }
