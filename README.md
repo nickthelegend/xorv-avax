@@ -12,7 +12,8 @@ Everything below is live on Fuji with real Groq model runs.
 - **x402 on Fuji.** `POST /v1/chat/completions` (OpenAI-compatible) answers `402 Payment Required` with exact-scheme requirements. The client signs `TransferWithAuthorization` for test dollars (tUSD); the gateway, acting as facilitator, submits it to `X402Router.payAndPost`, which moves the money into the buyer's job escrow and posts the job in one transaction. Unused escrow is refunded on-chain at settlement. Replays and expired signatures are rejected by the token.
 - **Spot checks and slashing.** 30% of deliveries (100% when the buyer asks to verify) are re-run by a drawn node. The contract computes word-set similarity on-chain. On a mismatch a third node breaks the tie and whoever it contradicts loses 10% of stake. A real lying node was slashed on Fuji ([job #8](#a-real-slash-on-fuji)).
 - **The Xorv Compute Index.** Only delivered, unslashed jobs with at least two revealed bids and a buyer who is not the winner are recorded. Each clearing moves the index at most 25%. It exposes `latest`, `twap(model, window)` and `vwap(model, window)` to any contract, a web page and `GET /api/index`.
-- **eERC private credit.** Ava Labs' official EncryptedERC (converter mode over tUSD) with its production verifiers. A buyer tops up the Xorv desk with an encrypted transfer; only the buyer, the desk and the auditor can read the amount. The desk credits the buyer and posts the buyer's chats under its own address, so the public job record does not name the buyer.
+- **Zero-setup start.** Open the hosted app with nothing: **Start with a test wallet** makes a key in the browser and, in the same tap, `XorvGasStation` sends it 2 tUSD and 0.001 AVAX on Fuji (the gateway relays a gasless signed request; once per wallet, 40 a day, limits on-chain). Then chat, sealed-bid auction, answer, Snowtrace link. An empty Core or MetaMask wallet gets the same one-tap **Get test funds**.
+- **eERC private credit, proved in the browser.** Ava Labs' official EncryptedERC (converter mode over tUSD) with its production verifiers, driven from the page by Ava Labs' `@avalabs/eerc-sdk`: registration and the encrypted transfer to the Xorv desk are Groth16 proofs made in the browser. Only the buyer, the desk and the auditor can read the amount. The desk credits the buyer and posts the buyer's chats under its own address, so the public job record does not name the buyer. The desk signs a receipt of its ledger, and the page checks every line against Fuji, including each top-up amount against the buyer's own proof.
 - **Agents.** An MCP server (`node packages/mcp/src/main.ts`) gives agents `xorv_index`, `xorv_models`, `xorv_job` and `xorv_ask`, which pays the 402 itself and returns the answer with its Fuji settlement ([job #11](https://testnet.snowtrace.io/tx/0x26b608b595097456741a057ade9807f345f18602d1cd87325867e631bdb9009c)).
 - **Compute forwards (stretch).** `XorvForward` pays the difference between a strike and the index TWAP over the forward's life, capped at margin. One forward ran and settled on Fuji.
 
@@ -28,6 +29,7 @@ Avalanche Fuji C-Chain (43113). All contracts are this repo's, deployed by `0xDD
 | X402Router (x402 payTo) | [`0xd2555e5b231957f4810f78029341cf4936e89f74`](https://testnet.snowtrace.io/address/0xd2555e5b231957f4810f78029341cf4936e89f74) |
 | XorvForward | [`0x67eeb02e16629d784165f3613b53e8ed29089428`](https://testnet.snowtrace.io/address/0x67eeb02e16629d784165f3613b53e8ed29089428) |
 | Similarity (linked library) | [`0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b`](https://testnet.snowtrace.io/address/0x10720460b0130a6c7cc7d21b2e7b6e6d240b618b) |
+| XorvGasStation (one-tap test funds, on-chain caps) | [`0xfc23826ad39591f10fed2397ce5c87278806cfb1`](https://testnet.snowtrace.io/address/0xfc23826ad39591f10fed2397ce5c87278806cfb1) |
 | TestDollar tUSD (6 decimals, EIP-3009, faucet) | [`0x2210a2161b13a1a2375951577b506707867f9739`](https://testnet.snowtrace.io/address/0x2210a2161b13a1a2375951577b506707867f9739) |
 | EncryptedERC (Ava Labs, converter) | [`0xf0f1d107bbca6568e0ff0cec580cf053e1b73787`](https://testnet.snowtrace.io/address/0xf0f1d107bbca6568e0ff0cec580cf053e1b73787) |
 | Registrar (Ava Labs) | [`0x335d199e8442ddad556c874a065801ba0ac63350`](https://testnet.snowtrace.io/address/0x335d199e8442ddad556c874a065801ba0ac63350) |
@@ -36,7 +38,7 @@ Avalanche Fuji C-Chain (43113). All contracts are this repo's, deployed by `0xDD
 Every address, deployment transaction and recorded run is in [deployments/fuji.json](deployments/fuji.json). An earlier market deployment (same tUSD and eERC, market `0x3130…a07c`) was replaced after Fuji testing showed the spot-check draw waited for a later block that a quiet Avalanche chain may not produce; its jobs stay on-chain but are not counted here.
 
 <!-- EVIDENCE:START -->
-#### Jobs on the current market (19)
+#### Jobs on the current market (23)
 
 | Job | Paid with | Model | Bids (revealed) | Cleared, $/1M tokens | Tokens | Charged | Outcome |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -59,15 +61,19 @@ Every address, deployment transaction and recorded run is in [deployments/fuji.j
 | [#16](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0xd8edea71…`](https://testnet.snowtrace.io/tx/0xd8edea716f9e3a9e6a997d871e72ba25a06a62a71b210e942660b85cc272cf18) | GPT-OSS 20B | 4 (4) | $0.233 | 132 | $0.000031 | Paid. A second node re-ran it and matched. |
 | [#17](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 [`0x212ee852…`](https://testnet.snowtrace.io/tx/0x212ee8529e3a5de8984f08c52c8917ec12f2e5ba45d6db1c260bac8c6df2b6ec) | GPT-OSS 20B | 4 (4) | $0.062 | 136 | $0.000009 | Paid. Not sampled for a spot check. |
 | [#18](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from the web app (QA signer) [`0xbe1efe7f…`](https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a) | GPT-OSS 20B | 4 (4) | $0.219 | 186 | $0.000041 | Paid. Not sampled for a spot check. |
+| [#19](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from a fresh test wallet (web build) [`0x33128459…`](https://testnet.snowtrace.io/tx/0x331284593c88b466f9e6407b5f7a8facc6aa2d78e7238d729e27b5d8c82cbd6e) | GPT-OSS 20B | 4 (4) | $0.220 | 182 | $0.000041 | Paid. Not sampled for a spot check. |
+| [#20](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | private credit, top-up proved in the browser [`0x39cfc2ef…`](https://testnet.snowtrace.io/tx/0x39cfc2efdeda833030834d1a1c3e06621b18ac69ab71746727179770b0a270c3) | GPT-OSS 20B | 4 (4) | $0.217 | 187 | $0.000041 | Paid. Not sampled for a spot check. |
+| [#21](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | x402 from a fresh test wallet (hosted app) [`0x3b6ad2dd…`](https://testnet.snowtrace.io/tx/0x3b6ad2dd7792dae146c400b3e94021363a3658fdc77fb27c1e6fbddec2f29141) | GPT-OSS 20B | 4 (4) | $0.208 | 184 | $0.000039 | Paid. Not sampled for a spot check. |
+| [#22](https://testnet.snowtrace.io/address/0x57fc4ab7de82ea555d957d88ff27bf4ff463814b) | private credit, top-up proved in the browser [`0xa9bb56e2…`](https://testnet.snowtrace.io/tx/0xa9bb56e2cf20e7474794d8a46a2fb5300c772fcc1c0402b07a5af75594a35382) | GPT-OSS 20B | 4 (4) | $0.216 | 187 | $0.000041 | Paid. A second node re-ran it and matched. |
 
 #### Index
 
-- GPT-OSS 20B: index $0.217 per 1M tokens, TWAP 1h $0.178, VWAP 24h $0.240 over 2269 tokens, 15 clearings.
+- GPT-OSS 20B: index $0.216 per 1M tokens, TWAP 1h $0.216, VWAP 24h $0.234 over 3009 tokens, 19 clearings.
 - GPT-OSS 120B: index $0.464 per 1M tokens, TWAP 1h $0.464, VWAP 24h $0.491 over 517 tokens, 3 clearings.
 
 #### Totals
 
-jobs 19, clearings 19, staked $39.00, paid to providers $0.002799, slashed $1.00 in 1 slash(es)
+jobs 23, clearings 23, staked $39.00, paid to providers $0.003161, slashed $1.00 in 1 slash(es)
 
 #### The index under a dumping seller (job #17)
 
@@ -99,16 +105,30 @@ The desk decrypted 1.75 tUSD from the second top-up, the auditor read the same 1
 
 ## Hosted
 
-- **App:** https://xorv-avax.vercel.app (Vercel, production build; no QA signer, so paying from it needs a Fuji wallet
-  such as Core or MetaMask holding tUSD). `/api/*` and `/v1/*` are rewritten to the hosted gateway.
+- **App:** https://xorv-avax.vercel.app (Vercel, production build, no QA signer). `/api/*` and `/v1/*` are rewritten
+  to the hosted gateway. Nothing to install: **Start with a test wallet** on the chat page (or Account) makes a key in
+  the browser and funds it in the same tap; Core or MetaMask work too, and an empty one gets **Get test funds**.
+- **Test funds:** `XorvGasStation` ([`0xfc23…cfb1`](https://testnet.snowtrace.io/address/0xfc23826ad39591f10fed2397ce5c87278806cfb1))
+  sends a wallet that signed a request 2 tUSD, plus 0.001 AVAX if it holds none. Once per wallet, 40 a day, 4 a day per
+  requester (an HMAC of the IP, never the IP), all enforced on-chain; it refills its tUSD from the test dollar's faucet.
+  The gateway's `POST /api/fund` is only the relayer (`XORV_SPONSOR_KEY`). Funded from the Avalanche funding hub.
+  The test wallet's key sits in the browser's local storage: it is for Fuji test funds only.
 - **Gateway + four provider nodes:** https://xorv-api.201-18-198-162.sslip.io (`/api/health`, `/v1/models`,
-  `POST /v1/chat/completions` → 402) on the hackathon VPS, one container, `deploy/docker-compose.yml`. The nodes run
-  Groq with the provider key; the server holds only the desk (facilitator) key, the four node keys and `GROQ_API_KEY`.
-- **Checked:** job #18 was paid and answered through the hosted gateway
-  ([settlement](https://testnet.snowtrace.io/tx/0xbe1efe7f989ff06393e0d35eccd019ed8e926a7fab870ac5f256347c8797ef8a)): the
-  web app's QA build ran on a laptop with its `/api` proxy pointed at the VPS, signed x402 with the QA test key, and the
-  four hosted nodes bid, dune won and delivered. The Vercel page loads the live index, models and job table from the same
-  gateway with no console errors.
+  `POST /v1/chat/completions` → 402, `/api/fund`) on the hackathon VPS, one container, `deploy/docker-compose.yml`. The
+  nodes run Groq with the provider key; the server holds only the desk (facilitator) key, the four node keys, the gas
+  station relayer key, the tag secret and `GROQ_API_KEY`.
+- **Checked from the hosted app with a fresh, empty browser** (no wallet extension, empty storage;
+  `web/scripts/judge-flow.mjs --private`, Nov 12, 0 console errors): one tap funded test wallet `0xAA2f…E7e6`
+  ([drip](https://testnet.snowtrace.io/tx/0xa083e7e4482968570f3c9e51f16323b97dee6caef14492eb325bccc5bddfcccc)); a paid chat
+  became job #21 ([x402 settlement](https://testnet.snowtrace.io/tx/0x3b6ad2dd7792dae146c400b3e94021363a3658fdc77fb27c1e6fbddec2f29141)),
+  four sealed bids, answered in 39 s; then a private top-up proved in the page with Ava Labs' eERC SDK
+  ([register](https://testnet.snowtrace.io/tx/0xaa69efc2a996ebea36d59dd599bc979a0bb5569ba06637fb6fa4e5c958bcadbd),
+  [approve](https://testnet.snowtrace.io/tx/0x5a3fd95713378a7a703388a6d90b417c8ac2945318afcdedd97423af84308ec9),
+  [deposit](https://testnet.snowtrace.io/tx/0xaf34324a88f11fbecfffcbe9e43af9b81d9a33f4e9dec150ef5a767909c6fd19),
+  [encrypted transfer to the desk](https://testnet.snowtrace.io/tx/0x6ef07a1352ce0dca948b906518ca9a4f48849ffd531a2688fc520ab3c4f01efb),
+  22 s for all four), the desk's receipt passed all five checks, and a chat paid from private credit became job #22
+  ([desk post](https://testnet.snowtrace.io/tx/0xa9bb56e2cf20e7474794d8a46a2fb5300c772fcc1c0402b07a5af75594a35382)), which
+  names the desk, not the wallet. The same run against the production build on a laptop: jobs #19 and #20.
 - Agents: `XORV_GATEWAY=https://xorv-api.201-18-198-162.sslip.io node scripts/x402-client.ts "question"`.
 
 ## How it works
@@ -131,8 +151,9 @@ settle: winner paid rate × tokens, unused escrow refunded, XorvIndex.record(mod
 
 - **Hidden:** the amount of each buyer top-up to the desk and of each provider payout to its treasury; encrypted balances. Only the holder, the receiver and the auditor can read them.
 - **Not hidden:** sender and receiver addresses of eERC transfers (that is how eERC works), deposit and withdrawal amounts (they are ERC-20 transfers), and every job's cleared price (that is the index's whole point). Jobs posted from private credit are public, but they name the desk, not the buyer.
-- **Trust:** the desk is an operator. It sees which buyer spent what, keeps the credit ledger in the gateway (not on-chain) and posts on their behalf. The auditor (`0x6aAf…84F4`) can decrypt every amount.
-- **What is official:** the EncryptedERC, Registrar, BabyJubJub and production verifier contracts are Ava Labs' code at commit [`8dc98cd`](https://github.com/ava-labs/EncryptedERC/tree/8dc98cd4d63ad3aa6d86b70b8f4bbcd70f1e8be1), vendored unmodified in `contracts/lib/eerc` under the Ava Labs Ecosystem License. Proofs use Ava Labs' published circuits and proving keys. The Node client in `packages/eerc` ports their encryption helpers; the official browser SDK (`@avalabs/ac-eerc-sdk`) is not used, and the web app does not generate eERC proofs (top-ups run with `node scripts/private-topup.ts`).
+- **Trust:** the desk is an operator. It sees which buyer spent what, keeps the credit ledger in the gateway (a file, not on-chain: the amounts are exactly what eERC hides, so they cannot sit in a public contract) and posts on their behalf. The auditor (`0x6aAf…84F4`) can decrypt every amount.
+- **The ledger is checkable, not trustless.** On every credit request and private chat the desk signs a receipt of all its lines for that buyer (`receiptMessage` in `packages/sdk/src/receipt.ts`). The Account page checks it against Fuji: signed by the desk address in the deployment; each top-up is a real `PrivateTransfer` from the buyer to the desk **and its amount equals what the buyer's own proof moved** (the sender ciphertext in the proof's public signals, decrypted with the buyer's eERC key in the tab); every transfer from the buyer to the desk on-chain is listed; every private job was posted by the desk in that transaction; and credit = top-ups − escrows + (escrow − charge) of settled jobs, with the charge read from the market. A desk that under-credits, drops a top-up or invents a charge is caught, with its own signature as evidence; nothing stops it from refusing service. Tested on a local chain, including a receipt edited after signing and one the desk really signed with an inflated amount.
+- **What is official:** the EncryptedERC, Registrar, BabyJubJub and production verifier contracts are Ava Labs' code at commit [`8dc98cd`](https://github.com/ava-labs/EncryptedERC/tree/8dc98cd4d63ad3aa6d86b70b8f4bbcd70f1e8be1), vendored unmodified in `contracts/lib/eerc` under the Ava Labs Ecosystem License. Proofs use Ava Labs' published circuits and proving keys (the browser's copies are sha256-checked at build). The web app uses Ava Labs' official SDK, `@avalabs/eerc-sdk` 1.0.2 (its `EERC` class with viem clients; its wagmi hooks are not used and are stubbed out of the bundle), for the key, registration, deposit, the encrypted transfer and balance decryption; it loads only on the private-credit page. The Node client in `packages/eerc` (a port of Ava Labs' encryption helpers) runs the desk, the scripts and the local-chain tests.
 
 ## Run it
 
@@ -141,8 +162,8 @@ Requirements: Node 22.18+ (TypeScript runs natively), pnpm 10, Foundry. Fuji tes
 ```bash
 pnpm install
 pnpm circuits                                   # Ava Labs eERC circuits into .eerc/circuits (~57 MB, not committed)
-cd contracts && forge test && cd ..             # 55 contract tests
-bash scripts/test-local.sh                      # 19 tests on a fresh local chain with the full deployment
+cd contracts && forge test && cd ..             # 79 contract tests
+bash scripts/test-local.sh                      # 20 tests on a fresh local chain with the full deployment
 ```
 
 Use the live Fuji deployment:
@@ -155,7 +176,7 @@ cd web && pnpm build && pnpm preview             # the app; /api and /v1 proxy t
 node packages/mcp/src/main.ts                    # MCP server (stdio) for agents
 ```
 
-Provider nodes need `GROQ_API_KEY` (read by name only, passed to node processes and nothing else). A fresh deployment: `node scripts/fund-deployer.ts`, `node scripts/deploy.ts`, `node scripts/setup-providers.ts`, then `node scripts/private-lane.ts` for the eERC auditor and registrations. Slashing demo: start the gateway with `XORV_GATEWAY_NODES=atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15:deliver` and send a `--verify` chat.
+Provider nodes need `GROQ_API_KEY` (read by name only, passed to node processes and nothing else). A fresh deployment: `node scripts/fund-deployer.ts`, `node scripts/deploy.ts`, `node scripts/setup-providers.ts`, then `node scripts/private-lane.ts` for the eERC auditor and registrations, and `node scripts/gas-station.ts` for the test-funds station (its relayer is `XORV_SPONSOR_KEY`; the gateway also needs `XORV_TAG_SECRET`, which the script creates). Slashing demo: start the gateway with `XORV_GATEWAY_NODES=atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15:deliver` and send a `--verify` chat.
 
 Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `packages/sdk` (reads, x402, similarity), `packages/node` (provider node), `packages/gateway` (OpenAI-compatible API, x402 facilitator, private desk), `packages/eerc` (eERC client), `packages/mcp` (agent tools), `web/` (Vite + React), `scripts/`, `deployments/`.
 
@@ -165,7 +186,7 @@ Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `pack
 - Similarity is word-set Jaccard with a 50% tolerance: it catches junk, not subtle errors. Token counts are reported by the winner and capped by the buyer's maximum.
 - A chat takes about 25–35 seconds: two 10-second auction windows plus model time and Fuji confirmations. The answer is returned at delivery; checks continue after.
 - Gas: on Fuji a transaction is charged at least half its gas limit, so the nodes' fixed limits overpay slightly; at Fuji's fee level that is negligible.
-- The public Fuji RPC rate-limited this machine during testing; the apps fall back across publicnode, drpc and the official endpoint, and read history from the Snowtrace indexer API.
+- The public Fuji RPC rate-limited this machine during testing; the apps fall back across publicnode, drpc and the official endpoint, and read history from the Snowtrace indexer API. drpc's free plan refuses JSON-RPC batches of more than 3 calls (HTTP 400), so batches to it are capped at 3 (they were not before Nov 12, which made the fallback fail whenever publicnode dropped a request). A browser still logs a network error when a public RPC drops a connection, even though the next endpoint answers.
 - Forwards settle within a day after expiry at the TWAP from start to the settle time. The Fuji forward ran 25 minutes (a week is the intended term).
 
 ## Prior work
@@ -176,7 +197,7 @@ Xorv is an existing project of the author, now built for Avalanche. Earlier vers
 - [xorv](https://github.com/nickthelegend/xorv) (Hedera), [xorv-monad](https://github.com/nickthelegend/xorv-monad) (Monad), [xorv-arc](https://github.com/nickthelegend/xorv-arc) (Arc), [xorv-arbitrum](https://github.com/nickthelegend/xorv-arbitrum) (Arbitrum, private), [xorv-clockin](https://github.com/nickthelegend/xorv-clockin) (Solana), [xorv-wif](https://github.com/nickthelegend/xorv-wif) (Robinhood Chain, private): earlier explorations of paid idle AI capacity, x402 and escrow. No Solidity was copied from them.
 - [xorr-zk-avax](https://github.com/nickthelegend/xorr-zk-avax): an earlier eERC project by the author; its funded Fuji key paid this repo's 0.08 AVAX.
 
-**Built new for this Avalanche build (Nov 12, 2026):** all Solidity (market, registry, router, index, forwards, test dollar, on-chain similarity), the EVM SDK, x402 exact scheme on Fuji with a settlement router, the provider node and gateway for EVM, the Compute Index and its page, the eERC private credit lane and client, the forward, the tests and the Fuji deployment.
+**Built new for this Avalanche build (Nov 12, 2026):** all Solidity (market, registry, router, index, forwards, test dollar, on-chain similarity, gas station; the gas station follows Kumi on Avalanche's `KumiGasStation`, by the same author), the EVM SDK, x402 exact scheme on Fuji with a settlement router, the provider node and gateway for EVM, the Compute Index and its page, the eERC private credit lane and client, the forward, the tests and the Fuji deployment.
 
 ## AI tools used
 

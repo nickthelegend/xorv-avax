@@ -22,7 +22,10 @@ for (const j of jobs.reverse()) {
   const q = (ev.webQaFlow ?? []).find((c: any) => c.job === j.id);
   const p = (ev.privateChats ?? []).find((c: any) => c.job === j.id && Date.parse(c.at) > since);
   const mcp = (ev.mcpAsk ?? []).find((c: any) => c.job === j.id);
-  const how = mcp ? `x402 from the MCP tool ${tx(mcp.settleTx)}` : q ? `x402 from the web app (QA signer) ${tx(q.settleTx)}` : x ? `x402 ${tx(x.settleTx)}` : p ? `private credit (desk) ${tx(p.postTx)}` : j.viaX402 ? 'x402' : 'allowance';
+  const jx = (ev.judgePath ?? []).find((c: any) => c.x402?.job === j.id);
+  const jp = (ev.judgePath ?? []).find((c: any) => c.private?.job === j.id);
+  const hostTx = (u: string) => tx(u.split('/tx/')[1]);
+  const how = jx ? `x402 from a fresh test wallet (${jx.base.startsWith('https') ? 'hosted app' : 'web build'}) ${hostTx(jx.x402.settlement)}` : jp ? `private credit, top-up proved in the browser ${hostTx(jp.private.settlement)}` : mcp ? `x402 from the MCP tool ${tx(mcp.settleTx)}` : q ? `x402 from the web app (QA signer) ${tx(q.settleTx)}` : x ? `x402 ${tx(x.settleTx)}` : p ? `private credit (desk) ${tx(p.postTx)}` : j.viaX402 ? 'x402' : 'allowance';
   console.log(`| [#${j.id}](https://testnet.snowtrace.io/address/${d.contracts.market}) | ${how} | ${modelInfo(j.model).name}${j.alwaysCheck ? ' (verify)' : ''} | ${j.bidCount} (${j.revealed}) | ${j.clearedRate ? perMillion(j.clearedRate, 3) : '-'} | ${j.tokens} | ${usd(j.charge, 6)} | ${OUTCOME_TEXT[j.outcome]} |`);
 }
 

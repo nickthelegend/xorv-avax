@@ -718,6 +718,60 @@
           }
         ]
       }
+    ],
+    "judgePath": [
+      {
+        "at": "2026-11-12T15:08:53.659Z",
+        "base": "http://127.0.0.1:5390 (the production build, /api proxied to the hosted gateway)",
+        "address": "0xe3908ba0B4E74b91f1B94C9c1cf0eFB9EBb9C76f",
+        "fundTx": "0xed575a59647a74be619db8bdb5109ad8f9582a20d0dd53a7f47a72c814ec169c",
+        "x402": {
+          "job": 19,
+          "settlement": "https://testnet.snowtrace.io/tx/0x331284593c88b466f9e6407b5f7a8facc6aa2d78e7238d729e27b5d8c82cbd6e"
+        },
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0xf43f369178380a5bb8ded313032dbc11da38deffb1007593bcd2a3b937c0b599",
+          "https://testnet.snowtrace.io/tx/0xda223366e6ee589db4df20d8b6480e5adc418791e4f4ecca829f0ea934da526d",
+          "https://testnet.snowtrace.io/tx/0x3d2a7c8a10cd8495e4ceba22088936fd80053d371b043e41bcab9ed523816e11",
+          "https://testnet.snowtrace.io/tx/0x2876971dabd233d2641e10f6eed43c049b4d41e4a820af4385ceac4661d99ac7"
+        ],
+        "receipt": "all 5 checks good",
+        "private": {
+          "job": 20,
+          "settlement": "https://testnet.snowtrace.io/tx/0x39cfc2efdeda833030834d1a1c3e06621b18ac69ab71746727179770b0a270c3"
+        },
+        "consoleErrors": 0
+      },
+      {
+        "at": "2026-11-12T15:13:12.544Z",
+        "base": "https://xorv-avax.vercel.app",
+        "address": "0xAA2fe612711A04FF235B2c6b19517dA3D1c8E7e6",
+        "x402": {
+          "job": 21,
+          "settlement": "https://testnet.snowtrace.io/tx/0x3b6ad2dd7792dae146c400b3e94021363a3658fdc77fb27c1e6fbddec2f29141",
+          "answer": "Because each bidder submits a single, confidential bid without knowledge of the others\u2019 offers, colluding parties cannot coordinate a common price or adjust their bids in real time to keep the price low. The lack of inter\u2011bid communication and the single\u2011shot nature of the auction make it difficult for competitors to signal or enforce a collusive agreement, thereby discouraging price collusion."
+        },
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0xaa69efc2a996ebea36d59dd599bc979a0bb5569ba06637fb6fa4e5c958bcadbd",
+          "https://testnet.snowtrace.io/tx/0x5a3fd95713378a7a703388a6d90b417c8ac2945318afcdedd97423af84308ec9",
+          "https://testnet.snowtrace.io/tx/0xaf34324a88f11fbecfffcbe9e43af9b81d9a33f4e9dec150ef5a767909c6fd19",
+          "https://testnet.snowtrace.io/tx/0x6ef07a1352ce0dca948b906518ca9a4f48849ffd531a2688fc520ab3c4f01efb"
+        ],
+        "receipt": [
+          "step good: Signed by the Xorv desk \u00b7 0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+          "step good: For this wallet, chain and eERC",
+          "step good: Top-up of $0.50 \u00b7 transfer found on Fuji; amount matches your proof0x6ef07a13\u2026 \u2197",
+          "step good: Every top-up you sent the desk is listed \u00b7 1 on Fuji, 1 in the receipt",
+          "step good: Credit $0.50 = top-ups \u2212 escrows + refunds \u00b7 adds up from the chain"
+        ],
+        "private": {
+          "job": 22,
+          "settlement": "https://testnet.snowtrace.io/tx/0xa9bb56e2cf20e7474794d8a46a2fb5300c772fcc1c0402b07a5af75594a35382",
+          "answer": "Fraud Prevention \u2013 By encrypting customer balances, a business can ensure that only authorized personnel can view or modify account information, reducing the risk of internal theft or unauthorized adjustments.\nRegulatory Compliance \u2013 Encrypting balances helps meet data protection regulations (such as GDPR or PCI DSS) by safeguarding sensitive financial data during storage and transmission, thereby"
+        },
+        "consoleErrors": 0,
+        "fundTx": "0xa083e7e4482968570f3c9e51f16323b97dee6caef14492eb325bccc5bddfcccc"
+      }
     ]
   },
   "previous": [
