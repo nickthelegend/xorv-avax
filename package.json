@@ -22,6 +22,8 @@
   "devDependencies": {
     "typescript": "5.9.3",
     "@types/node": "24.10.1",
-    "viem": "2.37.6"
+    "viem": "2.37.6",
+    "@xorv/eerc": "workspace:*",
+    "@xorv/sdk": "workspace:*"
   }
 }

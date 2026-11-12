@@ -8,3 +8,4 @@ export * from './similarity.ts';
 export * from './types.ts';
 export * from './x402.ts';
 export * from './pricing.ts';
+export * from './private.ts';
