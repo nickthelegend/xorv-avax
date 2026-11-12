@@ -207,8 +207,24 @@ export class XorvReader {
       out.push(...rows.map((x: any) => ({ address: x.address, topics: x.topics.filter(Boolean), data: x.data === '' ? '0x' : x.data, blockNumber: BigInt(x.blockNumber), logIndex: Number(x.logIndex === '0x' ? 0 : x.logIndex), transactionHash: x.transactionHash, timeStamp: Number(x.timeStamp) })));
       if (rows.length < 1000) break;
     }
-    const parsed = parseEventLogs({ abi: q.abi, logs: out as any, strict: false }) as any[];
-    return parsed.map((l, i) => ({ ...l, timeStamp: (l as any).timeStamp ?? out[i]?.timeStamp }));
+    const parsed = (parseEventLogs({ abi: q.abi, logs: out as any, strict: false }) as any[]).map((l, i) => ({ ...l, timeStamp: (l as any).timeStamp ?? out[i]?.timeStamp }));
+    // The explorer index can trail the chain by minutes; add the newest blocks straight from the RPC.
+    const recent = await this.recentRaw(q.address, topics, 300n).catch(() => []);
+    const seen = new Set(parsed.map((l) => `${l.transactionHash}:${l.logIndex}`));
+    const extra = (parseEventLogs({ abi: q.abi, logs: recent as any, strict: false, ...(q.eventName ? { eventName: q.eventName } : {}) }) as any[]).filter((l) => !seen.has(`${l.transactionHash}:${l.logIndex}`));
+    return [...parsed, ...extra].sort((a, b) => (a.blockNumber === b.blockNumber ? a.logIndex - b.logIndex : Number(a.blockNumber - b.blockNumber)));
+  }
+
+  private async recentRaw(address: Hex, topics: (Hex | null)[], blocks: bigint) {
+    const latest = await this.client.getBlockNumber();
+    const start = latest > blocks ? latest - blocks : 0n;
+    const out: any[] = [];
+    for (let a = start; a <= latest; a += 100n) {
+      const b = a + 99n > latest ? latest : a + 99n;
+      const raw = (await this.client.request({ method: 'eth_getLogs', params: [{ address, topics, fromBlock: `0x${a.toString(16)}`, toBlock: `0x${b.toString(16)}` }] } as any)) as any[];
+      out.push(...raw.map((l) => ({ ...l, blockNumber: BigInt(l.blockNumber), logIndex: Number(l.logIndex) })));
+    }
+    return out;
   }
 
   /** Recent logs straight from the RPC, walking back `blocks` blocks in 100-block windows (for nodes). */

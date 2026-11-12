@@ -44,15 +44,16 @@ async function main() {
   for (const [n, u] of [['buyer', buyer], ['desk', desk], ['provider owner (atlas)', owner], ['provider treasury', treasury]] as const) t(`${n} registers`, await u.register());
 
   console.log('3. buyer funds private credit');
-  t('buyer deposits 5 tUSD (public)', await buyer.deposit(5_000_000n));
+  if ((await buyer.balance()).amount < 1_750_000n) t('buyer deposits 5 tUSD (public)', await buyer.deposit(5_000_000n));
   const before = (await desk.balance()).amount;
   t('buyer -> desk private top-up', await buyer.transfer(desk.address, 1_750_000n));
 
   console.log('4. who can read the top-up');
   const deskBal = await desk.balance();
   console.log(`  desk decrypts its balance: ${fmt(deskBal.amount)} (was ${fmt(before)}; consistent with ciphertext: ${deskBal.consistent})`);
-  const logs = await auditor.privateTransferLogs(BigInt(d.startBlock ?? 0), { from: buyer.address, to: desk.address });
-  const last = logs[logs.length - 1];
+  // read the event from the transfer's own receipt (the explorer index can lag a few seconds)
+  const rc = await buyer.w.getTransactionReceipt({ hash: steps['buyer -> desk private top-up'] as Hex });
+  const last = Eerc.receiptEvents(rc.logs).find((e: any) => e.eventName === 'PrivateTransfer') as any;
   const audited = auditor.auditorAmount(last.args.auditorPCT);
   console.log(`  auditor decrypts the transfer event: ${fmt(audited)}`);
   console.log(`  everyone else sees: from ${buyer.address.slice(0, 10)}… to ${desk.address.slice(0, 10)}…, amount = ciphertext ${String(last.args.auditorPCT[0]).slice(0, 18)}…`);

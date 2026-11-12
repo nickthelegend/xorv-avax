@@ -25,7 +25,9 @@
       "transfer": "0x9e7bf355f92d35e7e9f372b1737aa83bcad55cf0",
       "burn": "0x3834ebc73323f24eb8ddc83a348095854c953b92"
     },
-    "decimals": 6
+    "decimals": 6,
+    "auditor": "0x6aAf68984791d4676CdcB356206C512C217c84F4",
+    "desk": "0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713"
   },
   "config": {
     "minStake": "5000000",
@@ -281,6 +283,18 @@
         "bids": 4,
         "verify": false,
         "seconds": 26.104
+      },
+      {
+        "at": "2026-11-12T11:47:57.841Z",
+        "job": 8,
+        "settleTx": "0xade14313780bb9d9981d6456507158467d73954491b21c20243eb2f2397925c7",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "1",
+        "tokens": 1200,
+        "bids": 4,
+        "verify": true,
+        "seconds": 24.196
       }
     ],
     "webQaFlow": [
@@ -293,6 +307,171 @@
         "answerChars": 410,
         "pageErrors": 0,
         "snowtrace": "https://testnet.snowtrace.io/tx/0x8ebdb9dad18270bdb267cfbbd8928526df848bac26d4f72ace3e37f2a3e14099"
+      }
+    ],
+    "eerc": [
+      {
+        "at": "2026-11-12T11:43:11.676Z",
+        "steps": {
+          "buyer -> desk private top-up": "0xfce79007bbd84647c70d18e64d25bfc2884d423a2cf2ef1cd6ef7762b77a54e8",
+          "atlas owner deposits 0.5 tUSD earnings": "0x47981d09be61442e6c75892e3b8072a40a6e45da540d0db6c957136539e74e1c",
+          "atlas owner -> treasury private payout": "0x6677525cda90264ca262a56fba1d6e8ab262329fe05f4bbe181f9f682a981d11",
+          "desk withdraws 1 tUSD": "0x91a07f7ef38751bc1513bb7db3ac5004c285b95f9298b5ebb6139fb0239f55f3"
+        },
+        "decrypted": {
+          "deskReceived": "1750000",
+          "auditorRead": "1750000",
+          "buyerRemaining": "1500000",
+          "treasury": "400000",
+          "deskAfterWithdraw": "2500000"
+        },
+        "consistent": true
+      }
+    ],
+    "privateTopups": [
+      {
+        "at": "2026-11-12T11:43:31.446Z",
+        "from": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "to": "0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+        "tx": "0xfebe3b0161010135571554605b92e5afe3a16e13021b6a1cabc184d49ff36f34",
+        "deposit": null,
+        "amountKnownOnlyToSenderDeskAuditor": true
+      }
+    ],
+    "privateChats": [
+      {
+        "at": "2026-11-12T11:47:17.932Z",
+        "job": 7,
+        "postTx": "0x2a4e644a6d6dc790d6846a4c457388fecaedebbc64b21cb4b9532a2dfd307903",
+        "postedBy": "0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+        "buyerOnChain": "0x5E4af637E0FfD6bE741b75b8701606eCc3Fd2713",
+        "creditBefore": "500000",
+        "creditAfter": "499966",
+        "charge": "34"
+      }
+    ],
+    "slash": [
+      {
+        "at": "2026-11-12T11:48:46.749Z",
+        "market": "0x57fc4ab7de82ea555d957d88ff27bf4ff463814b",
+        "job": 8,
+        "status": "Faulted",
+        "outcome": "FaultedTiebreakSidedWithChecker",
+        "winner": "0x85b225E219E7FE56F50026F89d31a54899177408",
+        "rate": "1",
+        "tokens": 1200,
+        "note": "dune ran with --fault deliver: underbid at 1, returned junk; atlas's spot check and birch's tiebreak re-ran the model and slashed it",
+        "events": [
+          {
+            "event": "JobPosted",
+            "tx": "0xade14313780bb9d9981d6456507158467d73954491b21c20243eb2f2397925c7",
+            "block": 60944778
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0xd6e9d38528f733baaa90215dd6ac39686b5ce8dfa9188a18c9954fadca161504",
+            "block": 60944783
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0x582292106bea0f5df70ba6a5c9eefd8bf59d70111ef5705f829de4af700f8f7b",
+            "block": 60944783
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0x15d7b59a3f1bce7cdb2ca5ef151ffc3f44fc2969b6129855c6ec1c37656c2774",
+            "block": 60944784
+          },
+          {
+            "event": "BidCommitted",
+            "tx": "0xa8d65a0842559f969920eb09751f5217340592ddc9d423051b8c3fbe1b9571b9",
+            "block": 60944784
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x3a3f3e5ee7565a1b2306a0541ad78e407f67fd75a179b9227f4d8d601e328850",
+            "block": 60944789
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x396145cda5003d02eb7931f4c01a585f24db2fdcbf467a4046ffa65a3dde55ff",
+            "block": 60944790
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0x5c1c6d04a3882d7134b327eafe2f8624404d07f65e8635e8a50a58c35095fef8",
+            "block": 60944790
+          },
+          {
+            "event": "BidRevealed",
+            "tx": "0xdceb7671d8317f15dc3d27680e8a878625a0ffc36279fb71223cc8e5843837c9",
+            "block": 60944790
+          },
+          {
+            "event": "AuctionCleared",
+            "tx": "0xdceb7671d8317f15dc3d27680e8a878625a0ffc36279fb71223cc8e5843837c9",
+            "block": 60944790
+          },
+          {
+            "event": "Delivered",
+            "tx": "0x6094d312bf806747b7dd7fffeb4a427db55a7a135a0f95ea86ef56bb604124c8",
+            "block": 60944793
+          },
+          {
+            "event": "DrawResolved",
+            "tx": "0x3cf423fb57dab34e9f5ee1725a90b873cbabd6e6c1edd118d73376c55ce16012",
+            "block": 60944798
+          },
+          {
+            "event": "CheckDelivered",
+            "tx": "0x36fa0b0c2d25e8574f950b72d16da8ac62435e595597cd3b272d7494d977fe12",
+            "block": 60944801,
+            "round": 0,
+            "similarityBps": 185,
+            "againstFirstBps": 0
+          },
+          {
+            "event": "DrawResolved",
+            "tx": "0x3ad060792501c566167c7614b45725e0f724d0176b460a4cf9c572fe954d7a92",
+            "block": 60944805
+          },
+          {
+            "event": "CheckDelivered",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809,
+            "round": 1,
+            "similarityBps": 185,
+            "againstFirstBps": 10000
+          },
+          {
+            "event": "Payout",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809
+          },
+          {
+            "event": "Payout",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809
+          },
+          {
+            "event": "Slashed",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809,
+            "owner": "0x85b225E219E7FE56F50026F89d31a54899177408",
+            "amount": "1000000",
+            "reason": "result failed the spot check"
+          },
+          {
+            "event": "Payout",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809
+          },
+          {
+            "event": "JobClosed",
+            "tx": "0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6",
+            "block": 60944809
+          }
+        ]
       }
     ]
   },

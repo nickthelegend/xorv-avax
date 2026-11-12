@@ -222,12 +222,15 @@ const server = createServer(async (req, res) => {
 });
 
 pool.start();
+// Attribute encrypted top-ups promptly: the desk must record a pending top-up before it ever spends.
+const syncTimer = d.eerc && desk ? setInterval(() => lane.sync().catch(() => undefined), 30_000) : null;
 server.listen(port, '127.0.0.1', () => {
   console.log(`xorv gateway on http://127.0.0.1:${port} · ${d.network} · market ${d.contracts.market} · facilitator ${desk?.account.address ?? '(missing)'}`);
   const needs = setupNeeds();
   if (needs.length) console.log(`  Setup required: ${needs.join('; ')}`);
 });
 const stop = () => {
+  if (syncTimer) clearInterval(syncTimer);
   pool.stop();
   server.close();
   setTimeout(() => process.exit(0), 500);
