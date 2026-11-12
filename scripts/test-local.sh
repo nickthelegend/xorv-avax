@@ -15,5 +15,6 @@ done
 export XORV_NETWORK=test XORV_RPC=$RPC XORV_DEPLOYMENT=deployments/test.json
 node scripts/deploy.ts >/dev/null
 node scripts/setup-providers.ts >/dev/null
+node scripts/gas-station.ts >/dev/null
 echo "local chain ready: $(node -e "console.log(require('./deployments/test.json').contracts.market)")"
 node --test --test-concurrency=1 packages/sdk/test/*.test.ts packages/eerc/test/*.test.ts packages/gateway/test/*.test.ts

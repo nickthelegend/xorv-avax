@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { IncomingHttpHeaders } from 'node:http';
 import path from 'node:path';
 import { hashMessage, parseEventLogs, recoverMessageAddress, type Hex } from 'viem';
-import { chatMessage, creditMessage, requestHash, encryptedErcAbi, packPrompt, txUrl, xorvMarketAbi, testDollarAbi, type Deployment, type XorvReader } from '@xorv/sdk';
+import { chatMessage, creditMessage, receiptMessage, requestHash, type DeskReceipt, encryptedErcAbi, packPrompt, txUrl, xorvMarketAbi, testDollarAbi, type Deployment, type XorvReader } from '@xorv/sdk';
 import { ROOT, type Wallet } from '@xorv/sdk/node';
 import { Eerc, decryptPCT } from '@xorv/eerc';
 import { Facilitator, HttpError, WINDOWS } from './x402.ts';
@@ -91,6 +91,22 @@ export class PrivateLane {
     return this.syncing;
   }
 
+  /** Every ledger line the desk holds for one buyer, signed by the desk so the buyer can check it on Fuji. */
+  private async receipt(a: Hex): Promise<{ receipt: DeskReceipt; signature: Hex }> {
+    const desk = this.desk!;
+    const receipt: DeskReceipt = {
+      desk: desk.account.address,
+      buyer: a,
+      chainId: this.d.chainId,
+      encryptedERC: this.d.eerc!.encryptedERC,
+      credit: this.ledger.credit[a] ?? '0',
+      topups: Object.values(this.ledger.topups).filter((t) => t.from === a).sort((x, y) => x.block - y.block).map((t) => ({ tx: t.tx, amount: t.amount })),
+      jobs: Object.entries(this.ledger.jobs).filter(([, j]) => j.buyer === a).map(([id, j]) => ({ job: Number(id), escrow: j.escrow, settled: j.settled, tx: j.tx })).sort((x, y) => x.job - y.job),
+      issued: Math.floor(Date.now() / 1000),
+    };
+    return { receipt, signature: await desk.account.signMessage!({ message: receiptMessage(receipt) }) };
+  }
+
   /** Returns unused escrow of closed private jobs to the buyer's credit. */
   private async settleJobs() {
     for (const [id, j] of Object.entries(this.ledger.jobs)) {
@@ -128,7 +144,7 @@ export class PrivateLane {
       const a = String(address).toLowerCase();
       const topups = Object.values(this.ledger.topups).filter((t) => t.from === a);
       const jobs = Object.entries(this.ledger.jobs).filter(([, j]) => j.buyer === a).map(([id, j]) => ({ job: Number(id), escrow: j.escrow, settled: j.settled, tx: j.tx }));
-      return [200, { address: a, credit: this.ledger.credit[a] ?? '0', topups, jobs }];
+      return [200, { address: a, credit: this.ledger.credit[a] ?? '0', topups, jobs, ...(await this.receipt(a as Hex)) }];
     }
     if (method === 'POST' && p === '/api/private/chat') {
       const { address, ts, signature, request } = body ?? {};
@@ -167,7 +183,7 @@ export class PrivateLane {
         const id = Number(ev.args.id);
         this.ledger.jobs[String(id)] = { buyer: a, escrow: escrow.toString(), settled: false, tx: hash };
         this.save();
-        return [200, { job: id, tx: hash, explorer: txUrl(hash, this.d.chainId), escrow: escrow.toString(), creditLeft: this.ledger.credit[a], postedBy: desk.account.address }];
+        return [200, { job: id, tx: hash, explorer: txUrl(hash, this.d.chainId), escrow: escrow.toString(), creditLeft: this.ledger.credit[a], postedBy: desk.account.address, ...(await this.receipt(a)) }];
       } catch (e) {
         this.ledger.credit[a] = credit.toString();
         this.save();

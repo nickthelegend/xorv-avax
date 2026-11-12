@@ -11,6 +11,7 @@
  *   GET  /api/jobs/:id          one job with every event and its transaction hash
  *   GET  /api/health            what is set up
  *   /api/private/*              the eERC private credit lane (see private.ts)
+ *   GET/POST /api/fund          one tap of test funds for a new wallet, relayed to XorvGasStation (see fund.ts)
  *
  * Env: XORV_DEPLOYMENT, XORV_RPC, XORV_GATEWAY_PORT (5421), XORV_ENV_FILE (only GROQ_API_KEY is read),
  *      XORV_GATEWAY_NODES (atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15), XORV_PUBLIC_URL,
@@ -24,6 +25,7 @@ import { ROOT, keyByName, loadDeployment, readEnvFile, walletFor, type Wallet } 
 import { NodePool, parseNodes } from './nodes.ts';
 import { Facilitator, HttpError } from './x402.ts';
 import { PrivateLane } from './private.ts';
+import { FundDesk, clientIp } from './fund.ts';
 
 const d = loadDeployment();
 const rpc = process.env.XORV_RPC ?? d.rpc;
@@ -41,6 +43,7 @@ try {
 }
 const facilitator = new Facilitator(d, reader, desk, publicUrl);
 const lane = new PrivateLane(d, reader, desk, facilitator);
+const funds = new FundDesk(d, reader, rpc);
 
 const providerEnv: Record<string, string> = {};
 for (const f of (process.env.XORV_ENV_FILE ?? '').split(':').filter(Boolean)) Object.assign(providerEnv, readEnvFile(f, ['GROQ_API_KEY']));
@@ -180,7 +183,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, {});
     if (req.method === 'GET' && p === '/api/health') {
       const served = await servedModels().catch(() => new Map());
-      return send(res, 200, { chainId: d.chainId, network: d.network, contracts: d.contracts, facilitator: desk?.account.address ?? null, nodes: pool.status(), models: [...served].map(([id, n]) => ({ id, nodes: n })), setup_required: setupNeeds() });
+      return send(res, 200, { chainId: d.chainId, network: d.network, contracts: d.contracts, facilitator: desk?.account.address ?? null, nodes: pool.status(), models: [...served].map(([id, n]) => ({ id, nodes: n })), setup_required: setupNeeds(), funds: { station: funds.station, setup: funds.setupNeeds() } });
     }
     if (req.method === 'GET' && p === '/v1/models') {
       const [served, idx] = await Promise.all([servedModels(), reader.indexModels()]);
@@ -210,6 +213,8 @@ const server = createServer(async (req, res) => {
       const c = await completion(s.job, s.tx);
       return send(res, c.status, c.body, { 'x-payment-response': paymentResponse });
     }
+    if (p === '/api/fund' && req.method === 'GET') return send(res, 200, await funds.status(clientIp(req.headers, req.socket.remoteAddress)));
+    if (p === '/api/fund' && req.method === 'POST') return send(res, 200, await funds.fund(await readJson(req), clientIp(req.headers, req.socket.remoteAddress)));
     if (p.startsWith('/api/private')) return send(res, ...(await lane.route(req.method ?? 'GET', p, req.method === 'POST' ? await readJson(req) : {}, req.headers)));
     if (req.method === 'GET' && !p.startsWith('/api') && !p.startsWith('/v1') && serveStatic(p, res)) return;
     throw new HttpError(404, `no route ${req.method} ${p}`);

@@ -75,3 +75,10 @@ export function decryptPCT(privateKey: bigint, pct: readonly bigint[], length = 
 export const pctOf = (e: ReturnType<typeof poseidonEncryption>) => [...e.ciphertext, ...e.authKey, e.nonce] as bigint[];
 
 export const pointOf = (amount: bigint) => mulPointEscalar(Base8, amount);
+
+/** True when an ElGamal ciphertext to this key encrypts exactly `amount` (m·G = c2 − sk·c1). */
+export function ciphertextIs(privateKey: bigint, c1: bigint[], c2: bigint[], amount: bigint): boolean {
+  const p = decryptPoint(privateKey, c1, c2);
+  const want = pointOf(amount);
+  return p[0] === want[0] && p[1] === want[1];
+}
