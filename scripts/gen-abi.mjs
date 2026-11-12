@@ -12,6 +12,7 @@ const pick = {
   xorvMarketAbi: 'XorvMarket.sol/XorvMarket.json',
   x402RouterAbi: 'X402Router.sol/X402Router.json',
   xorvForwardAbi: 'XorvForward.sol/XorvForward.json',
+  gasStationAbi: 'XorvGasStation.sol/XorvGasStation.json',
   encryptedErcAbi: 'EncryptedERC.sol/EncryptedERC.json',
   registrarAbi: 'Registrar.sol/Registrar.json',
 };

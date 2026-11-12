@@ -6,6 +6,7 @@ export const ACCOUNTS: Record<string, string> = {
   auditor: 'XORV_AUDITOR_KEY',
   buyer: 'XORV_BUYER_KEY',
   qa: 'XORV_QA_KEY',
+  sponsor: 'XORV_SPONSOR_KEY',
   ...Object.fromEntries(LABELS.flatMap((l) => [[`owner.${l}`, `XORV_OWNER_${l.toUpperCase()}_KEY`], [`node.${l}`, `XORV_NODE_${l.toUpperCase()}_KEY`]])),
 };
 

@@ -15,6 +15,8 @@ export interface Deployment {
     market: Hex;
     router: Hex;
     forward?: Hex;
+    /** XorvGasStation: one-tap tUSD (and a sip of AVAX) for brand-new wallets */
+    gasStation?: Hex;
   };
   eerc?: {
     encryptedERC: Hex;
