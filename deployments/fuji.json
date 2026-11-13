@@ -549,6 +549,18 @@
         "bids": 4,
         "verify": false,
         "seconds": 28.622
+      },
+      {
+        "at": "2026-11-13T07:02:59.933Z",
+        "job": 60,
+        "settleTx": "0xe9c11f949a777f29f1fa86998a2ac4c53f01f366b852fccfc77cfa219efe15a4",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "217",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 29.696
       }
     ],
     "webQaFlow": [
@@ -1080,7 +1092,7 @@
       },
       {
         "at": "2026-11-13",
-        "what": "demo film v8 (videos/xorv-avax/versions/xorv-avax-film-v8.mp4): ONE live take on https://xorv-avax.vercel.app from a fresh browser, no tunnel. The gas station's drips for this network were used up, so the test wallet was made and funded off camera and the narration says so",
+        "what": "demo film v8 and v9 (videos/xorv-avax/versions/xorv-avax-film-v8.mp4): ONE live take on https://xorv-avax.vercel.app from a fresh browser, no tunnel. The gas station's drips for this network were used up, so the test wallet was made and funded off camera and the narration says so",
         "testWallet": "0x892c4aCc0bBdb92095F6Be8D9c2dE0427449d521",
         "walletFunding": {
           "tUSD": "2 tUSD from the repo's demo buyer: 0x3668d058ba91c3f9af57bb886b33b08e87d7207f9032f86d19535c56dd6dae0b",
@@ -1104,6 +1116,37 @@
         "terminal": {
           "x402Jobs": [
             56
+          ],
+          "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
+        }
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v10: ONE live take on https://xorv-avax.vercel.app from a fresh browser (no tunnel) after the app's Settled step began showing the check fee and total; the test wallet was made and funded off camera and the narration says so",
+        "testWallet": "0x0Df6683Fe99eb5B6d81818a5572D0b267A8A0744",
+        "walletFunding": {
+          "tUSD": "2 tUSD from the repo's demo buyer: 0x59c43290b12eb3dfde55c9a0c46b1bc6e1ba3ba738e1307024d4a8889945f88e",
+          "gas": "0.005 AVAX from the Avalanche funding hub: 0xf6bf727c34bd1f0baa2ab4202708906e3917701b95f37bcc875f9f3cdc41d96b"
+        },
+        "x402Job": 57,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0x63ef2502bbac5d0877ddacc69a6c0ede9948027cea7ba2082cc0bf114f57bedf",
+        "checkAndSettlement": "https://testnet.snowtrace.io/tx/0xb88f3dc222c39b99da8e5b5c279970f9cb1004a2a76e1f474a2663d352ec9ccf",
+        "settledLine": "Charged $0.000037 for 176 tokens + $0.0002 check fee = $0.000237",
+        "liarJob": 58,
+        "liarSlash": "https://testnet.snowtrace.io/tx/0x5b65fbd897f4a0bf7a0cfe8d58ab3950d542c8717a763e6d5442164665562816",
+        "liarOutcome": "5 sealed bids; liar $0.001/1M won and delivered junk; atlas's spot check 0%; cobalt's tiebreak 0% with the answer, 100% with the check; liar slashed 0.50 tUSD to the test wallet ($2.00 -> $2.50 in the app), 0.0024 refunded",
+        "privateJob": 59,
+        "deskPost": "https://testnet.snowtrace.io/tx/0x23fd2cb08d06cbdb979415bc2563cbb2c2415c0dd3cd0df0c6e3961c58e5fafd",
+        "eercTransferToDesk": "https://testnet.snowtrace.io/tx/0x2aeca2e472b9ef9bfbef3f0076c81e234518244a48b7375fa14f49bc8a117c27",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x3addb54bb7437fa2c88217965d9aa0c8878906d3ce1f97a8d2fbc4f570ae39f7",
+          "https://testnet.snowtrace.io/tx/0x791b0ee84a85d5c20dffd6816c69d83dfb9667ad84acdf34ca6dcc8e8a671ec7",
+          "https://testnet.snowtrace.io/tx/0x00a298eef38c394ca045b69bfa7848c2a507bc807816d0935a14a108d9a1c568",
+          "https://testnet.snowtrace.io/tx/0x2aeca2e472b9ef9bfbef3f0076c81e234518244a48b7375fa14f49bc8a117c27"
+        ],
+        "terminal": {
+          "x402Jobs": [
+            60
           ],
           "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
         }
@@ -1175,6 +1218,11 @@
         "at": "2026-11-13T05:42:57.794Z",
         "step": "addStake",
         "tx": "0x6803e9f4b5ca24d7a250ae4f7285e008bd6c043311f21249355c20bfd81e3b05"
+      },
+      {
+        "at": "2026-11-13T06:55:57.260Z",
+        "step": "addStake",
+        "tx": "0xecabc9a46cda6a3c8caaf45faf68db5e5a5c0fc005a22dcf5699a33a6888c014"
       }
     ]
   },
