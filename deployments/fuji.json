@@ -537,6 +537,18 @@
         "bids": 4,
         "verify": false,
         "seconds": 27.214
+      },
+      {
+        "at": "2026-11-13T05:47:34.321Z",
+        "job": 56,
+        "settleTx": "0x1d5889f4041777e8d97234339c7cba8bdc6b6fe2b5f2ec6e076a7f4c8015bb66",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "217",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 28.622
       }
     ],
     "webQaFlow": [
@@ -1041,7 +1053,7 @@
       },
       {
         "at": "2026-11-13",
-        "what": "demo film v5 and v6 (videos/xorv-avax/versions/xorv-avax-film-v5.mp4, -v6.mp4): ONE live take (take 5) on https://xorv-avax.vercel.app from an empty browser: honest Verify chat, a fifth node that lies on purpose (liar, --fault deliver, 5 tUSD stake) caught and slashed live, index, eERC top-up, private chat; the browser reached the app through an ssh tunnel to the hackathon VPS because the Mac's network had used its 4 daily gas-station drips on earlier takes",
+        "what": "demo film v5, v6 and v7 (videos/xorv-avax/versions/xorv-avax-film-v5.mp4, -v6.mp4): ONE live take (take 5) on https://xorv-avax.vercel.app from an empty browser: honest Verify chat, a fifth node that lies on purpose (liar, --fault deliver, 5 tUSD stake) caught and slashed live, index, eERC top-up, private chat; the browser reached the app through an ssh tunnel to the hackathon VPS because the Mac's network had used its 4 daily gas-station drips on earlier takes",
         "testWallet": "0x94bd90f9…977E (made in the browser, funded once by XorvGasStation in the take)",
         "x402Job": 49,
         "x402Settlement": "https://testnet.snowtrace.io/tx/0xac5c9981953e9fc1b8aaa64c8d73562b29f89792a78b0b1af7ffca8b18aee731",
@@ -1062,6 +1074,36 @@
         "terminal": {
           "x402Jobs": [
             52
+          ],
+          "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
+        }
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v8 (videos/xorv-avax/versions/xorv-avax-film-v8.mp4): ONE live take on https://xorv-avax.vercel.app from a fresh browser, no tunnel. The gas station's drips for this network were used up, so the test wallet was made and funded off camera and the narration says so",
+        "testWallet": "0x892c4aCc0bBdb92095F6Be8D9c2dE0427449d521",
+        "walletFunding": {
+          "tUSD": "2 tUSD from the repo's demo buyer: 0x3668d058ba91c3f9af57bb886b33b08e87d7207f9032f86d19535c56dd6dae0b",
+          "gas": "0.005 AVAX from the Avalanche funding hub (avax/.hub/LEDGER.md): 0x054500475de4f48d0d972429ec369ba2ac5d64bee4f33250ecc485b1f782eedc"
+        },
+        "x402Job": 53,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0x210c5b097435d59fc317d1796bd4435ca5d80c86e7479530026ddf4b0769f3a0",
+        "checkAndSettlement": "https://testnet.snowtrace.io/tx/0xe4c45406789b96bbb827b686fd012f002d009ad2839ec3aadac810ba03acdd8e",
+        "liarJob": 54,
+        "liarSlash": "https://testnet.snowtrace.io/tx/0xa3d6f73ff8eb6c02dda179fe824d3ae179bc017fca04dbd592f38048b6998856",
+        "liarOutcome": "5 sealed bids; liar $0.001/1M won and delivered junk; dune's spot check 0%; atlas's tiebreak 0% with the answer, 100% with the check; liar slashed 0.50 tUSD to the test wallet (app balance $2.00 -> $2.50), 0.0024 refunded",
+        "privateJob": 55,
+        "deskPost": "https://testnet.snowtrace.io/tx/0x2c53614616873f6ff712e8434013cc563d85e433fd5d67e75883334b8bf7eb54",
+        "eercTransferToDesk": "https://testnet.snowtrace.io/tx/0x0001042fcc548d5c925da93d4ce3e7c09b175b9866fcdf73d347524b58058c4a",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x97013c82f9122428fc4c3746392bd4fed3d9d28cb2d96b1ceab74f7f16889af7",
+          "https://testnet.snowtrace.io/tx/0x9b6b131151bd4ee1278618057f2eb2b56bba7bd9b5313e4d7bc4ae152a306cc1",
+          "https://testnet.snowtrace.io/tx/0xcd0692e8c084c2bc04e28bcd80214a3627f178777be9586392760db585b4b945",
+          "https://testnet.snowtrace.io/tx/0x0001042fcc548d5c925da93d4ce3e7c09b175b9866fcdf73d347524b58058c4a"
+        ],
+        "terminal": {
+          "x402Jobs": [
+            56
           ],
           "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
         }
@@ -1128,6 +1170,11 @@
         "at": "2026-11-13T04:35:51.054Z",
         "step": "addStake",
         "tx": "0xc969fce351885fb740eea897b8ef2260843979a5d220f8428cb00f620eb4f35e"
+      },
+      {
+        "at": "2026-11-13T05:42:57.794Z",
+        "step": "addStake",
+        "tx": "0x6803e9f4b5ca24d7a250ae4f7285e008bd6c043311f21249355c20bfd81e3b05"
       }
     ]
   },
