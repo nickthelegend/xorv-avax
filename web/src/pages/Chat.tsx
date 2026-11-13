@@ -86,12 +86,15 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
         const closed = ev1(d, 'JobClosed');
         const bad = j.status === 'Faulted';
         const slashEv = ev1(d, 'Slashed');
+        // check fees are paid from the same escrow (Payout kinds 2 and 3), so the buyer's total is charge + fees
+        const checkFees = ev(d, 'Payout').filter((p) => [2, 3].includes(Number(p.args.kind))).reduce((a, p) => a + BigInt(p.args.amount), 0n);
         const refundEv = ev(d, 'Payout').find((p) => Number(p.args.kind) === 4);
-        steps.push({ k: 'end', state: bad ? 'bad' : j.status === 'Expired' ? '' : 'good', body: bad ? <><b>Slashed.</b> {slashEv ? <>{nameOf(m.data, j.winner)} lost {money(slashEv.args.amount, 2)} of its stake to you</> : 'The provider lost stake to you'}, and the rest of your escrow{refundEv ? <> ({money(refundEv.args.amount)})</> : null} came back <T h={closed?.transactionHash} /></> : j.status === 'Expired' ? <><b>No delivery.</b> Nobody revealed a bid; the escrow went back in full <T h={closed?.transactionHash} /></> : <><b>Settled.</b> Charged {money(j.charge)} for {j.tokens} tokens; the rest of the escrow went back <T h={closed?.transactionHash} /></> });
+        steps.push({ k: 'end', state: bad ? 'bad' : j.status === 'Expired' ? '' : 'good', body: bad ? <><b>Slashed.</b> {slashEv ? <>{nameOf(m.data, j.winner)} lost {money(slashEv.args.amount, 2)} of its stake to you</> : 'The provider lost stake to you'}, and the rest of your escrow{refundEv ? <> ({money(refundEv.args.amount)})</> : null} came back <T h={closed?.transactionHash} /></> : j.status === 'Expired' ? <><b>No delivery.</b> Nobody revealed a bid; the escrow went back in full <T h={closed?.transactionHash} /></> : <><b>Settled.</b> Charged {money(j.charge)} for {j.tokens} tokens{checkFees > 0n ? <> + {money(checkFees)} check fee = <b>{money(j.charge + checkFees, 6)}</b></> : null}; the rest of the escrow went back <T h={closed?.transactionHash} /></> });
       }
     }
   }
   const done = j ? CLOSED.has(j.status) : false;
+  const paidFees = d ? ev(d, 'Payout').filter((p) => [2, 3].includes(Number(p.args.kind))).reduce((a, p) => a + BigInt(p.args.amount), 0n) : 0n;
   const tol = m.data?.config.toleranceBps ?? 5000;
   const checked = d?.checks.length ? d.checks.every((c) => c.delivered) : false;
   const verifyLabel = !msg.verify ? null : faulted ? 'failed its check' : done && checked && d!.checks[0].similarityBps >= tol ? 'verified' : done ? 'checked' : 'verify requested';
@@ -110,7 +113,7 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
         {det.error && !d && <p className="note">Could not read job #{msg.job}: {det.error}</p>}
         {msg.job != null && (output || done) && (
           <div className="receipt-bar">
-            {j && j.charge > 0n && <span className="money">{money(j.charge)}</span>}
+            {j && j.charge > 0n && <span className="money" title="what this answer cost you: the winner's charge plus any check fees">{money(j.charge + paidFees, 6)}</span>}
             {msg.tx && <a href={txUrl(msg.tx)} target="_blank" rel="noreferrer">{msg.pay === 'x402' ? 'x402 settlement' : 'Desk post'} <Icon name="external" size={11} /></a>}
             {delivered && <a href={txUrl(delivered.transactionHash)} target="_blank" rel="noreferrer">Delivery tx <Icon name="external" size={11} /></a>}
             <Link to={`/jobs/${msg.job}`}>Job #{msg.job} record <Icon name="arrow" size={12} /></Link>
