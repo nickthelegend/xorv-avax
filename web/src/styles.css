@@ -739,3 +739,51 @@ a.pill { height: 32px; padding: 0 10px; }
 @media (max-width: 640px) { .state-art { flex-direction: column; align-items: center; text-align: center; } .state-art .ph-actions { justify-content: center; } }
 .cards3.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 640px) { .br-lg { display: none; } .contracts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cards3.n2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- two-sided market (landing): providers and buyers side by side ---- */
+.sides-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+.side-card { padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.side-top { display: flex; align-items: center; gap: 14px; }
+.side-top .art3d { flex: none; }
+.kicker { display: block; font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.side-card h3 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; margin-top: 4px; }
+.side-card > p { color: var(--ink-2); font-size: 15px; line-height: 1.6; }
+.side-flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.side-flow li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); min-width: 0; }
+.side-flow b { display: block; font-size: 13.5px; font-weight: 600; }
+.side-flow span { display: block; color: var(--ink-3); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.side-flow li.bad { border-color: rgba(248, 113, 113, .3); }
+.side-flow li.bad b { color: var(--bad); }
+.side-more { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; min-height: 32px; }
+.codebox-lg pre { font-size: 13.5px; line-height: 1.75; white-space: pre; }
+.codebox-lg .cl { display: block; }
+.buy-tabs { margin-bottom: 8px; }
+.honest-line { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink-2); font-size: 13.5px; line-height: 1.55; }
+.honest-line .icon { flex: none; margin-top: 3px; }
+.honest-line code, .sec-h p code { font-family: var(--mono); font-size: .92em; color: var(--ink); background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+.vs-wrap { overflow: hidden; }
+.vs { width: 100%; border-collapse: collapse; font-size: 14px; }
+.vs th, .vs td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.vs thead th { color: var(--ink-3); font-weight: 500; font-size: 12.5px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.vs tbody th { font-weight: 600; white-space: nowrap; }
+.vs td { color: var(--ink-2); }
+.vs tr:last-child th, .vs tr:last-child td { border-bottom: 0; }
+.vs tr.us { background: var(--surface-2); }
+.vs tr.us td { color: var(--ink); }
+.vs-us { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 980px) {
+  .sides-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .side-card { padding: 18px; }
+  .side-card h3 { font-size: 20px; }
+  .side-top .art3d { width: 60px !important; height: 60px !important; }
+  .side-flow { grid-template-columns: 1fr 1fr; }
+  .codebox-lg pre { font-size: 12px; }
+  .vs thead { display: none; }
+  .vs, .vs tbody, .vs tr, .vs th, .vs td { display: block; width: 100%; }
+  .vs tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .vs tr:last-child { border-bottom: 0; }
+  .vs th, .vs td { border: 0; padding: 4px 16px; }
+  .vs td::before { content: attr(data-l) ': '; color: var(--ink-3); }
+}

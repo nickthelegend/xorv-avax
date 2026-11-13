@@ -14,3 +14,4 @@ web/test-results/
 deployments/local.json
 deployments/test.json
 web/public/eerc/
+.vercel/
