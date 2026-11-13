@@ -59,7 +59,7 @@ export async function startNode(o: NodeOptions) {
   const log = (event: string, data: Record<string, unknown> = {}) => {
     const line = { at: new Date().toISOString(), node: o.label, address: me, event, ...data };
     appendFileSync(logFile, `${JSON.stringify(line)}\n`);
-    console.log(`[${o.label}] ${event} ${Object.entries(data).map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`).join(' ')}`);
+    console.log(process.env.XORV_LOG === 'pretty' ? pretty(o.label, event, data) : `[${o.label}] ${event} ${Object.entries(data).map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`).join(' ')}`);
   };
 
   // One transaction at a time per node key, each confirmed before the next.
@@ -172,6 +172,14 @@ export async function startNode(o: NodeOptions) {
     for (const id of [...open]) {
       const j = await reader.job(id);
       if (CLOSED.has(j.status)) {
+        // Say how a job this node won ended: paid for its tokens, or slashed because a spot check caught it.
+        if (state.bids[String(id)] && !state.done[`closed:${id}`] && j.winner.toLowerCase() === owner.toLowerCase()) {
+          state.done[`closed:${id}`] = true;
+          save();
+          const p = await reader.provider(owner).catch(() => null);
+          if (j.status === 'Faulted') log('SLASHED: a spot check caught this answer', { job: id, outcome: j.outcome, stake_left: p ? Number(p.stake) / 1e6 : null });
+          else if (j.charge > 0n) log('paid', { job: id, charge: Number(j.charge), tokens: j.tokens });
+        }
         open.delete(id);
         continue;
       }
@@ -276,4 +284,23 @@ export async function startNode(o: NodeOptions) {
     if (o.once) return;
     await new Promise((r) => setTimeout(r, o.pollMs));
   }
+}
+
+/** XORV_LOG=pretty: one short human line per event (time, node, what happened, the job, a shortened tx). */
+function pretty(label: string, event: string, data: Record<string, unknown>) {
+  const t = new Date().toISOString().slice(11, 19);
+  const parts: string[] = [];
+  const per1m = (v: unknown) => '$' + ((Number(v) * 1000) / 1e6).toFixed(3) + '/1M';
+  for (const [k, v] of Object.entries(data)) {
+    if (k === 'job') parts.unshift('job #' + v);
+    else if (k === 'tx') parts.push('tx ' + String(v).slice(0, 8) + '…' + String(v).slice(-4));
+    else if (k === 'rate' || k === 'sealed_rate') parts.push((k === 'sealed_rate' ? 'sealed ' : '') + per1m(v));
+    else if (k === 'charge') parts.push('$' + (Number(v) / 1e6).toFixed(6));
+    else if (k === 'similarity_bps') parts.push(Number(v) / 100 + '% match');
+    else if (k === 'vs_first_check_bps') parts.push(Number(v) / 100 + '% with the first check');
+    else if (k === 'stake_left') parts.push('stake left $' + Number(v).toFixed(2));
+    else if (['gas', 'address', 'chars', 'ms', 'margin', 'model', 'outcome'].includes(k)) continue;
+    else parts.push(k + ' ' + (typeof v === 'string' ? v : JSON.stringify(v)));
+  }
+  return t + '  ' + label + '  ' + event + (parts.length ? '  ·  ' + parts.join(' · ') : '');
 }
