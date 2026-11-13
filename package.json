@@ -19,13 +19,17 @@
     "gateway": "node packages/gateway/src/server.ts",
     "node": "node packages/node/src/cli.ts",
     "mcp": "node packages/mcp/src/main.ts",
-    "test:local": "bash scripts/test-local.sh"
+    "test:local": "bash scripts/test-local.sh",
+    "xorv": "node packages/cli/src/main.ts",
+    "xorv-node": "node packages/node/src/cli.ts",
+    "test:fuji": "node --test packages/sdk/test/fuji.test.ts"
   },
   "devDependencies": {
     "typescript": "5.9.3",
     "@types/node": "24.10.1",
     "viem": "2.37.6",
     "@xorv/eerc": "workspace:*",
-    "@xorv/sdk": "workspace:*"
+    "@xorv/sdk": "workspace:*",
+    "@xorv/cli": "workspace:*"
   }
 }
