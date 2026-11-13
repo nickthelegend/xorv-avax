@@ -266,6 +266,9 @@ u.dot { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3
 .msg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--ink-3); font-size: 13px; min-height: 30px; }
 .msg-meta b { color: var(--ink-2); font-weight: 500; }
 .answer { margin-top: 10px; overflow-wrap: anywhere; line-height: 1.65; font-size: 15.5px; animation: rise .4s var(--ease); }
+.answer-bad { border-left: 2px solid var(--bad); padding-left: 14px; color: var(--ink-3); }
+.answer-flag { margin: 14px 0 0; font-size: 14px; color: var(--ink-2); }
+.answer-flag b { font-weight: 500; }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
 .steps { list-style: none; margin: 10px 0 0; padding: 0 0 0 2px; display: flex; flex-direction: column; }
 .step { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 12px; padding-bottom: 10px; font-size: 13.5px; color: var(--ink-2); animation: rise .3s var(--ease); }

@@ -42,6 +42,10 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
   const [fallback, setFallback] = useState<{ output: string; tx: string } | null>(null);
   const delivered = ev1(d, 'Delivered');
   const output = delivered?.args.output ?? fallback?.output ?? msg.content;
+  const faulted = j?.status === 'Faulted';
+  const rerun = faulted ? ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === 0) : undefined;
+  // A faulted answer is junk: the chat history keeps the spot check's re-run instead.
+  const keep = rerun ? rerun.args.output : output;
   // The explorer indexer can trail the chain by a few seconds; read the Delivered log from the RPC meanwhile.
   useEffect(() => {
     if (!j || delivered || fallback || /^0x0+$/.test(j.resultHash)) return;
@@ -49,9 +53,10 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
       .then((l) => l[0] && setFallback({ output: l[0].args.output, tx: l[0].transactionHash }))
       .catch(() => {});
   }, [j?.resultHash, !!delivered]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (output && output !== msg.content) onDelivered(output); }, [output]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (keep && keep !== msg.content) onDelivered(keep); }, [keep]); // eslint-disable-line react-hooks/exhaustive-deps
   const now = Date.now() / 1000;
   const left = (t: number) => Math.max(0, Math.ceil(t - now));
+  const pct = (bps: number) => `${bps % 100 === 0 ? bps / 100 : (bps / 100).toFixed(2)}%`;
   const T = ({ h }: { h?: string }) => (h ? <a href={txUrl(h)} target="_blank" rel="noreferrer" title={h}>{h.slice(0, 6)}… ↗</a> : null);
 
   const steps: { k: string; state: 'done' | 'now' | 'bad' | 'good' | ''; body: React.ReactNode }[] = [];
@@ -75,25 +80,32 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
       if (j.status === 'Delivered') steps.push({ k: 'draw', state: 'now', body: <>Drawing the spot check from the delivery block hash…</> });
       if (spot) {
         if (!spot.args.selected) steps.push({ k: 'spot', state: 'done', body: <>Not sampled for a spot check this time (roll {String(spot.args.rollBps)} ≥ {String(spot.args.thresholdBps)}) <T h={spot.transactionHash} /></> });
-        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> is re-running the prompt</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {c.similarityBps % 100 === 0 ? c.similarityBps / 100 : (c.similarityBps / 100).toFixed(2)}% match, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
+        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> is re-running the prompt</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {pct(c.similarityBps)} match{i ? <> with the answer, {pct(Number(ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === 1)?.args.againstFirstBps ?? 0))} with the spot check</> : null}, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
       }
       if (CLOSED.has(j.status)) {
         const closed = ev1(d, 'JobClosed');
         const bad = j.status === 'Faulted';
-        steps.push({ k: 'end', state: bad ? 'bad' : j.status === 'Expired' ? '' : 'good', body: bad ? <><b>Slashed.</b> The tiebreaker sided against the provider; your escrow came back plus its slashed stake <T h={closed?.transactionHash} /></> : j.status === 'Expired' ? <><b>No delivery.</b> Nobody revealed a bid; the escrow went back in full <T h={closed?.transactionHash} /></> : <><b>Settled.</b> Charged {money(j.charge)} for {j.tokens} tokens; the rest of the escrow went back <T h={closed?.transactionHash} /></> });
+        const slashEv = ev1(d, 'Slashed');
+        const refundEv = ev(d, 'Payout').find((p) => Number(p.args.kind) === 4);
+        steps.push({ k: 'end', state: bad ? 'bad' : j.status === 'Expired' ? '' : 'good', body: bad ? <><b>Slashed.</b> {slashEv ? <>{nameOf(m.data, j.winner)} lost {money(slashEv.args.amount, 2)} of its stake to you</> : 'The provider lost stake to you'}, and the rest of your escrow{refundEv ? <> ({money(refundEv.args.amount)})</> : null} came back <T h={closed?.transactionHash} /></> : j.status === 'Expired' ? <><b>No delivery.</b> Nobody revealed a bid; the escrow went back in full <T h={closed?.transactionHash} /></> : <><b>Settled.</b> Charged {money(j.charge)} for {j.tokens} tokens; the rest of the escrow went back <T h={closed?.transactionHash} /></> });
       }
     }
   }
   const done = j ? CLOSED.has(j.status) : false;
+  const tol = m.data?.config.toleranceBps ?? 5000;
+  const checked = d?.checks.length ? d.checks.every((c) => c.delivered) : false;
+  const verifyLabel = !msg.verify ? null : faulted ? 'failed its check' : done && checked && d!.checks[0].similarityBps >= tol ? 'verified' : done ? 'checked' : 'verify requested';
   return (
     <div className="msg-a">
       <span className="mark-av" aria-hidden="true"><img src="/brand/xorv-mark-white.png" alt="" /></span>
       <div style={{ minWidth: 0 }}>
-        <div className="msg-meta"><b>{modelName(msg.model)}</b><span>via {hostName(msg.model)}</span>{j?.winner && !/^0x0+$/.test(j.winner) && <span>· served by <Link to={`/providers/${nameOf(m.data, j.winner)}`} className="link">{nameOf(m.data, j.winner)}</Link></span>}{msg.verify && <span>· verified</span>}</div>
+        <div className="msg-meta"><b>{modelName(msg.model)}</b><span>via {hostName(msg.model)}</span>{j?.winner && !/^0x0+$/.test(j.winner) && <span>· served by <Link to={`/providers/${nameOf(m.data, j.winner)}`} className="link">{nameOf(m.data, j.winner)}</Link></span>}{verifyLabel && <span className={faulted ? 'bad-c' : undefined}>· {verifyLabel}</span>}</div>
         {msg.error && <div className="err-box" role="alert"><b>{msg.job != null ? 'Job update' : 'Not sent'}.</b> {msg.error}</div>}
         {msg.job == null && !msg.error && <ol className="steps"><li className="step now"><i /><span>{msg.stage ?? 'Preparing the payment…'}</span></li></ol>}
         {steps.length > 0 && !(done && output) && <ol className="steps" aria-live="polite">{steps.map((s) => <li key={s.k} className={`step ${s.state}`}><i /><span>{s.body}</span></li>)}</ol>}
-        {output && <div className="answer"><Md text={output} /></div>}
+        {output && faulted && <p className="answer-flag bad-c"><b>Failed its check.</b> {nameOf(m.data, j!.winner)} was paid nothing and slashed. Its answer:</p>}
+        {output && <div className={`answer${faulted ? ' answer-bad' : ''}`}><Md text={output} /></div>}
+        {faulted && rerun && <><p className="answer-flag">The spot check's re-run, by <b>{nameOf(m.data, rerun.args.node)}</b>:</p><div className="answer"><Md text={rerun.args.output} /></div></>}
         {done && output && <details className="prompt"><summary>How this answer was bought ({steps.length} steps on Avalanche)</summary><ol className="steps">{steps.map((s) => <li key={s.k} className={`step ${s.state}`}><i /><span>{s.body}</span></li>)}</ol></details>}
         {det.error && !d && <p className="note">Could not read job #{msg.job}: {det.error}</p>}
         {msg.job != null && (output || done) && (
@@ -193,7 +205,9 @@ export function Chat() {
   }
 
   const setContent = (id: string, i: number, content: string) => update(id, (r) => ({ ...r, messages: r.messages.map((x, k) => (k === i && x.role === 'assistant' ? { ...x, content } : x)) }));
-  const label = useMemo(() => (offline ? 'Gateway offline' : !g.data ? 'Checking…' : health ? `${health.nodes.filter((n) => n.ready).length} provider nodes online` : 'Gateway error'), [offline, g.data, health]);
+  // Staked, eligible nodes for this model come from the registry (any operator's node, not just the gateway's own).
+  const nServe = m.data ? (served.get(model)?.length ?? 0) : null;
+  const label = useMemo(() => (offline ? 'Gateway offline' : !g.data ? 'Checking…' : !health ? 'Gateway error' : nServe == null ? 'Gateway online' : `${nServe} staked node${nServe === 1 ? ' serves' : 's serve'} this model`), [offline, g.data, health, nServe]);
 
   return (
     <div className="chat">

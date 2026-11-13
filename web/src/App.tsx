@@ -32,7 +32,7 @@ function route(path: string): Route {
   if (p === '/providers/join') return { key: 'join', nav: 'providers', title: 'Xorv · Become a provider', el: <Join /> };
   if ((x = p.match(/^\/providers\/([^/]+)$/))) { const label = decodeSegment(x[1]); return label === null ? route('/missing') : { key: `prov-${label}`, nav: 'providers', title: `Xorv · ${label}`, el: <Provider label={label} /> }; }
   if (p === '/rankings') return { key: 'rankings', nav: 'rankings', title: 'Xorv · Rankings', el: <Rankings /> };
-  if ((x = p.match(/^\/jobs\/(\d+)$/))) return { key: `job${x[1]}`, nav: 'rankings', title: `Xorv · Job #${x[1]}`, el: <JobPage id={Number(x[1])} /> };
+  if ((x = p.match(/^\/jobs\/(\d+)$/))) return { key: `job${x[1]}`, title: `Xorv · Job #${x[1]}`, el: <JobPage id={Number(x[1])} /> };
   if (p === '/private') return { key: 'private', nav: 'private', title: 'Xorv · Private credit', el: <Private /> };
   if (p === '/account') return { key: 'account', nav: 'account', title: 'Xorv · Account', el: <Account tab="wallet" /> };
   if (p === '/account/private') return { key: 'account-private', nav: 'account', title: 'Xorv · Private credit', el: <Account tab="private" /> };
