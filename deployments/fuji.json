@@ -489,6 +489,18 @@
         "bids": 4,
         "verify": false,
         "seconds": 28.818
+      },
+      {
+        "at": "2026-11-13T00:50:10.962Z",
+        "job": 36,
+        "settleTx": "0xef911dcb87d719eecf8b7cdabdb20658f736bdbeed6656a51a04e08df8d376be",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "208",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 25.402
       }
     ],
     "webQaFlow": [
@@ -921,6 +933,33 @@
             35
           ],
           "note": "scripts/x402-client.ts against the hosted API while re-shooting the terminal scene; job #35 is the one in the film"
+        }
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v3, ONE live take on https://xorv-avax.vercel.app from an empty browser, Verify ticked on the first chat (videos/xorv-avax/versions/xorv-avax-film-v3.mp4)",
+        "testWallet": "0x638dc05f05b75a39814615222984019253214b46 (made in the browser, funded once by XorvGasStation in the take)",
+        "x402Job": 37,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0x72caf00c67eb82273b719a9ebaef98914bd4cf306076afaea91caca4709af8f1",
+        "spotCheck": "cobalt re-ran job #37: 100% match, computed on-chain",
+        "jobTxCounts": {
+          "37": 12,
+          "38": 11
+        },
+        "privateJob": 38,
+        "deskPost": "https://testnet.snowtrace.io/tx/0xd65ccc44042e7fce36b4c6dcf51baf3027a79b9ed34b4dff0222047993542b0b",
+        "eercTransferToDesk": "https://testnet.snowtrace.io/tx/0xb82f7a92887c0b0bfd7b9ea69d2a530b0d6aae93f58e9628531fe5316f217313",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x554ac9b5887938d391081ac24e225ec6b782e875a4388dfc161d5027771adc99",
+          "https://testnet.snowtrace.io/tx/0x24f1821033d2ce2d648dccc9d8b07673365e3b1797caec167cd69a3f8ae86851",
+          "https://testnet.snowtrace.io/tx/0x55baff6ce298ecaf28e3691b61906a7d1affde720af34cb1e3f7d16933f9d1df",
+          "https://testnet.snowtrace.io/tx/0xb82f7a92887c0b0bfd7b9ea69d2a530b0d6aae93f58e9628531fe5316f217313"
+        ],
+        "terminal": {
+          "x402Jobs": [
+            36
+          ],
+          "note": "scripts/x402-client.ts against the hosted API; job #36 is the one in the film"
         }
       }
     ]
