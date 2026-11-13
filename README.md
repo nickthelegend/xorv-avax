@@ -1,11 +1,67 @@
 # Xorv on Avalanche
 
-**Every AI request goes to the lowest bidder.** Pay per message, no account: providers with idle capacity bid for each
-request in a sealed auction on Avalanche, and every winning price joins a public compute price index.
+**Sell the AI you don't use. Buy AI one request at a time.** A two-sided market on Avalanche: people who already pay
+for AI run a Xorv node and sell their idle capacity; buyers offload AI work from code, a terminal or an agent, and every
+request goes to the lowest sealed bid, paid per call with x402.
 
 Xorv sells AI answers from idle capacity. Every request is a sealed-bid auction among staked provider nodes on Avalanche Fuji. The buyer pays per call with **x402** (HTTP 402, one EIP-3009 signature, settled in the same Fuji transaction that funds the job's escrow). A random sample of answers is re-run by a second node, and the contract itself compares the texts; a node that lies loses stake. Every paid, checked clearing feeds the **Xorv Compute Index**, an on-chain price per model per 1M tokens that any contract can read. Buyers who don't want competitors reading their AI spend can pay from an **eERC** encrypted balance instead, with an auditor key for compliance. A **compute forward** lets a buyer lock next week's price against a provider, settled against the index.
 
 Everything below is live on Fuji with real Groq model runs.
+
+## Two sides: providers and buyers
+
+Xorv is a two-sided market. **Providers** are people who already pay for AI (an API plan, or a GPU that sits idle) and run a Xorv node to sell the capacity they don't use: the node bids a sealed price for each request it can serve, answers, gets paid, and loses stake if it lies. **Buyers** offload AI work to the network from code, a terminal, an OpenAI-style client or an agent, and pay per request with x402.
+
+Today every node is ours: four nodes (atlas, birch, cobalt, dune) that resell Groq at its list price plus their own margin, and a fifth one (liar) that we start with `--fault deliver` to show a slash. The node software is in this repo, so anyone can run one; no third-party providers exist yet.
+
+From a clone (Node 22.18+, pnpm 10; TypeScript runs natively, nothing to build): `pnpm install`, then the two CLIs run as `pnpm xorv …` and `pnpm xorv-node …` (or link `packages/cli/src/main.ts` and `packages/node/src/cli.ts` onto your PATH as `xorv` and `xorv-node`). Both read keys by name from the environment, the repo's gitignored `.env` or `~/.xorv/keys.env` (mode 600; `XORV_HOME` moves it) and never print them.
+
+### Buy: the SDK (`@xorv/sdk`)
+
+```ts
+import { Xorv } from '@xorv/sdk';
+import { privateKeyToAccount } from 'viem/accounts';
+
+const xorv = new Xorv({ account: privateKeyToAccount(process.env.XORV_WALLET_KEY) }); // gateway defaults to https://xorv-avax.vercel.app
+const r = await xorv.chat('In two sentences: what makes a sealed-bid auction fair?', { verify: true });
+console.log(r.text, r.job, r.settlement); // the answer, the job id, the Fuji settlement tx
+```
+
+`chat()` does the whole x402 round trip (POST → `402` → one EIP-3009 signature → paid retry) and waits for the answer. `quote()` returns the most a request can cost (the escrow you sign for), the ceiling and the last index price without paying. `submit()` pays and returns as soon as the job is on Fuji; `followJob(reader, id, onStep)` then streams the auction from the contracts (sealed bids, reveal, winner, answer, spot check, settlement). `verifyJob(reader, id)` re-checks any job from the chain alone. [`examples/offload.ts`](examples/offload.ts) is the snippet above (job #62 on Fuji: `node --env-file ~/.xorv/keys.env examples/offload.ts`).
+
+### Buy: the CLI (`xorv`)
+
+```bash
+pnpm xorv wallet new          # a Fuji test wallet in ~/.xorv/keys.env (address printed, key never)
+pnpm xorv fund                # 2 tUSD (+ a sip of AVAX) from XorvGasStation, gasless, once per wallet
+pnpm xorv quote "…" --verify  # the most it can cost: ceiling x max tokens + two check fees, and the last clearing price
+pnpm xorv chat  "…" --verify  # 402 → signature → sealed bids → reveal → winner → answer → spot check → settlement, live
+pnpm xorv jobs --mine         # your jobs, from the market contract
+pnpm xorv verify 58           # re-check a job from Fuji alone (below)
+pnpm xorv models · pnpm xorv index
+```
+
+`xorv chat` prints each step as it happens on Fuji (read from the contracts, not the gateway). The first real run was job #61 ([payment](https://testnet.snowtrace.io/tx/0x8137db9b02c08234f4fce693bdbd94690bf73787a2986ad3d84e26187a6f35eb), [settlement](https://testnet.snowtrace.io/tx/0x02efde97c157b4320a46d56215ab9ee0f8b07db1e8005fafb11cd3f0641e10cd)).
+
+`xorv verify <job>` trusts nothing but the chain: it recomputes the prompt and answer hashes against the stored ones, checks that the cleared rate is the lowest revealed sealed bid, recomputes every spot check's word-overlap score locally and compares it with the score the contract stored, checks that the outcome follows from those scores, that escrow = charge + check fees + refund, and where a slash went. On job #58 (the liar): 8 of 8 pass, including "liar slashed $0.50 of stake, paid to the buyer".
+
+### Buy: any OpenAI-style client, or an agent
+
+`POST https://xorv-avax.vercel.app/v1/chat/completions` answers `402 Payment Required` with x402 exact-scheme requirements; retry with `X-PAYMENT` (wire format in [docs/X402.md](docs/X402.md); a plain-fetch client is [scripts/x402-client.ts](scripts/x402-client.ts)). Agents get the MCP server `xorv-mcp` (`node packages/mcp/src/main.ts`, stdio): `xorv_ask` pays the 402 itself and returns the answer with its settlement, plus `xorv_index`, `xorv_models` and `xorv_job`.
+
+### Sell: run a node (`xorv-node`)
+
+```bash
+pnpm xorv-node init  --label you                    # owner key (stakes, withdraws, is paid) + node key (bids, delivers, checks)
+#   send each address a little Fuji test AVAX for gas (https://core.app/tools/testnet-faucet)
+pnpm xorv-node join  --label you --stake 5 --models groq:openai/gpt-oss-20b
+#   tUSD from the test faucet if needed, approve the registry, register (run again to top up stake or change models)
+XORV_ENV_FILE=/path/to/.env XORV_LOG=pretty pnpm xorv-node start --label you --margin 1.2
+#   GROQ_API_KEY (or OLLAMA_HOST) from that file; self-check each model, then bid, serve, get paid
+pnpm xorv-node status --label you · pnpm xorv-node leave --label you · pnpm xorv-node withdraw --label you
+```
+
+What a node does: for every job on a model it serves it commits a sealed rate (micro-tUSD per 1k tokens) priced from its own cost (Groq's published per-token price, blended 40/60 input/output), its margin and its load, then reveals it. If it wins it runs the model and delivers the answer on-chain, and is paid the cleared rate × tokens when the job settles; it also earns a check fee whenever it is drawn to re-run someone else's job. After each auction it moves its margin a little toward the price that cleared. Stake rules: at least 5 tUSD; a winner whose answer a tiebreaker contradicts loses 10% to the buyer, and a checker whose re-run a tiebreaker contradicts loses 10% to the provider (job #61 shows the second case: an honest checker's short re-run overlapped only 45%, below the 50% tolerance, so word-overlap checks can punish a checker on short answers). The provider guide is also on the hosted app at [/providers/join](https://xorv-avax.vercel.app/providers/join).
 
 ## What is live
 
@@ -179,7 +235,7 @@ node packages/mcp/src/main.ts                    # MCP server (stdio) for agents
 
 Provider nodes need `GROQ_API_KEY` (read by name only, passed to node processes and nothing else). A fresh deployment: `node scripts/fund-deployer.ts`, `node scripts/deploy.ts`, `node scripts/setup-providers.ts`, then `node scripts/private-lane.ts` for the eERC auditor and registrations, and `node scripts/gas-station.ts` for the test-funds station (its relayer is `XORV_SPONSOR_KEY`; the gateway also needs `XORV_TAG_SECRET`, which the script creates). Slashing demo: start the gateway with `XORV_GATEWAY_NODES=atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15:deliver` and send a `--verify` chat.
 
-Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `packages/sdk` (reads, x402, similarity), `packages/node` (provider node), `packages/gateway` (OpenAI-compatible API, x402 facilitator, private desk), `packages/eerc` (eERC client), `packages/mcp` (agent tools), `web/` (Vite + React), `scripts/`, `deployments/`.
+Repository: `contracts/` (Foundry; eERC vendored in `contracts/lib/eerc`), `packages/sdk` (the `Xorv` client, reads, x402, similarity, `followJob`, `verifyJob`), `packages/cli` (the `xorv` buyer CLI), `packages/node` (provider node and the `xorv-node` CLI), `examples/`, `packages/gateway` (OpenAI-compatible API, x402 facilitator, private desk), `packages/eerc` (eERC client), `packages/mcp` (agent tools), `web/` (Vite + React), `scripts/`, `deployments/`.
 
 ## Limits
 

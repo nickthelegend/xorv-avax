@@ -6,7 +6,8 @@ Every test that touches a chain runs against real contracts: Foundry's EVM for t
 | --- | --- | --- | --- |
 | Contracts (Foundry) | `cd contracts && forge test` | 79 (two fuzz tests, 256 runs each) | 79 passed |
 | SDK, eERC and gateway on a local chain | `bash scripts/test-local.sh` | 20 | 20 passed |
-| **Total** | | **99** | **99 passed** |
+| SDK client and `verifyJob` against live Fuji and the hosted gateway (read-only, nothing paid) | `pnpm test:fuji` | 6 | 6 passed (Nov 13) |
+| **Total** | | **105** | **105 passed** |
 
 `scripts/test-local.sh` starts Anvil on port 5546, deploys with `scripts/deploy.ts`, registers the four provider nodes, runs the suites and stops Anvil. The eERC suite generates real Groth16 proofs with the official circuits, so run `pnpm circuits` once first (it fetches Ava Labs' `circom/build` artifacts at the pinned commit into `.eerc/circuits`).
 
@@ -29,6 +30,10 @@ Every test that touches a chain runs against real contracts: Foundry's EVM for t
 **eERC with Ava Labs' official contracts and circuits (8).** Registration with a real proof and setting the auditor; the same account signature always derives the same eERC key; deposit, private transfer, decrypt as receiver and as auditor, with the plaintext matching the on-chain ElGamal ciphertext and never appearing in the logs; **overspending cannot be proven** (the circuit refuses); **a tampered proof is rejected on-chain** by the production verifier; transfers to or from unregistered accounts revert; withdraw returns public tUSD; a key from another signature cannot decrypt.
 
 **Gateway as a real process (6).** An unpaid call gets HTTP 402 with exact-scheme requirements; garbage, underpaid, expired and unfunded payments are refused before gas is spent; a valid payment settles on-chain into a job the payer owns and **its replay gets 409**; an unserved model is refused; the private credit lane (with a fresh buyer): wrong signer and stale signatures are rejected, credit equals exactly the encrypted top-up the desk decrypted, the posted job does not name the buyer, a signed request cannot be replayed or have its body changed, **the desk's signed receipt checks out line by line against the chain** (the top-up amount is matched against the sender ciphertext in the buyer's own transfer proof), **a receipt edited after signing fails its signature, and a receipt the desk really signed with an inflated amount fails the proof check**; test funds: `/api/fund` refuses a signature from another key, funds a brand-new wallet with tUSD and AVAX through the gas station, refuses a second request (409), and that wallet then pays an x402 chat straight away.
+
+## SDK client and verifier against live Fuji: 6
+
+Read-only, against the real deployment and https://xorv-avax.vercel.app (no mocks, nothing paid): `verifyJob` passes every line on the honest job #57 (lowest bid won, the check's 100% recomputed, escrow = charge + check fee + refund); on the liar's job #58 it recomputes both 0% scores and finds the $0.50 slash paid to the buyer; on job #61 it finds the checker's slash paid to the provider it contradicted; the `Xorv` client's `quote` returns the real x402 requirements (exact scheme, avalanche-fuji, the router as payTo, escrow = ceiling × tokens + two check fees) and the index price; paying without an account fails with "Setup required"; an unserved model is refused with the gateway's reason (HTTP 400). Paid runs of the client and the CLI on Fuji: jobs #61 (`xorv chat --verify`) and #62 (`examples/offload.ts`).
 
 ## Browser QA
 
