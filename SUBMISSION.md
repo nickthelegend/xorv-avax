@@ -4,7 +4,7 @@ Draft for Nick. Event: https://build.avax.network/events/3f8d455d-1eb5-425b-b859
 
 **Name:** Xorv
 
-**One-liner:** Every AI request goes to the lowest bidder. Pay-per-message AI where each request is a sealed-bid auction on Avalanche, paid with x402, and every winning price becomes an on-chain compute price index.
+**One-liner:** Sell the AI you don't use; buy AI one request at a time. A two-sided market on Avalanche: people who already pay for AI run a Xorv node and sell idle capacity in sealed-bid auctions, buyers offload work from code (`@xorv/sdk`), a terminal (`xorv`), any OpenAI-style client or an agent (MCP) and pay per call with x402, and a node caught lying is slashed to the buyer.
 
 ## Description
 
@@ -19,6 +19,11 @@ Every paid, checked, competitive clearing is written to the Xorv Compute Index: 
 Spend is private when it needs to be. With Ava Labs' official eERC (encrypted ERC, converter mode over the test dollar), a buyer tops up the Xorv desk with an encrypted transfer that only the buyer, the desk and a compliance auditor can read; the proofs are made in the buyer's browser with Ava Labs' eERC SDK. The desk credits the buyer and posts their chats under its own address, so competitors can't read a company's AI spend from the chain. The desk's ledger stays off-chain (the amounts are what eERC hides), but it signs a receipt of every line, and the buyer's browser checks each one against Fuji, down to matching each top-up amount against the buyer's own proof. Providers can sweep earnings into eERC and pay their treasury privately the same way.
 
 Anyone can try it with nothing installed: on the hosted app, one tap makes a test wallet in the browser and a gas station contract funds it with test dollars and a little AVAX, with its limits enforced on-chain.
+
+## Use it (buyers and providers)
+
+- Buyers: `pnpm xorv wallet new && pnpm xorv fund`, then `pnpm xorv chat "…" --verify` (live auction steps from Fuji) and `pnpm xorv verify <job>` (re-check any job from the chain alone); or `new Xorv({ account }).chat(…)` from `@xorv/sdk` ([examples/offload.ts](examples/offload.ts)); or the MCP tools.
+- Providers: `pnpm xorv-node init --label you`, `pnpm xorv-node join --label you --stake 5`, `pnpm xorv-node start --label you`. Today every node is ours (four reselling Groq, plus a liar we run for the slash demo); anyone can run one. Guide: README "Two sides" and https://xorv-avax.vercel.app/providers/join.
 
 ## Why Avalanche
 
