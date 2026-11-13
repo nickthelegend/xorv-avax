@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
-  "bin": { "xorv-mcp": "./src/main.ts" },
-  "dependencies": { "@modelcontextprotocol/sdk": "1.32.2", "@xorv/sdk": "workspace:*", "viem": "2.37.6" }
+  "bin": {
+    "xorv-mcp": "./src/main.ts",
+    "xorv-mcp-call": "./src/call.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@xorv/sdk": "workspace:*",
+    "viem": "2.37.6"
+  }
 }

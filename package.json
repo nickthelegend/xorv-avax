@@ -22,7 +22,9 @@
     "test:local": "bash scripts/test-local.sh",
     "xorv": "node packages/cli/src/main.ts",
     "xorv-node": "node packages/node/src/cli.ts",
-    "test:fuji": "node --test packages/sdk/test/fuji.test.ts"
+    "test:fuji": "node --test packages/sdk/test/fuji.test.ts",
+    "xorv-mcp": "node packages/mcp/src/main.ts",
+    "mcp:call": "node packages/mcp/src/call.ts"
   },
   "devDependencies": {
     "typescript": "5.9.3",

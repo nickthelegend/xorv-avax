@@ -3,8 +3,8 @@
  * The buyer key is read by name (XORV_MCP_KEY_NAME, default XORV_BUYER_KEY) and never returned.
  */
 import { privateKeyToAccount } from 'viem/accounts';
-import { OUTCOME_TEXT, XorvReader, encodePayment, modelInfo, perMillion, signPayment, usd, type PaymentRequirements } from '@xorv/sdk';
-import { keyByName, loadDeployment } from '@xorv/sdk/node';
+import { OUTCOME_TEXT, Xorv, XORV_GATEWAY, XorvReader, modelInfo, perMillion, usd } from '@xorv/sdk';
+import { keyByName, loadDeployment, maybeKey } from '@xorv/sdk/node';
 
 export const TOOLS = [
   {
@@ -42,21 +42,11 @@ export async function runTool(name: string, a: any): Promise<unknown> {
       return { ...j, outcome_text: OUTCOME_TEXT[j.outcome], charge_usd: usd(j.charge, 6), cleared_per_1m: perMillion(j.clearedRate, 4), transactions: ev.map((e: any) => ({ event: e.eventName, tx: `https://testnet.snowtrace.io/tx/${e.transactionHash}` })) };
     }
     case 'xorv_ask': {
-      const gateway = process.env.XORV_GATEWAY ?? 'http://127.0.0.1:5421';
-      const buyer = privateKeyToAccount(keyByName(process.env.XORV_MCP_KEY_NAME ?? 'XORV_BUYER_KEY'));
-      const body = { model: a.model ?? 'groq:openai/gpt-oss-20b', messages: [{ role: 'user', content: String(a.prompt) }], max_tokens: Math.min(Number(a.max_tokens ?? 1200), 4096), xorv: { verify: !!a.verify } };
-      const url = `${gateway}/v1/chat/completions`;
-      const first = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {
-        throw new Error(`Setup required: the Xorv gateway is not running at ${gateway} (pnpm gateway)`);
-      });
-      const challenge = await first.json();
-      if (first.status !== 402) throw new Error(`expected HTTP 402, got ${first.status}: ${JSON.stringify(challenge).slice(0, 300)}`);
-      const req: PaymentRequirements = challenge.accepts[0];
-      const pay = await signPayment(buyer, req);
-      const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-payment': encodePayment(pay) }, body: JSON.stringify(body) });
-      const out = await res.json();
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(out).slice(0, 300)}`);
-      return { answer: out.choices?.[0]?.message?.content, job: out.xorv.job, bids: out.xorv.bids, cleared_per_1m: perMillion(out.xorv.cleared_rate_per_1k, 4), tokens: out.usage.total_tokens, paid_max: usd(req.maxAmountRequired, 6), settlement: out.xorv.explorer, payer: buyer.address };
+      // The hosted gateway by default; the buyer key by name (XORV_MCP_KEY_NAME, else XORV_WALLET_KEY from `xorv wallet new`, else XORV_BUYER_KEY).
+      const keyName = process.env.XORV_MCP_KEY_NAME ?? (maybeKey('XORV_WALLET_KEY') ? 'XORV_WALLET_KEY' : 'XORV_BUYER_KEY');
+      const xorv = new Xorv({ gateway: process.env.XORV_GATEWAY ?? XORV_GATEWAY, account: privateKeyToAccount(keyByName(keyName)) });
+      const r = await xorv.chat(String(a.prompt), { model: a.model, verify: !!a.verify, maxTokens: a.max_tokens ? Number(a.max_tokens) : undefined });
+      return { answer: r.text, job: r.job, bids: r.bids, cleared_per_1m: perMillion(r.clearedRate, 4), tokens: r.tokens, paid_max: usd(r.paidMax, 6), settlement: r.settlement, payer: r.payer };
     }
     default:
       throw new Error(`unknown tool ${name}`);
