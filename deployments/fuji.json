@@ -501,6 +501,18 @@
         "bids": 4,
         "verify": false,
         "seconds": 25.402
+      },
+      {
+        "at": "2026-11-13T04:11:03.173Z",
+        "job": 44,
+        "settleTx": "0x436477cb90767ec5ac525c7960d5a2f42e6d6891133ea63ba3b0e95b31828748",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "212",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 28.487
       }
     ],
     "webQaFlow": [
@@ -961,6 +973,37 @@
           ],
           "note": "scripts/x402-client.ts against the hosted API; job #36 is the one in the film"
         }
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v5, ONE live take on https://xorv-avax.vercel.app from an empty browser (take 3; takes 1-2 stopped at the Providers step after honest jobs #39 and #40): honest Verify chat, then a fifth node that lies on purpose (liar, --fault deliver, 5 tUSD stake) caught and slashed live",
+        "testWallet": "0x2d432dcbab8eda082b29162c6014c4315cbf94e9 (made in the browser, funded once by XorvGasStation in the take; the browser reached the app through an ssh tunnel to the hackathon VPS because the Mac's network had used its 4 daily drips)",
+        "x402Job": 41,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0xe978ff6bba3597fcf8afbdbb7dbab216409d6d0729924501c694a7f770a30d2d",
+        "checkAndSettlement": "https://testnet.snowtrace.io/tx/0xfabc8d8554acda1ffc53a2e1c728477d8f8bd02f03fb1903e351beeafc7bd34d",
+        "spotCheck": "job #41: second node re-ran it, 100% match computed on-chain; charge 0.000037, check fee 0.0002, refund 0.002563 to the test wallet",
+        "liarJob": 42,
+        "liarSlash": "https://testnet.snowtrace.io/tx/0x7a53c4b3e7c4759ce121196c48e4f28af398ba35fa37692581342d672e79859a",
+        "liarOutcome": "5 sealed bids; liar bid $0.001/1M, won, delivered junk; cobalt's spot check 0% match; birch's tiebreak 0% with the answer, 100% with the check; liar slashed 0.5 tUSD (10%) to the test wallet, 0.0024 escrow refunded; liar stake 4.5 < minStake 5, so it can no longer bid or check",
+        "privateJob": 43,
+        "deskPost": "https://testnet.snowtrace.io/tx/0xcbf55231f069b238ba9e1bc1c0fd8420c0228da7b9d977df54539de5ad23dbbc",
+        "eercTransferToDesk": "https://testnet.snowtrace.io/tx/0x235f5ddd95ca4b0f7f664cab131c157eecb4a3082e5061be78d79d06d6ff9882",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x3569b007909cf15ad3f56cf04bccb57ef45cec18ea788b8d28b7b250e1fa49a2",
+          "https://testnet.snowtrace.io/tx/0xc847429c4935b871adce25c6f54bbbfcbe3f75682ab63d23b5618fda78847b43",
+          "https://testnet.snowtrace.io/tx/0xedd017afb65f4c6df83bba57325acc398f7d8ae3fa06d51eda4bcc7c77f8042f",
+          "https://testnet.snowtrace.io/tx/0x235f5ddd95ca4b0f7f664cab131c157eecb4a3082e5061be78d79d06d6ff9882"
+        ],
+        "terminal": {
+          "x402Jobs": [
+            44
+          ],
+          "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
+        },
+        "failedTakeJobs": [
+          39,
+          40
+        ]
       }
     ],
     "liar": [
@@ -969,6 +1012,51 @@
         "step": "prep",
         "faucet": "0x5a32b007581a7b1f7f2564bc8be9cf6f09393640444521a905283ce613fdf434",
         "approve": "0x6494527b2956266562745934affcdb105329a7f338b15a8e878365b4094c2b37"
+      },
+      {
+        "at": "2026-11-13T03:43:32.333Z",
+        "step": "register",
+        "tx": "0x22567a31cb72bca2bdd362db844ae93e8e89e01b439325c15e5ee0055bb1c8c3",
+        "block": 60982212,
+        "owner": "0x35D1E1390E66E4A964d923Cd4A35839DA6173581",
+        "node": "0x9150692c816945cA643B3aa22Fb122a847d5A330",
+        "stake": "5000000",
+        "models": [
+          "groq:openai/gpt-oss-20b"
+        ],
+        "note": "film v5: a node that lies on purpose (--fault deliver)"
+      },
+      {
+        "at": "2026-11-13T03:51:27.705Z",
+        "step": "park",
+        "tx": "0xd7173d1be674fc129733c2db62496b77183708868c5f128ddf6c84fa23c4cb3b",
+        "models": [
+          "groq:openai/gpt-oss-120b"
+        ]
+      },
+      {
+        "at": "2026-11-13T03:54:16.596Z",
+        "step": "unpark",
+        "tx": "0x92ef6d1dfb7e54edef2596972ffb05a7b2aa80bfce54a73275edfb4e5c7aaddd",
+        "models": [
+          "groq:openai/gpt-oss-20b"
+        ]
+      },
+      {
+        "at": "2026-11-13T04:02:07.829Z",
+        "step": "park",
+        "tx": "0x0e1a83830e4f24d449058fa11985eb3b3a114ba14a65d992392035b8e9c5cf28",
+        "models": [
+          "groq:openai/gpt-oss-120b"
+        ]
+      },
+      {
+        "at": "2026-11-13T04:06:26.642Z",
+        "step": "unpark",
+        "tx": "0xb3e9c65cfe5ea8d1e52ce519cfc395ee0e3e36a970e77454e37bd02aede52c83",
+        "models": [
+          "groq:openai/gpt-oss-20b"
+        ]
       }
     ]
   },
