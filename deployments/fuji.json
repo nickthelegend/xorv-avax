@@ -429,6 +429,66 @@
         "bids": 4,
         "verify": false,
         "seconds": 24.27
+      },
+      {
+        "at": "2026-11-12T22:47:04.542Z",
+        "job": 29,
+        "settleTx": "0x244c0ec82dae4916dee94ecb37f009fdf5be1ef4768ae23cd8ea03d9e57f9ae6",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "208",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 27.863
+      },
+      {
+        "at": "2026-11-12T22:55:35.817Z",
+        "job": 30,
+        "settleTx": "0x531bb2a598c206545a9fde9b62d92c4fde2821ea9a61b0188c336ce3eaee31ff",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "214",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 30.367
+      },
+      {
+        "at": "2026-11-12T22:56:50.217Z",
+        "job": 31,
+        "settleTx": "0x0d1589d505f16af3dc0c192b38ef4fb49f58aa2b18446ed049699f200babd3ce",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "210",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 28.741
+      },
+      {
+        "at": "2026-11-12T23:01:43.251Z",
+        "job": 32,
+        "settleTx": "0x7a83251008c9941e94cb8cde5dc6a11de126da673305a5498e58fa1d5c74886f",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "210",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 31.367
+      },
+      {
+        "at": "2026-11-13T00:30:48.463Z",
+        "job": 35,
+        "settleTx": "0xb04535209282fdad0f37c7a3e23727b4d9ab6120f81b5b5bbecf351d01df0cf2",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "214",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 28.818
       }
     ],
     "webQaFlow": [
@@ -830,6 +890,37 @@
             24
           ],
           "note": "scripts/x402-client.ts against the hosted API; job #24 is the one in the film"
+        }
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v2, ONE live take on https://xorv-avax.vercel.app from an empty browser (videos/xorv-avax/versions/xorv-avax-film-v2.mp4)",
+        "testWallet": "0xdfF1ab61d728787bC041ACB7808dF7D14F506674 (made in the browser, funded once by XorvGasStation in the take)",
+        "x402Job": 33,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0x8acf7d02a218c2e701206d52a2790c8e7dfdae894656f063c9dc0955a3becfd5",
+        "x402SettlementFeeAvax": "0.0000000000543088",
+        "jobTxCounts": {
+          "33": 11,
+          "34": 12
+        },
+        "privateJob": 34,
+        "deskPost": "https://testnet.snowtrace.io/tx/0x95be4b5d2d5abe8f304e6da9a380634dbec08fc4e3be5324c6ef5c75891405c7",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x397664e1a29cc2edab6de6cbb644ff045435e9b20bf43fcce727060684e7182f",
+          "https://testnet.snowtrace.io/tx/0x0aaa53eba76c25bfb05bbffbb9aa3dbc2604f8263140467fab963e4e53fe5d18",
+          "https://testnet.snowtrace.io/tx/0x6e3d271611718ee88e3f1b528df330f36344ebc6ec2e42d1fa4b1e4fa9009b0b",
+          "https://testnet.snowtrace.io/tx/0x670d414ccc752f29d820f9ce41484cfbe0bc0cdd74a277991a844963560cf6ab"
+        ],
+        "slashShown": "job #8 settlement 0xbc9ff29c75ef4ca0a5a0889e067933170c3211eab0213ed76a3e4086455b42d6 (recorded Nov 12; 1 tUSD registry -> buyer)",
+        "terminal": {
+          "x402Jobs": [
+            29,
+            30,
+            31,
+            32,
+            35
+          ],
+          "note": "scripts/x402-client.ts against the hosted API while re-shooting the terminal scene; job #35 is the one in the film"
         }
       }
     ]
