@@ -101,8 +101,8 @@ async function main() {
     ]);
     const registered = !/^0x0{40}$/.test(p.owner);
     console.log(`${t.b(`xorv-node join ${label}`)} · registry ${d.contracts.registry} on Avalanche Fuji`);
-    console.log(`  owner ${owner.account.address} · ${formatEther(gasO)} AVAX · ${usd(bal, 2)} tUSD${registered ? ` · staked ${usd(p.stake, 2)}` : ''}`);
-    console.log(`  node  ${node} · ${formatEther(gasN)} AVAX`);
+    console.log(`  owner ${owner.account.address} · ${Number(formatEther(gasO)).toFixed(5)} AVAX · ${usd(bal, 2)} tUSD${registered ? ` · staked ${usd(p.stake, 2)}` : ''}`);
+    console.log(`  node  ${node} · ${Number(formatEther(gasN)).toFixed(5)} AVAX`);
     if (gasO === 0n || gasN === 0n) throw new Error(`Setup required: send a little Fuji test AVAX for gas to ${gasO === 0n ? owner.account.address : node} (https://core.app/tools/testnet-faucet)`);
     const need = registered ? (stake > p.stake ? stake - p.stake : 0n) : stake;
     if (need > 0n && bal < need) await send(owner, { ...tusd, functionName: 'faucet' }, 'tUSD from the test faucet');
