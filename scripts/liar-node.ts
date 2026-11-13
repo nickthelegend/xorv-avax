@@ -3,6 +3,7 @@
 // slash (10%) leaves it below the minimum and the registry stops letting it bid or be drawn as a checker.
 //   XORV_NETWORK=fuji node scripts/liar-node.ts prep    gas check, tUSD faucet, approve the registry (no register)
 //   XORV_NETWORK=fuji node scripts/liar-node.ts join    register the node (5 tUSD stake, GPT-OSS 20B only)
+//   XORV_NETWORK=fuji node scripts/liar-node.ts park    serve only GPT-OSS 120B (not the film's model) while stopped
 //   XORV_NETWORK=fuji node scripts/liar-node.ts status
 //   XORV_NETWORK=fuji node scripts/liar-node.ts leave   start unbonding what is left (withdraw after unbondSecs)
 //   XORV_NETWORK=fuji node scripts/liar-node.ts withdraw
@@ -17,6 +18,7 @@ const d = readJson(deploymentPath(network));
 const rpc = process.env.XORV_RPC ?? d.rpc;
 const STAKE = BigInt(d.config.minStake);
 const MODELS = ['groq:openai/gpt-oss-20b'];
+const PARKED = ['groq:openai/gpt-oss-120b'];
 const owner = walletFor(d, 'XORV_OWNER_LIAR_KEY', rpc);
 const node = walletFor(d, 'XORV_NODE_LIAR_KEY', rpc);
 const reg = { address: d.contracts.registry as Hex, abi: xorvRegistryAbi };
@@ -48,7 +50,17 @@ async function main() {
     console.log('liar prepared (not registered)');
     return;
   }
+  if (cmd === 'park') {
+    // Off the film model between takes: a registered node that is not running must not be drawn as a checker.
+    const r = await send(owner, { ...reg, functionName: 'updateProfile', args: ['liar', 'api', PARKED] }, 'park liar on GPT-OSS 120B only');
+    recordEvidence(network, 'liar', { step: 'park', tx: r.tx, models: PARKED });
+    return;
+  }
   if (cmd === 'join') {
+    if (s.registered && !s.p.models.includes(MODELS[0])) {
+      const r = await send(owner, { ...reg, functionName: 'updateProfile', args: ['liar', 'api', MODELS] }, 'liar serves GPT-OSS 20B again');
+      recordEvidence(network, 'liar', { step: 'unpark', tx: r.tx, models: MODELS });
+    }
     if (s.registered) {
       if (s.p.stake < STAKE) {
         const r = await send(owner, { ...reg, functionName: 'addStake', args: [STAKE - s.p.stake] }, 'top up to the minimum stake');
@@ -71,7 +83,7 @@ async function main() {
     recordEvidence(network, 'liar', { step: 'withdrawStake', tx: r.tx });
     return;
   }
-  throw new Error('usage: liar-node.ts prep|join|status|leave|withdraw');
+  throw new Error('usage: liar-node.ts prep|join|park|status|leave|withdraw');
 }
 
 main().catch((e) => {
