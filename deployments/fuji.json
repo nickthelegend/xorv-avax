@@ -513,6 +513,30 @@
         "bids": 4,
         "verify": false,
         "seconds": 28.487
+      },
+      {
+        "at": "2026-11-13T04:23:30.752Z",
+        "job": 48,
+        "settleTx": "0x4be111645e3a81c7f0886a9cdd5512d4bdc480741af8f53abb3f7876ff9650ce",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "209",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 31.237
+      },
+      {
+        "at": "2026-11-13T04:40:17.443Z",
+        "job": 52,
+        "settleTx": "0x9eb4d83ec7d06fda97c03153e5f50043c437cd341073baf1e67be2a99a076aa2",
+        "payer": "0xf1d5B238aB3Ed4672EC0fACe30B41C6D6EFFBC93",
+        "value": "2800",
+        "rate": "209",
+        "tokens": 145,
+        "bids": 4,
+        "verify": false,
+        "seconds": 27.214
       }
     ],
     "webQaFlow": [
@@ -976,7 +1000,7 @@
       },
       {
         "at": "2026-11-13",
-        "what": "demo film v5, ONE live take on https://xorv-avax.vercel.app from an empty browser (take 3; takes 1-2 stopped at the Providers step after honest jobs #39 and #40): honest Verify chat, then a fifth node that lies on purpose (liar, --fault deliver, 5 tUSD stake) caught and slashed live",
+        "what": "film v5 attempt, take 3 (not used in the film: its highlight rings were misplaced). Honest Verify chat, then the liar caught and slashed live",
         "testWallet": "0x2d432dcbab8eda082b29162c6014c4315cbf94e9 (made in the browser, funded once by XorvGasStation in the take; the browser reached the app through an ssh tunnel to the hackathon VPS because the Mac's network had used its 4 daily drips)",
         "x402Job": 41,
         "x402Settlement": "https://testnet.snowtrace.io/tx/0xe978ff6bba3597fcf8afbdbb7dbab216409d6d0729924501c694a7f770a30d2d",
@@ -1004,6 +1028,43 @@
           39,
           40
         ]
+      },
+      {
+        "at": "2026-11-13",
+        "what": "film v5 attempt, take 4 (not used: rings cut neighbouring rows); jobs #45 honest, #46 liar slashed (0x717850d8…), #47 private; wallet 0x2380a810…; terminal x402 job #48",
+        "jobs": [
+          45,
+          46,
+          47,
+          48
+        ]
+      },
+      {
+        "at": "2026-11-13",
+        "what": "demo film v5 and v6 (videos/xorv-avax/versions/xorv-avax-film-v5.mp4, -v6.mp4): ONE live take (take 5) on https://xorv-avax.vercel.app from an empty browser: honest Verify chat, a fifth node that lies on purpose (liar, --fault deliver, 5 tUSD stake) caught and slashed live, index, eERC top-up, private chat; the browser reached the app through an ssh tunnel to the hackathon VPS because the Mac's network had used its 4 daily gas-station drips on earlier takes",
+        "testWallet": "0x94bd90f9…977E (made in the browser, funded once by XorvGasStation in the take)",
+        "x402Job": 49,
+        "x402Settlement": "https://testnet.snowtrace.io/tx/0xac5c9981953e9fc1b8aaa64c8d73562b29f89792a78b0b1af7ffca8b18aee731",
+        "checkAndSettlement": "https://testnet.snowtrace.io/tx/0xc9365edf22e0e64ac727a02d416599544c47dac56d2ef7d8f8c1dd593a24d7e4",
+        "spotCheck": "job #49: birch re-ran it, 100% match on-chain; charge 0.000038, check fee 0.0002, refund 0.002562 to the test wallet",
+        "liarJob": 50,
+        "liarSlash": "https://testnet.snowtrace.io/tx/0x4c106485ca03ac7f6e2a7fc9de3a669682b9353613561bfaa2493e9789767031",
+        "liarOutcome": "5 sealed bids; liar $0.001/1M won and delivered junk; birch's spot check 0%; dune's tiebreak 0% with the answer, 100% with the check; liar slashed 0.5 tUSD to the test wallet, 0.0024 refunded; liar stake 4.5 < minStake 5 afterwards",
+        "privateJob": 51,
+        "deskPost": "https://testnet.snowtrace.io/tx/0x1273457fea13ad7e9a9466696f254bb103d11cad6030fdfbe080aab5a857dc25",
+        "eercTransferToDesk": "https://testnet.snowtrace.io/tx/0x6dc15eafaddd4caedf75f621616f6cda92c3e807affeb9a3286ed4d3c8fed097",
+        "topup": [
+          "https://testnet.snowtrace.io/tx/0x60ae6d3378115ee5800468a3f3d64c21c5f1b10ffd32237a7a25a53d700d70fe",
+          "https://testnet.snowtrace.io/tx/0x463249dfbdda5a96a152c3c7226081c522b20bf28664832b1a0c95a47d2edd23",
+          "https://testnet.snowtrace.io/tx/0x05ef84d8ac35f81d48e20016edaf58c78c1d86cdf9cee412c5696bc4bc62b5f1",
+          "https://testnet.snowtrace.io/tx/0x6dc15eafaddd4caedf75f621616f6cda92c3e807affeb9a3286ed4d3c8fed097"
+        ],
+        "terminal": {
+          "x402Jobs": [
+            52
+          ],
+          "note": "scripts/x402-client.ts against the hosted API, then the MCP server's tools/list and xorv_index"
+        }
       }
     ],
     "liar": [
@@ -1057,6 +1118,16 @@
         "models": [
           "groq:openai/gpt-oss-20b"
         ]
+      },
+      {
+        "at": "2026-11-13T04:19:08.821Z",
+        "step": "addStake",
+        "tx": "0x4ad75c5c6f363e8037a805fff42954903e289f729c2e4ad0d4e913cbb5f1b05e"
+      },
+      {
+        "at": "2026-11-13T04:35:51.054Z",
+        "step": "addStake",
+        "tx": "0xc969fce351885fb740eea897b8ef2260843979a5d220f8428cb00f620eb4f35e"
       }
     ]
   },
