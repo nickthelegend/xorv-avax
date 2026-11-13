@@ -159,6 +159,8 @@ export function Chat() {
   const lowFunds = pay === 'x402' && bal.data != null && bal.data < escrow;
   // x402 needs a known tUSD balance: right after a test wallet is made, its funds are still on the way.
   const ready = !!health && needs.length === 0 && models.includes(model) && !!wallet.address && !lowFunds && (pay !== 'x402' || bal.data != null) && !fresh.busy && !funds.busy;
+  // Say why the composer is not ready yet; a connected wallet whose balance is still loading is not "no wallet".
+  const placeholder = ready ? 'Ask anything…' : !wallet.address ? 'Connect a wallet to chat' : fresh.busy || funds.busy ? 'Getting test funds…' : pay === 'x402' && bal.data == null ? 'Reading your balance…' : lowFunds ? 'Add test funds to chat' : 'Getting ready…';
   const pending = room?.messages.some((x) => x.role === 'assistant' && !x.content && !x.error) ?? false;
   const update = (id: string, f: (r: Room) => Room) => setRooms((rs) => rs.map((r) => (r.id === id ? f(r) : r)).sort((a, b) => b.updated - a.updated));
 
@@ -292,7 +294,7 @@ export function Chat() {
           )}
           <form className="composer" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
             <label htmlFor="chat-in" className="sr">Message</label>
-            <textarea id="chat-in" ref={ta} rows={1} value={text} maxLength={3000} placeholder={ready ? 'Ask anything…' : 'Connect a wallet to chat'}
+            <textarea id="chat-in" ref={ta} rows={1} value={text} maxLength={3000} placeholder={placeholder}
               onChange={(e) => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(200, e.target.scrollHeight)}px`; }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(text); } }} />
             <div className="composer-row">
