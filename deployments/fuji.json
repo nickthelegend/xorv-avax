@@ -962,6 +962,14 @@
           "note": "scripts/x402-client.ts against the hosted API; job #36 is the one in the film"
         }
       }
+    ],
+    "liar": [
+      {
+        "at": "2026-11-13T03:23:36.212Z",
+        "step": "prep",
+        "faucet": "0x5a32b007581a7b1f7f2564bc8be9cf6f09393640444521a905283ce613fdf434",
+        "approve": "0x6494527b2956266562745934affcdb105329a7f338b15a8e878365b4094c2b37"
+      }
     ]
   },
   "previous": [
