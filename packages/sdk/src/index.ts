@@ -11,3 +11,6 @@ export * from './pricing.ts';
 export * from './private.ts';
 export * from './gas.ts';
 export * from './receipt.ts';
+export * from './client.ts';
+export * from './verify.ts';
+export * from './follow.ts';
