@@ -88,7 +88,7 @@ test('packPrompt keeps the newest turns and requires a user turn last', () => {
 
 test('reader decodes market and registry state from the chain', async () => {
   const ps = await r.providers();
-  assert.equal(ps.length, 4);
-  assert.deepEqual(ps.map((p) => p.label).sort(), ['atlas', 'birch', 'cobalt', 'dune']);
+  // the four house nodes, plus any node someone else (or the film's liar / provider demo) registered since
+  for (const l of ['atlas', 'birch', 'cobalt', 'dune']) assert.ok(ps.some((p) => p.label === l), `${l} is registered`);
   assert.equal(await r.escrowFor(2000n, 1200), 2400n + 400n);
 });
