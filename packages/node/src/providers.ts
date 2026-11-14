@@ -122,9 +122,10 @@ async function runClaude(name: string, prompt: string, maxTokens: number, timeou
 export const NONDETERMINISTIC = new Set<Vendor>(['anthropic']);
 
 const REVIEW = (prompt: string, answer: string) =>
-  `You are checking another node's answer on a compute market.\n\n<question>\n${prompt}\n</question>\n\n<answer>\n${answer}\n</answer>\n\n` +
-  'If the answer is a genuine, on-topic and correct response to the question, reply with exactly the word AGREE and nothing else. ' +
-  'Otherwise reply with your own answer to the question, and nothing else.';
+  `You are a spot checker on a compute market. Another node was paid to answer the question below. Decide only whether its answer is honest work.\n\n<question>\n${prompt}\n</question>\n\n<answer>\n${answer}\n</answer>\n\n` +
+  'Reply with exactly the word AGREE if the answer is a genuine, on-topic attempt that a careful expert would accept as reasonable, even if you would word it differently, ' +
+  'emphasise other points, or it questions the premise of the question. ' +
+  'Reject only junk, filler, off-topic text, a refusal to engage, or a clear factual error. If you reject it, reply with your own answer to the question and nothing else.';
 
 /**
  * A spot check. Deterministic models are simply re-run (the contract then scores the word overlap). Claude
@@ -136,5 +137,7 @@ export async function checkModel(model: string, prompt: string, delivered: strin
   if (!NONDETERMINISTIC.has(vendorOf(model))) return { ...(await runModel(model, prompt, opts)), reviewed: false };
   const r = await runModel(model, REVIEW(prompt, delivered), opts);
   const agreed = /^AGREE\.?$/i.test(r.text.trim());
-  return { text: agreed ? delivered : r.text, tokens: r.tokens, reviewed: true, agreed };
+  // the model's own answer, without a leading verdict word some replies start with
+  const own = r.text.replace(/^\s*(DISAGREE|REJECT(ED)?)\b[.:]?\s*/i, '').trim() || r.text;
+  return { text: agreed ? delivered : own, tokens: r.tokens, reviewed: true, agreed };
 }

@@ -83,6 +83,17 @@ model judges the answer genuine and correct, the check submits the delivered tex
 it submits its model's own answer (junk scores about 0%). The contract still computes the overlap itself. Groq and
 Ollama checks are plain re-runs at temperature 0.
 
+What happened live on Nov 14 (film v14): on job #73 ember, a Claude node we started from a laptop, was drawn as the
+checker; its Claude agreed with atlas's answer (100%) and ember earned the check fee. On job #76 cobalt answered "why do
+sealed-bid auctions keep prices honest?" by questioning the premise (bidders shade their bids; only the Vickrey variant
+makes truthful bids optimal). ember's Claude rejected that and sent its own answer (27.77% overlap); the tiebreaker birch
+matched cobalt's answer 100%, so the job paid cobalt and ember, the checker, lost $0.50 of stake to cobalt. The reviewer
+prompt was too strict, so it now accepts any genuine, on-topic answer a careful expert would call reasonable and rejects
+only junk, filler, off-topic text, refusals or clear factual errors (`packages/node/test/claude.test.ts` keeps job #76 as a
+live regression test; in a measured run it accepted job #76 3/3 and fresh honest answers 6/6, and rejected junk 2/2 and a
+plainly wrong answer 2/2). A Claude check is a judgement by a second model, not a reproduction: it catches junk and clear
+errors, not subtle ones.
+
 ## What is live
 
 - **The market.** Staked provider nodes serve `anthropic:claude-haiku-5-5` (atlas, birch, cobalt, plus ember when it runs), `groq:openai/gpt-oss-20b` and `groq:openai/gpt-oss-120b` (atlas, birch, cobalt, dune); every model has its own sealed-bid auction and its own index. Nodes commit sealed bids, reveal, the lowest rate wins, the winner runs the model with its operator's own key and delivers the answer on-chain. Nodes price from the provider's published per-token rates and move their margin after each win or loss, so the clearing price is a real negotiated price.
