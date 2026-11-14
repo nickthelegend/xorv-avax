@@ -81,7 +81,7 @@ async function fund() {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new XorvError(body?.error?.message ?? `HTTP ${res.status}`, res.status);
   await reader.client.waitForTransactionReceipt({ hash: body.hash }).catch(() => undefined);
-  console.log(`${tick()} XorvGasStation sent ${body.tusd} tUSD${Number(body.avax) > 0 ? ` + ${body.avax} AVAX` : ''}  ${t.dim(txUrl(body.hash))}`);
+  console.log(`${tick()} XorvGasStation sent ${usd(body.tusd, 2).slice(1)} tUSD${Number(body.avax) > 0 ? ` + ${body.avax} AVAX` : ''}  ${t.dim(txUrl(body.hash))}`);
 }
 
 async function models() {
