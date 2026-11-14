@@ -16,8 +16,8 @@ const CONTRACTS: [string, string | undefined][] = [
 type Line = [string, string?];
 const PROVIDER: Line[] = [
   ['xorv-node init  --label you', 'an owner key and a node key'],
-  ['xorv-node join  --label you --stake 5', 'faucet, approve, register'],
-  ['xorv-node start --label you', 'bid, serve, get paid'],
+  ['xorv-node join  --label you --models anthropic:claude-haiku-5-5', 'stake, pick models'],
+  ['xorv-node start --label you', 'your key: bid, serve, get paid'],
 ];
 const BUY: Record<string, { title: string; lines: Line[] }> = {
   SDK: {
@@ -107,7 +107,7 @@ export function Landing() {
         <div className="wrap">
           <Art name="hero" size={176} className="hero-art" label />
           <h1>Sell the AI you don’t use.<span className="soft">Buy AI one request at a time.</span></h1>
-          <p>A two-sided market on Avalanche. People who already pay for AI run a Xorv node and sell their idle capacity. Buyers offload AI work from code, a terminal or an agent, and every request goes to the lowest sealed bid.</p>
+          <p>A two-sided market on Avalanche. People who pay for AI API capacity they don’t fully use (Claude, Groq) run a Xorv node with their own key and sell it per request. Buyers offload AI work from code, a terminal or an agent, and every request goes to the lowest sealed bid for that model.</p>
           <div className="hero-cta">
             <Link to="/#sides" className="btn btn-w">Offload AI work <Icon name="arrow" size={16} /></Link>
             <Link to="/providers/join" className="btn">Become a provider</Link>
@@ -137,7 +137,7 @@ export function Landing() {
                   <h3>Sell AI you already pay for</h3>
                 </div>
               </div>
-              <p>An API plan you don’t use all day, or a GPU that sits idle: run a Xorv node. It bids a sealed price for each request it can serve, answers, and is paid on Fuji. Its stake keeps it honest: a node caught lying loses {D.config.slashBps / 100}% to the buyer.</p>
+              <p>Spare Claude or Groq API capacity, or a GPU that sits idle: run a Xorv node with your own key. Each model has its own sealed-bid auction; your node bids for the requests it can serve, answers, and is paid on Fuji. Its stake keeps it honest: a node caught lying loses {D.config.slashBps / 100}% to the buyer.</p>
               <ul className="side-flow" aria-label="What a node does">
                 <li><b>Bid</b><span>sealed, from its own cost</span></li>
                 <li><b>Serve</b><span>runs the model, delivers on-chain</span></li>
@@ -145,7 +145,8 @@ export function Landing() {
                 <li className="bad"><b>Lie, get slashed</b><span>stake goes to the buyer</span></li>
               </ul>
               <Code title="terminal · become a provider" prompt lines={PROVIDER} copy={PROVIDER.map(([c]) => c).join('\n')} />
-              <Link to="/providers/join" className="link side-more">Provider guide: keys, stake, models, payouts <Icon name="arrow" size={14} /></Link>
+              <p className="terms-line">Your key stays on your node, under your own account and your provider’s terms. Buyers get answers, never your key or account. Chat subscriptions (Claude Pro, ChatGPT Plus) can’t be sold here.</p>
+              <Link to="/providers/join#terms" className="link side-more">Provider guide: keys, stake, models, what the terms allow <Icon name="arrow" size={14} /></Link>
             </article>
             <article className="card side-card">
               <div className="side-top">
@@ -160,7 +161,7 @@ export function Landing() {
               <Link to="/chat" className="link side-more">Or try it in the browser with a test wallet <Icon name="arrow" size={14} /></Link>
             </article>
           </div>
-          <p className="honest-line"><Icon name="shield" size={14} /><span>Today every node is ours: four nodes that resell Groq at its list price plus their own margin. The node software is in the repo, so anyone can run one. From a clone: <code>pnpm install</code>, then <code>pnpm xorv …</code> and <code>pnpm xorv-node …</code>.</span></p>
+          <p className="honest-line"><Icon name="shield" size={14} /><span>Today every node is ours, on Fuji for test dollars: four on our server sell Groq’s GPT-OSS, three of them also Claude Haiku 5.5 with our own Anthropic key, each at the list price plus its own margin. The node software is in the repo, so anyone can run one. From a clone: <code>pnpm install</code>, then <code>pnpm xorv …</code> and <code>pnpm xorv-node …</code>.</span></p>
         </section>
 
         <section className="sec" aria-labelledby="h-how">
@@ -171,7 +172,7 @@ export function Landing() {
         </section>
 
         <section className="sec" aria-labelledby="h-vs">
-          <div className="sec-h"><div><h2 id="h-vs">Why not just buy an API key?</h2><p>How Xorv differs from the usual ways to buy AI. It does not claim to be cheaper: today its price sits at Groq’s list price.</p></div></div>
+          <div className="sec-h"><div><h2 id="h-vs">Why not just buy an API key?</h2><p>How Xorv differs from the usual ways to buy AI. It does not claim to be cheaper: today its prices sit at the providers’ list prices.</p></div></div>
           <div className="card vs-wrap">
             <table className="vs">
               <thead><tr><th scope="col">Way to buy AI</th><th scope="col">To start</th><th scope="col">Price set by</th><th scope="col">Who can sell</th><th scope="col">Answer checked</th></tr></thead>
@@ -228,7 +229,7 @@ export function Landing() {
           </div>
         </section>
 
-        <p className="quiet-line">Have API credits or a GPU you don’t use? <Link to="/providers/join" className="link">Run a node and sell the idle capacity</Link>{d && <> · {money(d.stats.staked, 2)} staked so far</>}</p>
+        <p className="quiet-line">Have Claude or Groq API capacity, or a GPU, you don’t use? <Link to="/providers/join" className="link">Run a node and sell the idle capacity</Link>{d && <> · {money(d.stats.staked, 2)} staked so far</>}</p>
       </div>
     </>
   );

@@ -787,3 +787,7 @@ a.pill { height: 32px; padding: 0 10px; }
   .vs th, .vs td { border: 0; padding: 4px 16px; }
   .vs td::before { content: attr(data-l) ': '; color: var(--ink-3); }
 }
+.terms-line { margin: 12px 0 0; padding: 10px 12px; border-left: 2px solid var(--ink-2); color: var(--ink-2); font-size: 13.5px; line-height: 1.55; }
+.terms-card p { margin: 0 0 12px; line-height: 1.6; color: var(--ink-2); }
+.terms-card p b { color: var(--ink); }
+.terms-card p:last-child { margin-bottom: 0; }
