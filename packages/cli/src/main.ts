@@ -18,7 +18,7 @@
 import { formatEther, parseEventLogs, type Hex } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import {
-  OUTCOME_TEXT, Xorv, XorvError, XorvReader, XORV_GATEWAY, fundDigest, followJob, modelInfo, perMillion, reviewedCheck, txUrl, usd, verifyJob, xorvMarketAbi, xorvRegistryAbi, type Step,
+  OUTCOME_TEXT, Xorv, XorvError, XorvReader, XORV_GATEWAY, fundDigest, followJob, modelInfo, perMillion, providerOf, reviewedCheck, txUrl, usd, verifyJob, xorvMarketAbi, xorvRegistryAbi, type Step,
 } from '@xorv/sdk';
 import { keysFile, loadDeployment, maybeKey, saveKeys, t, tick, cross, wrapText } from '@xorv/sdk/node';
 
@@ -87,8 +87,13 @@ async function fund() {
 async function models() {
   const ms = await xorv().models();
   if (!ms.length) return console.log('No staked node serves a model right now.');
-  console.log(t.dim(`${'model'.padEnd(26)} ${'nodes'.padStart(5)}  index $/1M tokens`));
-  for (const m of ms) console.log(`${m.id.padEnd(26)} ${String(m.nodes).padStart(5)}  ${per1m(m.indexRate)}`);
+  console.log(t.dim(`${'provider'.padEnd(10)} ${'model'.padEnd(17)} ${'id'.padEnd(27)} ${'nodes'.padStart(5)}  ${'index/1M'.padStart(8)}  list/1M`));
+  const sorted = [...ms].sort((a, b) => providerOf(a.id).localeCompare(providerOf(b.id)) || a.id.localeCompare(b.id));
+  for (const m of sorted) {
+    const l = modelInfo(m.id).list;
+    console.log(`${providerOf(m.id).padEnd(10)} ${modelInfo(m.id).name.padEnd(17)} ${m.id.padEnd(27)} ${String(m.nodes).padStart(5)}  ${per1m(m.indexRate).padStart(8)}  ${l ? '$' + (0.4 * l.input + 0.6 * l.output).toFixed(3) : '—'}`);
+  }
+  console.log(t.dim('  one sealed-bid auction per model · list = the provider\'s published price, 40% input / 60% output'));
 }
 
 const askOpts = () => ({ model: opt('model'), maxTokens: opt('max-tokens') ? Number(opt('max-tokens')) : undefined, verify: has('verify') });

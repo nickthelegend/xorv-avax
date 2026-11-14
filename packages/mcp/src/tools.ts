@@ -3,7 +3,7 @@
  * The buyer key is read by name (XORV_MCP_KEY_NAME, default XORV_BUYER_KEY) and never returned.
  */
 import { privateKeyToAccount } from 'viem/accounts';
-import { OUTCOME_TEXT, Xorv, XORV_GATEWAY, XorvReader, modelInfo, perMillion, usd } from '@xorv/sdk';
+import { OUTCOME_TEXT, Xorv, XORV_GATEWAY, XorvReader, modelInfo, perMillion, providerOf, usd } from '@xorv/sdk';
 import { keyByName, loadDeployment, maybeKey } from '@xorv/sdk/node';
 
 export const TOOLS = [
@@ -17,7 +17,7 @@ export const TOOLS = [
   {
     name: 'xorv_ask',
     description: 'Buy one answer: pays the Xorv gateway with x402 (an EIP-3009 tUSD signature on Fuji), runs a sealed-bid auction among staked nodes and returns the answer with the settlement transaction. verify=true forces a spot check.',
-    inputSchema: { type: 'object', properties: { prompt: { type: 'string' }, model: { type: 'string', description: 'default groq:openai/gpt-oss-20b' }, verify: { type: 'boolean' }, max_tokens: { type: 'number' } }, required: ['prompt'] },
+    inputSchema: { type: 'object', properties: { prompt: { type: 'string' }, model: { type: 'string', description: 'a model id from xorv_models, e.g. anthropic:claude-haiku-5-5 or groq:openai/gpt-oss-20b (default)' }, verify: { type: 'boolean' }, max_tokens: { type: 'number' } }, required: ['prompt'] },
   },
 ] as const;
 
@@ -33,8 +33,8 @@ export async function runTool(name: string, a: any): Promise<unknown> {
     case 'xorv_models': {
       const [ps, idx] = await Promise.all([r.providers(), r.indexModels()]);
       const count = new Map<string, number>();
-      for (const p of ps) if (p.unbonding === 0n) for (const m of p.models) count.set(m, (count.get(m) ?? 0) + 1);
-      return [...count].map(([id, nodes]) => ({ id, name: modelInfo(id).name, nodes, index_per_1m: (() => { const m = idx.find((x) => x.name === id); return m ? perMillion(m.rate, 4) : null; })() }));
+      for (const p of ps) if (p.unbonding === 0n && p.stake >= BigInt(d.config.minStake)) for (const m of p.models) count.set(m, (count.get(m) ?? 0) + 1);
+      return [...count].sort(([a], [b]) => providerOf(a).localeCompare(providerOf(b)) || a.localeCompare(b)).map(([id, nodes]) => ({ provider: providerOf(id), id, name: modelInfo(id).name, nodes, index_per_1m: (() => { const m = idx.find((x) => x.name === id); return m ? perMillion(m.rate, 4) : null; })() }));
     }
     case 'xorv_job': {
       const id = Number(a.id);

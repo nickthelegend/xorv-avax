@@ -19,6 +19,9 @@ export const MODELS: ModelInfo[] = [
  * Claude has no temperature 0, so a Claude spot check is a review: the checker's own Claude reads the question and the
  * delivered answer and either agrees (the delivered text is submitted) or writes its own answer. Other models are re-run.
  */
+/** The upstream provider of a model id, by its prefix (anthropic:, groq:, ollama:). */
+export const providerOf = (id: string) => ({ anthropic: 'Anthropic', groq: 'Groq', ollama: 'Ollama', openai: 'OpenAI' } as Record<string, string>)[id.split(':')[0]] ?? id.split(':')[0];
+
 export const reviewedCheck = (id: string) => id.startsWith('anthropic:');
 
 export const modelInfo = (id: string): ModelInfo =>
