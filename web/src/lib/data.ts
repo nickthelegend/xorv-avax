@@ -59,7 +59,7 @@ export function rate1m(r: bigint | number | null | undefined, digits = 3) {
 export const int = (n: number | bigint) => Number(n).toLocaleString('en-US');
 export const short = (a?: string | null, n = 4) => (!a ? '—' : a.length > 2 + 2 * n ? `${a.slice(0, 2 + n)}…${a.slice(-n)}` : a);
 export const modelName = (id: string) => modelInfo(id).name;
-export const hostName = (id: string) => ({ groq: 'Groq', ollama: 'Ollama' } as Record<string, string>)[id.split(':')[0]] ?? id.split(':')[0];
+export const hostName = (id: string) => ({ anthropic: 'Anthropic', groq: 'Groq', ollama: 'Ollama' } as Record<string, string>)[id.split(':')[0]] ?? id.split(':')[0];
 export const modelUrl = (id: string) => `/models/${encodeURIComponent(id)}`;
 export const ago = (sec: number, now = Date.now() / 1000) => {
   const s = Math.max(0, Math.round(now - sec));

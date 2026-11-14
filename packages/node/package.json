@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
-  "bin": { "xorv-node": "./src/cli.ts" },
-  "dependencies": { "@xorv/sdk": "workspace:*", "viem": "2.37.6" }
+  "bin": {
+    "xorv-node": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
+    "@xorv/sdk": "workspace:*",
+    "viem": "2.37.6"
+  }
 }

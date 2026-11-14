@@ -7,7 +7,7 @@ import path from 'node:path';
 import { createWalletClient, publicActions, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { XorvReader, bidCommitment, chainFor, newSalt, rpcTransport, similarityBps, xorvMarketAbi, type Deployment, type Job } from '@xorv/sdk';
-import { runModel, vendorOf, TERMS, type RunResult } from './providers.ts';
+import { checkModel, runModel, vendorOf, TERMS, type RunResult } from './providers.ts';
 
 export type Fault = 'none' | 'deliver' | 'check';
 
@@ -262,7 +262,9 @@ export async function startNode(o: NodeOptions) {
               out = { text: JUNK, tokens: 10 };
               log('fault injection: junk check, model not run', { job: id });
             } else {
-              out = await run(j, await eventText(j, 'JobPosted', 'prompt'));
+              const c = await checkModel(j.model, await eventText(j, 'JobPosted', 'prompt'), result, { maxTokens: Math.min(1024, j.maxTokens) });
+              out = c;
+              if (c.reviewed) log(c.agreed ? 'own model reviewed the answer: agrees' : 'own model reviewed the answer: disagrees, sent its own', { job: id });
             }
             const sim = similarityBps(result, out.text);
             log(round === 0 ? 're-ran model for spot check' : 're-ran model as tiebreaker', { job: id, similarity_bps: sim, ...(round === 1 ? { vs_first_check_bps: similarityBps(first, out.text) } : {}) });

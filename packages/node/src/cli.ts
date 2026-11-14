@@ -3,7 +3,7 @@
  * xorv-node: sell AI capacity you already pay for (an API key, or a local model) on the Xorv market, Avalanche Fuji.
  *
  *   xorv-node init  --label <name>                     owner + node keys into $XORV_HOME/keys.env (addresses printed, keys never)
- *   xorv-node join  --label <name> [--stake 5] [--models groq:openai/gpt-oss-20b,...]
+ *   xorv-node join  --label <name> [--stake 5] [--models anthropic:claude-haiku-5-5,groq:openai/gpt-oss-20b,...]
  *                                                      tUSD from the faucet if needed, approve, register (or top up the stake)
  *   xorv-node start --label <name> [--margin 1.2] [--fault deliver|check]   bid, serve, get paid; lie and get slashed
  *   xorv-node status [--label <name>]                  the market, or one provider
@@ -12,7 +12,7 @@
  *
  * The owner key stakes and withdraws; the node key only bids, delivers and checks. Both are read by name
  * (XORV_OWNER_<LABEL>_KEY, XORV_NODE_<LABEL>_KEY) from the environment, the repo's gitignored .env or $XORV_HOME/keys.env.
- * GROQ_API_KEY comes from the environment or XORV_ENV_FILE (only that variable is read). Gas: a little Fuji test AVAX
+ * The provider key (ANTHROPIC_API_KEY, GROQ_API_KEY or OLLAMA_HOST) comes from the environment or XORV_ENV_FILE (only those are read). Gas: a little Fuji test AVAX
  * on both addresses (https://core.app/tools/testnet-faucet).
  */
 import path from 'node:path';
@@ -21,16 +21,20 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { XorvReader, perMillion, testDollarAbi, txUrl, usd, xorvRegistryAbi } from '@xorv/sdk';
 import { ROOT, keysFile, keyByName, loadDeployment, maybeKey, readEnvFile, saveKeys, t, tick, walletFor, type Wallet } from '@xorv/sdk/node';
 import { startNode, type Fault } from './node.ts';
+import { PROVIDER_VARS } from './providers.ts';
 
 /**
  * What each upstream model costs this operator, in micro-dollars per 1k tokens: Groq's published price
  * per 1M tokens (console.groq.com/docs/model, read Nov 12, 2026) blended as 40% input / 60% output.
  *   gpt-oss-20b:  $0.075 in, $0.30 out  -> $0.21 per 1M  -> 210
  *   gpt-oss-120b: $0.15 in,  $0.60 out  -> $0.42 per 1M  -> 420
+ * Claude Haiku 5.5 on the Anthropic API ($0.10 in, $0.50 out per 1M for prompts up to 100K tokens, Nov 14, 2026):
+ *   claude-haiku-5-5: -> $0.34 per 1M -> 340
  */
 export const DEFAULT_COST: Record<string, number> = {
   'groq:openai/gpt-oss-20b': 210,
   'groq:openai/gpt-oss-120b': 420,
+  'anthropic:claude-haiku-5-5': 340,
 };
 const DEFAULT_MODELS = 'groq:openai/gpt-oss-20b,groq:openai/gpt-oss-120b';
 
@@ -146,8 +150,8 @@ async function main() {
 
   if (cmd !== 'start') throw new Error('usage: xorv-node init|join|start|status|leave|withdraw --label <name>   (see the header of packages/node/src/cli.ts)');
   const label = needLabel(args);
-  if (!process.env.GROQ_API_KEY && process.env.XORV_ENV_FILE) {
-    for (const f of process.env.XORV_ENV_FILE.split(':')) Object.assign(process.env, readEnvFile(f, ['GROQ_API_KEY', 'OLLAMA_HOST']));
+  for (const f of (process.env.XORV_ENV_FILE ?? '').split(':').filter(Boolean)) {
+    for (const [k, v] of Object.entries(readEnvFile(f, PROVIDER_VARS))) process.env[k] ??= v;
   }
   const models = (flag(args, 'models') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   await startNode({

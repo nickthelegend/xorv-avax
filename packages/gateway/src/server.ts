@@ -13,7 +13,7 @@
  *   /api/private/*              the eERC private credit lane (see private.ts)
  *   GET/POST /api/fund          one tap of test funds for a new wallet, relayed to XorvGasStation (see fund.ts)
  *
- * Env: XORV_DEPLOYMENT, XORV_RPC, XORV_GATEWAY_PORT (5421), XORV_ENV_FILE (only GROQ_API_KEY is read),
+ * Env: XORV_DEPLOYMENT, XORV_RPC, XORV_GATEWAY_PORT (5421), XORV_ENV_FILE (only GROQ_API_KEY and ANTHROPIC_API_KEY are read),
  *      XORV_GATEWAY_NODES (atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15), XORV_PUBLIC_URL,
  *      XORV_GATEWAY_HOST (127.0.0.1; 0.0.0.0 inside a container behind a reverse proxy).
  */
@@ -46,8 +46,9 @@ const lane = new PrivateLane(d, reader, desk, facilitator);
 const funds = new FundDesk(d, reader, rpc);
 
 const providerEnv: Record<string, string> = {};
-for (const f of (process.env.XORV_ENV_FILE ?? '').split(':').filter(Boolean)) Object.assign(providerEnv, readEnvFile(f, ['GROQ_API_KEY']));
-if (process.env.GROQ_API_KEY) providerEnv.GROQ_API_KEY = process.env.GROQ_API_KEY;
+const PROVIDER_KEYS = ['GROQ_API_KEY', 'ANTHROPIC_API_KEY'];
+for (const f of (process.env.XORV_ENV_FILE ?? '').split(':').filter(Boolean)) Object.assign(providerEnv, readEnvFile(f, PROVIDER_KEYS));
+for (const k of PROVIDER_KEYS) if (process.env[k]) providerEnv[k] = process.env[k]!;
 const pool = new NodePool(providerEnv.GROQ_API_KEY && process.env.XORV_EXTERNAL_NODES !== '1' ? parseNodes(process.env.XORV_GATEWAY_NODES ?? 'atlas:1.2,birch:1.08,cobalt:1.35,dune:1.15') : [], providerEnv);
 
 function setupNeeds(): string[] {

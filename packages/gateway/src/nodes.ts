@@ -18,7 +18,7 @@ export function parseNodes(s: string | undefined): NodeSpec[] {
 
 /**
  * Runs provider nodes on this machine. Each node process gets only the allowlisted provider
- * variables (GROQ_API_KEY), never the gateway's desk key; it reads its own node key by name.
+ * variables (GROQ_API_KEY, ANTHROPIC_API_KEY), never the gateway's desk key; it reads its own node key by name.
  */
 export class NodePool {
   private procs = new Map<string, { spec: NodeSpec; child: ChildProcess | null; status: NodeStatus }>();
