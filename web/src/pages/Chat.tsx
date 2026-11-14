@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_MAX_RATE, DEFAULT_MAX_TOKENS, chatMessage, encodePayment, requestHash, xorvMarketAbi } from '@xorv/sdk';
+import { DEFAULT_MAX_RATE, DEFAULT_MAX_TOKENS, chatMessage, encodePayment, requestHash, reviewedCheck, xorvMarketAbi } from '@xorv/sdk';
 import { C, CLOSED, ev, ev1, hostName, modelName, money, nameOf, queryParam, rate1m, readJobDetail, reader, servedModels, txUrl, useMarket, usePoll, type JobDetail } from '../lib/data';
 import { gateway, useGateway, GATEWAY_START, GatewayError } from '../lib/gateway';
 import { Link } from '../lib/router';
@@ -80,7 +80,7 @@ function Turn({ msg, onDelivered }: { msg: BotMsg; onDelivered: (content: string
       if (j.status === 'Delivered') steps.push({ k: 'draw', state: 'now', body: <>Drawing the spot check from the delivery block hash…</> });
       if (spot) {
         if (!spot.args.selected) steps.push({ k: 'spot', state: 'done', body: <>Not sampled for a spot check this time (roll {String(spot.args.rollBps)} ≥ {String(spot.args.thresholdBps)}) <T h={spot.transactionHash} /></> });
-        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> is re-running the prompt</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {pct(c.similarityBps)} match{i ? <> with the answer, {pct(Number(ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === 1)?.args.againstFirstBps ?? 0))} with the spot check</> : null}, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
+        else d.checks.forEach((c, i) => steps.push({ k: `chk${i}`, state: !c.delivered ? 'now' : c.similarityBps >= (m.data?.config.toleranceBps ?? 5000) ? 'good' : 'bad', body: !c.delivered ? <>{i ? 'Tiebreaker' : 'Spot check'}: <b>{nameOf(m.data, c.owner)}</b> {reviewedCheck(msg.model) ? 'is reviewing the answer with its own Claude' : 'is re-running the prompt'}</> : <>{i ? 'Tiebreaker' : 'Spot check'} by <b>{nameOf(m.data, c.owner)}</b>: {pct(c.similarityBps)} match{i ? <> with the answer, {pct(Number(ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === 1)?.args.againstFirstBps ?? 0))} with the spot check</> : null}, computed on-chain <T h={ev(d, 'CheckDelivered').find((e) => Number(e.args.round) === i)?.transactionHash} /></> }));
       }
       if (CLOSED.has(j.status)) {
         const closed = ev1(d, 'JobClosed');
@@ -306,7 +306,7 @@ export function Chat() {
               <button className="send" type="submit" aria-label="Send" disabled={!ready || busy || pending || !text.trim()}><Icon name="up" size={18} /></button>
             </div>
           </form>
-          <p className="composer-note">{verify ? 'Verified: a second staked node always re-runs this answer, and the market compares them on-chain.' : `${(m.data?.config.spotCheckBps ?? 3000) / 100}% of answers are re-run by a second node; liars lose stake.`}</p>
+          <p className="composer-note">{verify ? (reviewedCheck(model) ? 'Verified: a second staked node always reviews this answer with its own Claude, and the market scores the match on-chain.' : 'Verified: a second staked node always re-runs this answer, and the market compares them on-chain.') : `${(m.data?.config.spotCheckBps ?? 3000) / 100}% of answers are checked by a second node; liars lose stake.`}</p>
         </div>
       </section>
     </div>

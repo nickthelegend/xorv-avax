@@ -61,7 +61,7 @@ export type OutcomeName = (typeof OUTCOME)[number];
 export const OUTCOME_TEXT: Record<OutcomeName, string> = {
   None: '',
   PaidNotSampled: 'Paid. Not sampled for a spot check.',
-  PaidCheckMatched: 'Paid. A second node re-ran it and matched.',
+  PaidCheckMatched: 'Paid. A second node checked it and matched.',
   PaidNoChecker: 'Paid. Sampled, but no other node could check it.',
   PaidCheckerTimeout: 'Paid. The checker did not answer in time.',
   PaidTiebreakSidedWithProvider: 'Paid. The tiebreaker sided with the provider and the checker was slashed.',

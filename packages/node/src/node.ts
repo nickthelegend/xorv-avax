@@ -258,16 +258,17 @@ export async function startNode(o: NodeOptions) {
             const result = await eventText(j, 'Delivered', 'output');
             const first = round === 1 ? await eventText(j, 'CheckDelivered', 'output', 0) : '';
             let out: RunResult;
+            let how = 're-ran model';
             if (o.fault === 'check') {
               out = { text: JUNK, tokens: 10 };
               log('fault injection: junk check, model not run', { job: id });
             } else {
               const c = await checkModel(j.model, await eventText(j, 'JobPosted', 'prompt'), result, { maxTokens: Math.min(1024, j.maxTokens) });
               out = c;
-              if (c.reviewed) log(c.agreed ? 'own model reviewed the answer: agrees' : 'own model reviewed the answer: disagrees, sent its own', { job: id });
+              if (c.reviewed) how = c.agreed ? 'own Claude reviewed the answer: agrees' : 'own Claude reviewed the answer: disagrees, sent its own answer';
             }
             const sim = similarityBps(result, out.text);
-            log(round === 0 ? 're-ran model for spot check' : 're-ran model as tiebreaker', { job: id, similarity_bps: sim, ...(round === 1 ? { vs_first_check_bps: similarityBps(first, out.text) } : {}) });
+            log(round === 0 ? `${how} for spot check` : `${how} as tiebreaker`, { job: id, similarity_bps: sim, ...(round === 1 ? { vs_first_check_bps: similarityBps(first, out.text) } : {}) });
             await tx('deliverCheck', [BigInt(id), out.text, out.tokens, result, first], round === 0 ? 'deliver spot check' : 'deliver tiebreak', { job: id, similarity_bps: sim });
           });
         } else if (now >= j.checkEnd && o.keeper) {

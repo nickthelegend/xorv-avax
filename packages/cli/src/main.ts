@@ -18,7 +18,7 @@
 import { formatEther, parseEventLogs, type Hex } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import {
-  OUTCOME_TEXT, Xorv, XorvError, XorvReader, XORV_GATEWAY, fundDigest, followJob, modelInfo, perMillion, txUrl, usd, verifyJob, xorvMarketAbi, xorvRegistryAbi, type Step,
+  OUTCOME_TEXT, Xorv, XorvError, XorvReader, XORV_GATEWAY, fundDigest, followJob, modelInfo, perMillion, reviewedCheck, txUrl, usd, verifyJob, xorvMarketAbi, xorvRegistryAbi, type Step,
 } from '@xorv/sdk';
 import { keysFile, loadDeployment, maybeKey, saveKeys, t, tick, cross, wrapText } from '@xorv/sdk/node';
 
@@ -137,7 +137,7 @@ async function chat() {
     else if (s.kind === 'delivered') {
       console.log(`${el()} ${tick()} answer delivered on-chain by ${s.label} (${s.tokens} tokens)`);
       console.log(t.acc(wrapText(s.text, 96, '       ')));
-    } else if (s.kind === 'draw') console.log(`${el()}   ${s.checked ? `spot check drawn: ${s.label} re-runs the prompt` : 'not drawn for a spot check this time'}`);
+    } else if (s.kind === 'draw') console.log(`${el()}   ${s.checked ? `spot check drawn: ${s.label} ${reviewedCheck(o.model ?? '') ? 'has its own Claude review the answer' : 're-runs the prompt'}` : 'not drawn for a spot check this time'}`);
     else if (s.kind === 'check') {
       const pass = s.similarityBps >= d.config.toleranceBps;
       const role = s.round === 0 ? 'spot check' : 'tiebreak';

@@ -15,6 +15,12 @@ export const MODELS: ModelInfo[] = [
   { id: 'groq:openai/gpt-oss-120b', name: 'GPT-OSS 120B', vendor: 'OpenAI open weights on Groq', blurb: 'The larger open-weight reasoning model.', list: { input: 0.15, output: 0.6, source: 'https://console.groq.com/docs/model/openai/gpt-oss-120b', checked: '2026-11-12' } },
 ];
 
+/**
+ * Claude has no temperature 0, so a Claude spot check is a review: the checker's own Claude reads the question and the
+ * delivered answer and either agrees (the delivered text is submitted) or writes its own answer. Other models are re-run.
+ */
+export const reviewedCheck = (id: string) => id.startsWith('anthropic:');
+
 export const modelInfo = (id: string): ModelInfo =>
   MODELS.find((m) => m.id === id) ?? { id, name: id.slice(id.indexOf(':') + 1), vendor: id.split(':')[0], blurb: '' };
 
